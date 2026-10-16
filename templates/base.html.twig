@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Seydeco — Location de matériel de réception{% endblock %}</title>
+        <link rel="preload" href="{{ asset('fonts/jost-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}{{ importmap('app') }}{% endblock %}
+        {% endblock %}
+    </head>
+    <body>
+        <a class="skip-link" href="#contenu">Aller au contenu</a>
+        <header class="site-header">
+            <div class="container">
+                <a class="wordmark" href="{{ path('app_home') }}">Seydeco</a>
+            </div>
+        </header>
+        <main id="contenu" tabindex="-1">
+            {% block body %}{% endblock %}
+        </main>
+    </body>
+</html>

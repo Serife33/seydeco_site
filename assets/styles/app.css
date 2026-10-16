@@ -1,0 +1,162 @@
+/* Polices auto-hébergées (OFL-1.1, via Fontsource) — 4 fichiers maximum */
+@font-face {
+    font-family: 'Tenor Sans';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/tenor-sans-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Jost';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../fonts/jost-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Jost';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/jost-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Cormorant Garamond';
+    font-style: italic;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../fonts/cormorant-garamond-latin-500-italic.woff2') format('woff2');
+}
+
+:root {
+    color-scheme: light;
+
+    /* Couleurs (DESIGN, clair uniquement) */
+    --surface: #FFFFFF;
+    --cream: #F8F5F0;
+    --cream-deep: #F5F1EA;
+    --sand: #E9E3D9;
+    --hairline: #ECE6DC;
+    --hairline-soft: #F0EBE3;
+    --swatch-border: #CFC6B8;
+    --ink: #1F1D1A;
+    --ink-muted: #5E5850;
+    --gold: #8A6E35;       /* < 24px, sur blanc uniquement, jamais en bouton ni aplat */
+    --gold-light: #D9C49A;
+    --error: #9B2C1F;      /* réservé aux erreurs */
+
+    /* Rôles typographiques */
+    --font-display: 'Tenor Sans', Georgia, serif;
+    --font-body: 'Jost', system-ui, sans-serif;
+    --font-accent: 'Cormorant Garamond', Georgia, serif;
+
+    /* Espacements, base 4px */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+    --space-16: 64px;
+    --space-24: 96px;
+
+    --content-max: 1240px;
+    --gutter: 16px;
+    --target-min: 44px;
+}
+
+@media (min-width: 768px) {
+    :root { --gutter: 24px; }
+}
+
+*, *::before, *::after { box-sizing: border-box; border-radius: 0; box-shadow: none; }
+
+body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.7;
+}
+
+h1, h2 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    line-height: 1.2;
+    margin: 0 0 var(--space-4);
+}
+
+a { color: var(--ink); }
+
+/* Focus visible : 2px ink décalé de 2px */
+:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+}
+
+.container {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+}
+
+/* Capitales espacées (nav, eyebrow, label-caps, product-name, button) */
+.eyebrow, .label-caps {
+    font-family: var(--font-body);
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.accent-sm {
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 19px;
+}
+
+.price-total { font-weight: 500; }
+
+/* Lien d'évitement : premier élément focusable, visible au focus */
+.skip-link {
+    position: absolute;
+    left: var(--space-4);
+    top: -100px;
+    z-index: 100;
+    padding: var(--space-3) var(--space-4);
+    min-height: var(--target-min);
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--ink);
+}
+.skip-link:focus { top: var(--space-4); }
+
+.site-header {
+    border-bottom: 1px solid var(--hairline);
+    padding: var(--space-6) 0;
+}
+.wordmark {
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+}
+
+.home-hero {
+    padding: var(--space-24) 0;
+    background: var(--cream);
+    border-bottom: 1px solid var(--hairline);
+}
+.home-hero h1 { font-size: clamp(32px, 6vw, 56px); }
+.home-hero .eyebrow { color: var(--ink-muted); margin: 0 0 var(--space-4); }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition: none !important; animation: none !important; }
+}

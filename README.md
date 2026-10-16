@@ -1,0 +1,65 @@
+# Seydeco
+
+Site de location de matériel de réception — Symfony 7.4, PHP 8.4, AssetMapper, MariaDB.
+
+## Développer en local
+
+Prérequis : PHP 8.4+, Composer, [Symfony CLI](https://symfony.com/download), Docker.
+
+```bash
+composer install
+docker compose up -d        # base MariaDB 10.11 (+ Mailpit pour les e-mails)
+symfony serve -d            # https://127.0.0.1:8000
+```
+
+La Symfony CLI fournit automatiquement `DATABASE_URL` à partir de Docker.
+Les réglages propres à votre machine vont dans `.env.local` (jamais commité).
+
+## Tests
+
+```bash
+php bin/phpunit
+composer audit
+```
+
+La CI GitHub Actions (`.github/workflows/ci.yml`) lance les deux à chaque push.
+Un commit dont la CI n'est pas verte ne peut pas être déployé.
+
+## Déployer sur o2switch
+
+Une seule fois sur la machine de développement :
+
+```bash
+gh auth login                      # deploy.sh interroge GitHub pour vérifier la CI
+cp deploy.env.dist deploy.env      # puis remplir avec les accès o2switch (fichier jamais commité)
+```
+
+Puis, à chaque mise en ligne (pousser d'abord sur `main` et attendre la CI verte) :
+
+```bash
+./deploy.sh
+```
+
+Le script : vérifie la CI du dernier commit de `main` → dump de la base → nouvelle release horodatée →
+`composer install --no-dev` → migrations → `asset-map:compile` → `cache:clear` → bascule du lien `current`
+→ tag Git `release-…`. Si une migration échoue, le dump est restauré et le site reste sur l'ancienne release.
+
+### Retour arrière
+
+```bash
+./deploy.sh --rollback
+```
+
+Remet la release précédente **et** la base telle qu'elle était avant le dernier déploiement
+(les données saisies depuis sont perdues ; le script demande confirmation).
+
+### Checklist serveur (première fois)
+
+- [ ] Clé SSH installée, `SSH_HOST` et `REMOTE_DIR` remplis dans `deploy.env`.
+- [ ] Chemin du PHP 8.4 en ligne de commande confirmé (`PHP_BIN`, par ex. `/opt/alt/php84/usr/bin/php`) et `composer.phar` présent (`COMPOSER_PHAR`).
+- [ ] Base MariaDB/MySQL créée dans cPanel ; sa version reportée dans `serverVersion` de `.env` et dans `compose.yaml`.
+- [ ] `REMOTE_DIR/shared/.env.local` créé à la main avec au minimum :
+      `APP_ENV=prod`, `APP_SECRET=` (valeur aléatoire), `DATABASE_URL=` (accès o2switch).
+- [ ] Racine web du domaine pointée sur `REMOTE_DIR/current/public`.
+- [ ] HTTPS activé (AutoSSL) ; la redirection HTTP → HTTPS est faite par `public/.htaccess`.
+- [ ] Fuseau MySQL : `SET time_zone = 'Europe/Paris'` accepté par le serveur (sinon demander le chargement des fuseaux à o2switch).

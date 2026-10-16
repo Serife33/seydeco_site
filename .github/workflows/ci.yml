@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    tags-ignore: ['release-*']
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: intl, pdo_mysql
+          ini-values: date.timezone=Europe/Paris
+          coverage: none
+
+      - name: Installer les dépendances
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Tests PHPUnit
+        run: php bin/phpunit
+
+      - name: Audit de sécurité des dépendances
+        run: composer audit
+
+      - name: Vérifications de build prod
+        run: |
+          composer validate --strict
+          php bin/console lint:yaml config
+          php bin/console lint:twig templates
+          APP_ENV=prod APP_DEBUG=0 php bin/console cache:clear
+          APP_ENV=prod php bin/console asset-map:compile
+
+      - name: Shellcheck deploy.sh
+        run: shellcheck deploy.sh
