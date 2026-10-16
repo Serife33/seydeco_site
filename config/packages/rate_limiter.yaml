@@ -1,0 +1,43 @@
+# Limitation des tentatives de connexion (AD-26) : compteurs stockés en base,
+# hors var/cache, pour survivre à un déploiement.
+framework:
+    cache:
+        pools:
+            cache.rate_limiter_dbal:
+                adapter: cache.adapter.doctrine_dbal
+                provider: doctrine.dbal.default_connection
+
+    rate_limiter:
+        # par identifiant + IP
+        login_local:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'
+            cache_pool: cache.rate_limiter_dbal
+        # par IP seule, tous identifiants confondus
+        login_global:
+            policy: fixed_window
+            limit: 25
+            interval: '15 minutes'
+            cache_pool: cache.rate_limiter_dbal
+        # codes 2FA faux, par compte (une reconnexion ne redonne pas d'essais)
+        two_factor_code:
+            policy: fixed_window
+            limit: 5
+            interval: '15 minutes'
+            cache_pool: cache.rate_limiter_dbal
+        # « Renvoyer un code », par compte
+        resend_code:
+            policy: fixed_window
+            limit: 3
+            interval: '15 minutes'
+            cache_pool: cache.rate_limiter_dbal
+
+services:
+    # Secret fixe (kernel.secret) : le secret par défaut change à chaque build et remettrait les compteurs à zéro.
+    app.login_rate_limiter:
+        class: Symfony\Component\Security\Http\RateLimiter\DefaultLoginRateLimiter
+        arguments:
+            $globalFactory: '@limiter.login_global'
+            $localFactory: '@limiter.login_local'
+            $secret: '%kernel.secret%'

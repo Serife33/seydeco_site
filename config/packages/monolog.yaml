@@ -9,7 +9,8 @@ when@dev:
                 type: stream
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
                 level: debug
-                channels: ["!event"]
+                # !doctrine : les requêtes SQL journalisent leurs paramètres (code 2FA)
+                channels: ["!event", "!doctrine"]
             console:
                 type: console
                 process_psr_3_messages: false
@@ -23,10 +24,14 @@ when@test:
                 action_level: error
                 handler: nested
                 excluded_http_codes: [404, 405]
-                channels: ["!event"]
+                channels: ["!event", "!doctrine"]
             nested:
                 type: stream
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+            # Capture tous les canaux ; le test des journaux applique les filtres des vrais handlers
+            testing:
+                type: test
                 level: debug
 
 when@prod:
@@ -37,7 +42,7 @@ when@prod:
                 action_level: error
                 handler: nested
                 excluded_http_codes: [404, 405]
-                channels: ["!deprecation"]
+                channels: ["!deprecation", "!doctrine"]
                 buffer_size: 50 # How many messages should be saved? Prevent memory leaks
             nested:
                 type: stream

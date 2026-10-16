@@ -19,6 +19,7 @@ services:
       start_period: 60s
     volumes:
       - database_data:/var/lib/mysql:rw
+      - ./docker/mariadb/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
 ###< doctrine/doctrine-bundle ###
 
 volumes:

@@ -1,0 +1,36 @@
+{% extends 'admin/security/_layout.html.twig' %}
+
+{% block title %}Code de connexion{% endblock %}
+
+{% block body %}
+    <h1 class="admin-title">Code de connexion</h1>
+    <p>Saisir le code à 6 chiffres reçu par email. Il est valable 15 minutes.</p>
+
+    {% for message in app.flashes('success') %}
+        <p class="admin-notice" role="status">{{ message }}</p>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <p class="admin-error" role="alert">{{ message }}</p>
+    {% endfor %}
+    {% if authenticationError %}
+        <p class="admin-error" id="code-error" role="alert">Code incorrect ou expiré.</p>
+    {% endif %}
+
+    <form method="post" action="{{ checkPathUrl ? checkPathUrl : path(checkPathRoute) }}" class="admin-form">
+        <div class="admin-field">
+            <label for="_auth_code">Code</label>
+            <input id="_auth_code" type="text" name="{{ authCodeParameterName }}" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus{% if authenticationError %} aria-invalid="true" aria-describedby="code-error"{% endif %}>
+        </div>
+        {% if isCsrfProtectionEnabled %}
+            <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
+        {% endif %}
+        <button type="submit" class="admin-button">Valider</button>
+    </form>
+
+    <form method="post" action="{{ path('admin_2fa_resend') }}" class="admin-form">
+        <input type="hidden" name="_token" value="{{ csrf_token('admin_2fa_resend') }}">
+        <button type="submit" class="admin-button admin-button--secondary">Renvoyer un code</button>
+    </form>
+
+    <p><a class="admin-link" href="{{ logoutPath }}">Annuler et revenir à la connexion</a></p>
+{% endblock %}

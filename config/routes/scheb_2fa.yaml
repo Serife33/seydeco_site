@@ -1,0 +1,9 @@
+2fa_login:
+    path: /admin/code
+    methods: [GET]
+    defaults:
+        _controller: "scheb_two_factor.form_controller::form"
+
+2fa_login_check:
+    path: /admin/code/verifier
+    methods: [POST]

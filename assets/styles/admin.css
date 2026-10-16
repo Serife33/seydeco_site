@@ -1,0 +1,135 @@
+/* Back-office « Atelier » : Jost seule, fond blanc, texte ≥ 16px, cibles 48px.
+   Les jetons (couleurs, espacements, polices) viennent de app.css. */
+.admin {
+    --target-min: 48px;
+    --admin-tabs-height: 64px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    background: var(--surface);
+}
+
+.admin h1, .admin h2 { font-family: var(--font-body); }
+
+.admin-title {
+    font-size: 24px;
+    font-weight: 500;
+    margin: 0 0 var(--space-6);
+}
+
+.admin-figure { font-size: 28px; font-weight: 500; }
+
+.admin-nav__brand {
+    font-size: 16px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 var(--space-6);
+}
+
+/* Mobile d'abord : onglets en bas */
+.admin-nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 10;
+    background: var(--surface);
+    border-top: 1px solid var(--hairline);
+}
+.admin-nav .admin-nav__brand { display: none; }
+.admin-nav ul {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.admin-nav li { flex: 1; }
+.admin-nav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--admin-tabs-height);
+    font-size: 16px;
+    text-decoration: none;
+    color: var(--ink-muted);
+}
+.admin-nav a[aria-current="page"] {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 6px;
+}
+
+.admin-main {
+    padding: var(--space-6) var(--gutter) calc(var(--admin-tabs-height) + var(--space-6));
+}
+
+/* ≥ 1024px : navigation latérale */
+@media (min-width: 1024px) {
+    .admin-shell {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        min-height: 100vh;
+    }
+    .admin-nav {
+        position: static;
+        border-top: 0;
+        border-right: 1px solid var(--hairline);
+        padding: var(--space-6) var(--space-4);
+    }
+    .admin-nav .admin-nav__brand { display: block; }
+    .admin-nav ul { flex-direction: column; }
+    .admin-nav a {
+        justify-content: flex-start;
+        min-height: var(--target-min);
+        padding: 0 var(--space-3);
+    }
+    .admin-main { padding: var(--space-8); max-width: var(--content-max); }
+}
+
+/* Écrans Connexion et Code */
+.admin-auth {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: var(--space-12) var(--gutter);
+}
+
+.admin-form { display: grid; gap: var(--space-4); margin-bottom: var(--space-6); }
+.admin-field { display: grid; gap: var(--space-2); }
+.admin-field label { font-size: 16px; }
+.admin-field input {
+    min-height: var(--target-min);
+    padding: 0 var(--space-3);
+    font: inherit;
+    font-size: 16px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--ink);
+}
+
+.admin-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--target-min);
+    padding: 0 var(--space-6);
+    font: inherit;
+    font-size: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--surface);
+    background: var(--ink);
+    border: 1px solid var(--ink);
+    cursor: pointer;
+}
+.admin-button--secondary { color: var(--ink); background: var(--surface); }
+
+.admin-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+}
+
+.admin-error, .admin-notice {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid currentColor;
+}
+.admin-error { color: var(--error); }
+.admin-notice { color: var(--ink); background: var(--cream); }
