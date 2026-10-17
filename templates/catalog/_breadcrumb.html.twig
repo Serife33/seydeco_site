@@ -1,0 +1,9 @@
+{# items : [{label, url?}] ; le dernier élément est la page courante #}
+<nav class="breadcrumb" aria-label="Fil d'Ariane">
+    <ol>
+        <li><a href="{{ path('app_home') }}">Accueil</a></li>
+        {% for item in items %}
+            <li>{% if loop.last %}<span aria-current="page">{{ item.label }}</span>{% else %}<a href="{{ item.url }}">{{ item.label }}</a>{% endif %}</li>
+        {% endfor %}
+    </ol>
+</nav>

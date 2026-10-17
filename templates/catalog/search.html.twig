@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Recherche{% if filters.q %} « {{ filters.q }} »{% endif %} — Seydeco{% endblock %}
+{% block search_value %}{{ filters.q }}{% endblock %}
+
+{% block body %}
+    <div class="container catalog-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Location', url: path('catalog_index')}, {label: 'Recherche'}]} only %}
+        <h1>{% if filters.q %}Résultats pour « {{ filters.q }} »{% else %}Recherche{% endif %}</h1>
+        {% include 'catalog/_listing.html.twig' with {route: 'catalog_search', routeParams: {}, clearUrl: path('catalog_search', filters.q ? {q: filters.q} : {})} %}
+    </div>
+{% endblock %}

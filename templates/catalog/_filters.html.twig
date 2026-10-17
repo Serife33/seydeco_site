@@ -1,0 +1,41 @@
+{# Panneau de filtres : colonne ≥ 1024 px, panneau plein écran en dessous (avec JS), simple formulaire sans JS #}
+{% macro checkboxes(legend, name, options, selected) %}
+    <fieldset class="catalog-filters__group">
+        <legend class="label-caps">{{ legend }}</legend>
+        {% for option in options %}
+            <div class="catalog-filters__option">
+                <input type="checkbox" id="f-{{ name }}-{{ loop.index }}" name="{{ name }}[]" value="{{ option.value }}"{% if option.value in selected %} checked{% endif %}>
+                <label for="f-{{ name }}-{{ loop.index }}">{{ option.label }}</label>
+            </div>
+        {% endfor %}
+    </fieldset>
+{% endmacro %}
+
+<form id="filtres-form" class="catalog-filters" method="get" action="{{ path(route, routeParams) }}" data-filters-target="form" data-action="change->filters#submit">
+    {% if filters.q %}<input type="hidden" name="q" value="{{ filters.q }}">{% endif %}
+    <div class="catalog-filters__panel" id="filtres" data-filters-target="panel" aria-labelledby="filtres-titre">
+        <div class="catalog-filters__head">
+            <h2 class="label-caps" id="filtres-titre">Filtrer</h2>
+            <button type="button" class="catalog-filters__close" data-action="filters#close" aria-label="Fermer les filtres">×</button>
+        </div>
+
+        {% if allCategories %}
+            {{ _self.checkboxes('Catégorie', 'categorie', allCategories|map(c => {value: c.slug, label: c.name}), filters.categories) }}
+        {% endif %}
+        {% if facets.colors %}
+            {{ _self.checkboxes('Couleur', 'couleur', facets.colors|map(c => {value: c, label: c}), filters.colors) }}
+        {% endif %}
+        {% if facets.styles %}
+            {{ _self.checkboxes('Style', 'style', facets.styles|map(s => {value: s.id, label: s.name}), filters.styles) }}
+        {% endif %}
+        {% if facets.events %}
+            {{ _self.checkboxes("Type d'événement", 'evenement', facets.events|map(e => {value: e.id, label: e.name}), filters.events) }}
+        {% endif %}
+
+        <div class="catalog-filters__actions">
+            <button type="submit" class="button-secondary catalog-filters__apply">Appliquer</button>
+            <button type="button" class="button-primary catalog-filters__show" data-action="filters#close">Voir {{ total }} produit{{ total > 1 ? 's' }}</button>
+            {% if activeFilters %}<a href="{{ clearUrl }}" data-turbo-frame="_top">Effacer les filtres</a>{% endif %}
+        </div>
+    </div>
+</form>

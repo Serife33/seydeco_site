@@ -1,0 +1,12 @@
+{# Carte produit : photo 4:5, nom, « dès X € » — rien d'autre (aucune mention de stock) #}
+{% set photo = product.photos|first %}
+{% set from = from_price(product) %}
+<li class="product-card">
+    <div class="product-card__media">
+        {% if photo %}
+            <img src="{{ photo.filename|imagine_filter('catalog_card') }}" width="480" height="600" alt="{{ photo.alt }}"{% if lazy %} loading="lazy"{% endif %} decoding="async">
+        {% endif %}
+    </div>
+    <h2 class="product-card__name">{{ product.name }}</h2>
+    {% if from is not null %}<p class="product-card__price">dès {{ from|money }}</p>{% endif %}
+</li>

@@ -15,8 +15,16 @@
     <body>
         <a class="skip-link" href="#contenu">Aller au contenu</a>
         <header class="site-header">
-            <div class="container">
+            <div class="container site-header__inner">
                 <a class="wordmark" href="{{ path('app_home') }}">Seydeco</a>
+                <nav class="site-nav" aria-label="Navigation principale">
+                    <a href="{{ path('catalog_index') }}">Catalogue</a>
+                </nav>
+                <form class="site-search" role="search" method="get" action="{{ path('catalog_search') }}">
+                    <label class="visually-hidden" for="site-search-q">Rechercher dans le catalogue</label>
+                    <input type="search" id="site-search-q" name="q" value="{% block search_value %}{% endblock %}" placeholder="Rechercher (chaise, nappe…)" maxlength="100">
+                    <button type="submit">Rechercher</button>
+                </form>
             </div>
         </header>
         <main id="contenu" tabindex="-1">

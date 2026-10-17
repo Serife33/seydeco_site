@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Catalogue de location — Seydeco{% endblock %}
+
+{% block body %}
+    <div class="container catalog-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Location'}]} only %}
+        <h1>Location</h1>
+        {% if categories %}
+            <ul class="category-tiles">
+                {% for category in categories %}
+                    {% include 'catalog/_category_tile.html.twig' %}
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Le catalogue arrive bientôt.</p>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ category.name }} en location — Seydeco{% endblock %}
+
+{% block body %}
+    <div class="container catalog-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Location', url: path('catalog_index')}, {label: category.name}]} only %}
+        <h1>{{ category.name }}</h1>
+        {% include 'catalog/_listing.html.twig' with {route: 'catalog_category', routeParams: {slug: category.slug}, clearUrl: path('catalog_category', {slug: category.slug})} %}
+    </div>
+{% endblock %}

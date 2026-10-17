@@ -12,3 +12,9 @@ liip_imagine:
             quality: 80
             filters:
                 thumbnail: { size: [96, 96], mode: outbound }
+        # Carte produit du catalogue public (photo 4:5, ~240 px affichés, 480 px pour les écrans haute densité)
+        catalog_card:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                thumbnail: { size: [480, 600], mode: outbound }

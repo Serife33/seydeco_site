@@ -1,0 +1,47 @@
+{# Grille filtrée d'une catégorie ou de la recherche. route/routeParams : page courante ; clearUrl : même page sans filtre. #}
+{% set countLabel = total ~ ' produit' ~ (total > 1 ? 's' : '') %}
+{# Hors du cadre Turbo : la région reste en place et annonce le nouveau nombre #}
+<p class="catalog-count" id="catalog-count" aria-live="polite">{{ countLabel }}</p>
+<turbo-frame id="catalogue" data-turbo-action="advance">
+    <div class="catalog" data-controller="filters" data-filters-count-value="{{ countLabel }}">
+        <div class="catalog__toolbar">
+            <button type="button" class="button-secondary catalog__filter-toggle" aria-controls="filtres" aria-expanded="false" data-filters-target="toggle" data-action="filters#open">Filtrer ({{ activeFilters }})</button>
+            <div class="catalog__sort">
+                <label class="label-caps" for="tri">Trier par</label>
+                <select id="tri" name="tri" form="filtres-form" data-action="filters#submit">
+                    {% for key, label in sorts %}
+                        <option value="{{ key }}"{% if key == sort %} selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        {% include 'catalog/_filters.html.twig' %}
+
+        <div class="catalog__results">
+            {% if total %}
+                <ul class="product-grid">
+                    {% for product in products %}
+                        {# 1re rangée chargée tout de suite, la suite à l'approche #}
+                        {% include 'catalog/_product_card.html.twig' with {lazy: loop.index > 4} %}
+                    {% endfor %}
+                </ul>
+                {% if page < pages %}
+                    <p class="catalog__more">
+                        <a class="button-secondary" href="{{ path(route, app.request.query.all|merge({page: page + 1})|merge(routeParams)) }}">Voir plus</a>
+                    </p>
+                {% endif %}
+            {% else %}
+                <div class="catalog__empty">
+                    <p>Aucun produit ne correspond.</p>
+                    <p>
+                        <a href="{{ clearUrl }}" data-turbo-frame="_top">Effacer les filtres</a>
+                        {% if whatsapp %}
+                            · <a href="https://wa.me/{{ whatsapp }}?text={{ 'Bonjour, je cherche un article que je ne trouve pas sur le site Seydeco.'|url_encode }}" target="_blank" rel="noopener">Nous écrire sur WhatsApp</a>
+                        {% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</turbo-frame>
