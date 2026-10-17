@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Questions fréquentes sur la location | Seydeco{% endblock %}
+{% set description = 'Prix, livraison, caution, retrait et retour du matériel : les réponses aux questions fréquentes sur la location chez Seydeco.' %}
+
+{% block structured_data %}
+    {{ parent() }}
+    {% if themes %}{% include 'seo/faq_page.html.twig' %}{% endif %}
+{% endblock %}
+
+{% block body %}
+    <div class="container content-page">
+        <h1>Questions fréquentes</h1>
+        {% if themes %}
+            {# Toutes les réponses dépliées en texte : indexables et lisibles sans clic (FR-35) #}
+            {% for theme, items in themes %}
+                <section class="faq-group">
+                    {% if theme %}<h2>{{ theme }}</h2>{% endif %}
+                    {% for item in items %}
+                        <div class="faq-item">
+                            {% if theme %}<h3 class="faq-item__question">{{ item.question }}</h3>{% else %}<h2 class="faq-item__question">{{ item.question }}</h2>{% endif %}
+                            <div class="rich-text faq-item__answer">{{ item.answer|simple_markdown }}</div>
+                        </div>
+                    {% endfor %}
+                </section>
+            {% endfor %}
+        {% else %}
+            <p>Les questions fréquentes arrivent bientôt.</p>
+            {% include 'layout/_contact_buttons.html.twig' with {message: wa_message} %}
+        {% endif %}
+    </div>
+{% endblock %}

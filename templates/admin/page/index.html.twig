@@ -1,0 +1,26 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Pages{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <div class="admin-head">
+        <h1 class="admin-title">Pages</h1>
+        <a class="admin-button" href="{{ path('admin_page_new') }}">Ajouter une page</a>
+    </div>
+    {{ include('admin/_flashes.html.twig') }}
+    <p class="admin-field__help">Les pages ne se suppriment pas : masquez celles qui ne doivent plus apparaître. L'ordre est celui des liens du pied de page.</p>
+    <ul class="admin-list">
+        {% for page in pages %}
+            <li class="admin-list__row">
+                <a class="admin-list__main" href="{{ path('admin_page_edit', {id: page.id}) }}">
+                    <span>
+                        <span class="admin-list__name">{{ page.title }}</span>
+                        <span class="admin-list__meta">/{{ page.slug }}{% if not page.visible %} · <strong>Masquée</strong>{% endif %}</span>
+                    </span>
+                </a>
+                {{ include('admin/_order_actions.html.twig', {prefix: 'admin_page', id: page.id, token: csrf_token('page' ~ page.id), name: page.title, first: loop.first, last: loop.last, visible: page.visible}, with_context = false) }}
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

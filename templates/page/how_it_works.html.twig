@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Comment ça marche : louer en 4 étapes | Seydeco{% endblock %}
+{% set description = 'Composer sa sélection, obtenir son devis, réserver avec l\'acompte, profiter : la location Seydeco en 4 étapes, avec caution, retrait et livraison en clair.' %}
+
+{% block body %}
+    <div class="container content-page">
+        <h1>Comment ça marche</h1>
+    </div>
+    {% include 'page/_how_it_works.html.twig' with {title: 'Louer en 4 étapes'} %}
+    <div class="container content-page">
+        {# Règles clés lues via SettingsProvider (AD-12) ; une règle sans réglage renvoie au devis #}
+        <section class="info-block" aria-labelledby="regles-titre">
+            <h2 class="label-caps" id="regles-titre">Les règles en clair</h2>
+            <dl>
+                <div>
+                    <dt>Acompte</dt>
+                    <dd>{{ rules.depositPercent is null ? 'Montant indiqué dans votre devis' : rules.depositPercent ~ ' % du devis, à la réservation' }}</dd>
+                </div>
+                <div>
+                    <dt>Caution</dt>
+                    <dd>{{ rules.deposit is null ? 'Montant indiqué dans votre devis' : rules.deposit|money }}</dd>
+                </div>
+                <div>
+                    <dt>Retrait au dépôt</dt>
+                    <dd>{{ rules.depotCity ? 'Au dépôt de ' ~ rules.depotCity ~ ', sur' : 'Sur' }} un créneau choisi dans votre demande, retour de la même façon.</dd>
+                </div>
+                {% set delivery = [
+                    rules.kmPrice is null ? null : rules.kmPrice|money(true) ~ ' / km par la route' ~ (rules.depotCity ? ' depuis ' ~ rules.depotCity),
+                    rules.minChairs is null ? null : 'dès ' ~ rules.minChairs ~ ' chaises',
+                    rules.maxKm is null ? null : rules.maxKm ~ ' km max',
+                ]|filter(v => v) %}
+                {% if delivery %}
+                    <div>
+                        <dt>Livraison</dt>
+                        <dd>{{ delivery|join(', ') }}</dd>
+                    </div>
+                {% endif %}
+                <div>
+                    <dt>Minimum de commande</dt>
+                    <dd>La quantité minimale de chaque produit est indiquée sur sa fiche.</dd>
+                </div>
+            </dl>
+        </section>
+        <p><a href="{{ path('faq') }}">Lire les questions fréquentes</a></p>
+    </div>
+{% endblock %}

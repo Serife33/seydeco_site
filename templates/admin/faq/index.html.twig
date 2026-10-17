@@ -1,0 +1,29 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}FAQ{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <div class="admin-head">
+        <h1 class="admin-title">FAQ</h1>
+        <a class="admin-button" href="{{ path('admin_faq_new') }}">Ajouter une question</a>
+    </div>
+    {{ include('admin/_flashes.html.twig') }}
+    {% if items is empty %}
+        <p>Aucune question.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for item in items %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_faq_edit', {id: item.id}) }}">
+                        <span>
+                            <span class="admin-list__name">{{ item.question }}</span>
+                            <span class="admin-list__meta">{{ item.theme ?? 'Sans thème' }}{% if not item.visible %} · <strong>Masquée</strong>{% endif %}</span>
+                        </span>
+                    </a>
+                    {{ include('admin/_order_actions.html.twig', {prefix: 'admin_faq', id: item.id, token: csrf_token('faq' ~ item.id), name: item.question, first: loop.first, last: loop.last, visible: item.visible}, with_context = false) }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

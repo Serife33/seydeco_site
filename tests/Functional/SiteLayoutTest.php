@@ -22,7 +22,7 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 final class SiteLayoutTest extends WebTestCase
 {
-    public const array CONTACT_KEYS = ['phone', 'address', 'siret', 'instagram_url', 'tiktok_url', 'facebook_url', 'youtube_url', 'pinterest_url'];
+    public const array CONTACT_KEYS = ['phone', 'email', 'address', 'siret', 'instagram_url', 'tiktok_url', 'facebook_url', 'youtube_url', 'pinterest_url'];
 
     private KernelBrowser $client;
     private EntityManagerInterface $em;
@@ -65,13 +65,16 @@ final class SiteLayoutTest extends WebTestCase
 
         foreach (['header .site-nav', '#menu-mobile nav'] as $nav) {
             $links = $crawler->filter("$nav a");
-            self::assertSame(['Catalogue'], $links->each(fn (Crawler $a) => $a->text()), "Aucun lien mort ($nav)");
+            // Ordre UX-DR11 ; Réalisations arrive avec la story 2.5
+            self::assertSame(['Catalogue', 'Comment ça marche', 'À propos', 'Contact'], $links->each(fn (Crawler $a) => $a->text()), "Aucun lien mort ($nav)");
+            self::assertSame(['/location', '/comment-ca-marche', '/a-propos', '/contact'], $links->each(fn (Crawler $a) => $a->attr('href')));
             self::assertSame('true', $links->attr('aria-current'), 'Rubrique du catalogue en cours');
+            self::assertCount(1, $crawler->filter("$nav a[aria-current]"));
         }
         $crawler = $this->client->request('GET', '/location');
         self::assertSame('page', $crawler->filter('header .site-nav a')->attr('aria-current'));
         $crawler = $this->client->request('GET', '/');
-        self::assertNull($crawler->filter('header .site-nav a')->attr('aria-current'));
+        self::assertCount(0, $crawler->filter('header .site-nav a[aria-current]'));
         // Accueil : trois zones (contacts avant la marque), navigation sous la ligne ; pages internes : sur une ligne
         self::assertCount(1, $crawler->filter('header.site-header--home'));
         self::assertCount(1, $crawler->filter('.site-header__inner > .site-header__contacts + .brand'));
@@ -172,7 +175,9 @@ final class SiteLayoutTest extends WebTestCase
         $this->pack('Pack 100 invités', [[$napoleon, 100]]);
         $hidden = $this->product('Chaise ancienne', category: $chaises, visible: false);
 
-        $urls = ['/', '/location', '/location/chaises', '/location/tables', $this->url($napoleon), $this->url($pliante), '/location/packs/pack-100-invites', '/recherche?q=chaise', '/recherche?q=table', $this->url($hidden), '/mon-devis'];
+        $urls = ['/', '/location', '/location/chaises', '/location/tables', $this->url($napoleon), $this->url($pliante), '/location/packs/pack-100-invites', '/recherche?q=chaise', '/recherche?q=table', $this->url($hidden), '/mon-devis',
+            // Stories 2.3 + 2.4 : pages de base (contenu provisoire de la migration), Comment ça marche, FAQ
+            '/a-propos', '/contact', '/mentions-legales', '/conditions-generales-de-location', '/politique-de-confidentialite', '/gestion-des-cookies', '/comment-ca-marche', '/questions-frequentes'];
         $titles = $descriptions = [];
         foreach ($urls as $url) {
             $crawler = $this->client->request('GET', $url);

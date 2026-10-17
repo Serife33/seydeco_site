@@ -37,6 +37,7 @@ final class ContactSettingsTest extends AdminTestCase
         $this->client->submitForm('Enregistrer', [
             'contact_settings[phone]' => ' 05 56 00 00 00 ',
             'contact_settings[whatsapp_phone]' => '06 12 34 56 78',
+            'contact_settings[email]' => ' contact@seydeco.fr ',
             'contact_settings[address]' => "12 rue des Fleurs\n33000 Bordeaux",
             'contact_settings[siret]' => '123 456 789 00012',
             'contact_settings[instagram_url]' => 'https://www.instagram.com/seydeco',
@@ -51,6 +52,7 @@ final class ContactSettingsTest extends AdminTestCase
         self::assertSelectorTextSame('.admin-notice', 'Coordonnées enregistrées.');
         self::assertSame([
             'address' => "12 rue des Fleurs\n33000 Bordeaux",
+            'email' => 'contact@seydeco.fr',
             'facebook_url' => 'https://fr-fr.facebook.com/seydeco',
             'instagram_url' => 'https://www.instagram.com/seydeco',
             'phone' => '05 56 00 00 00',
@@ -77,6 +79,7 @@ final class ContactSettingsTest extends AdminTestCase
             'contact_settings[siret]' => '123',
             'contact_settings[pinterest_url]' => 'https://pinterest.evil.example/x',
             'contact_settings[phone]' => '((( ... )))',
+            'contact_settings[email]' => 'pas-un-email',
         ]);
 
         self::assertResponseStatusCodeSame(422);
@@ -85,6 +88,7 @@ final class ContactSettingsTest extends AdminTestCase
         self::assertSelectorTextSame('#contact_settings_siret ~ .admin-field__error', 'Le SIRET compte 14 chiffres.');
         self::assertSelectorTextSame('#contact_settings_pinterest_url ~ .admin-field__error', 'Ce lien ne vient pas de Pinterest.');
         self::assertSelectorTextSame('#contact_settings_phone ~ .admin-field__error', 'Saisir un numéro, par exemple 06 12 34 56 78.');
+        self::assertSelectorTextSame('#contact_settings_email ~ .admin-field__error', 'Saisir un email, par exemple contact@seydeco.fr.');
         self::assertInputValueSame('contact_settings[instagram_url]', 'https://facebook.com/x');
         self::assertSelectorTextSame('#contact_settings_address', '12 rue des Fleurs');
         self::assertSame('', $this->db->fetchOne("SELECT value FROM setting WHERE name = 'address'"), 'Rien enregistré');

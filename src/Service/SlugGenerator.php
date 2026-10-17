@@ -8,6 +8,12 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 /** Slug unique dans la table : « chaises », puis « chaises-2 », « chaises-3 »… */
 final class SlugGenerator
 {
+    /**
+     * Adresses déjà prises : /location/packs/… (packs, story 1.14) et les routes du site,
+     * qu'une page servie sur /{slug} (story 2.3) ne doit jamais masquer.
+     */
+    private const array RESERVED = ['packs', 'location', 'recherche', 'mon-devis', 'admin', 'comment-ca-marche', 'questions-frequentes', 'realisations'];
+
     public function __construct(private readonly SluggerInterface $slugger)
     {
     }
@@ -19,8 +25,7 @@ final class SlugGenerator
         $max = $repository->getClassMetadata()->getFieldMapping('slug')->length - 6;
         $base = $this->slugger->slug($name)->lower()->truncate($max)->trimEnd('-')->toString() ?: 'element';
         $slug = $base;
-        // « packs » réservé : /location/packs/… mène aux pages des packs (story 1.14)
-        for ($i = 2; 'packs' === $slug || null !== $repository->findOneBy(['slug' => $slug]); ++$i) {
+        for ($i = 2; \in_array($slug, self::RESERVED, true) || null !== $repository->findOneBy(['slug' => $slug]); ++$i) {
             $slug = $base.'-'.$i;
         }
 

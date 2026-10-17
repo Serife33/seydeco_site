@@ -104,6 +104,13 @@
                         {% endfor %}
                     </ul>
                 {% endif %}
+                {# Liens légaux et pages de Serife (visibles, dans son ordre) ; À propos et Contact sont dans la navigation #}
+                <ul class="site-footer__links" aria-label="Informations">
+                    <li><a href="{{ path('faq') }}">Questions fréquentes</a></li>
+                    {% for page_slug, page_title in site_pages() %}
+                        {% if page_slug not in ['a-propos', 'contact'] %}<li><a href="{{ path('page_show', {slug: page_slug}) }}">{{ page_title }}</a></li>{% endif %}
+                    {% endfor %}
+                </ul>
                 <p class="site-footer__meta">© {{ 'now'|date('Y') }} Seydeco{% if contact.siret %} · SIRET {{ contact.siret }}{% endif %}</p>
             </div>
         </footer>

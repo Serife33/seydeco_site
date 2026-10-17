@@ -1,0 +1,30 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = item.id ? 'Modifier la question' : 'Ajouter une question' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_faq_index') }}">← FAQ</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        {{ form_rest(form) }}
+        {% if item.id %}
+            <section class="admin-section" aria-labelledby="s-visibility">
+                <h2 class="admin-title" id="s-visibility">Visibilité</h2>
+                <p>{{ item.visible ? 'Visible sur la page FAQ.' : 'Masquée : n\'apparaît plus sur le site.' }}</p>
+                <button type="submit" form="faq-visibility" class="admin-button admin-button--secondary">{{ item.visible ? 'Masquer' : 'Afficher à nouveau' }}</button>
+            </section>
+        {% endif %}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+    {% if item.id %}
+        <form id="faq-visibility" method="post" action="{{ path('admin_faq_toggle', {id: item.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('faq' ~ item.id) }}">
+        </form>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Page introuvable | Seydeco{% endblock %}
+{# URL inconnue : 404 soignée, non indexée, avec le catalogue et les contacts #}
+{% set noindex = true %}
+{% set description = 'Cette adresse n\'existe pas sur le site Seydeco. Retrouvez la location de matériel de réception dans le catalogue.' %}
+
+{% block body %}
+    <div class="container content-page">
+        <h1>Page introuvable</h1>
+        <p>Cette adresse n'existe pas ou plus.</p>
+        <p><a class="button-primary" href="{{ path('catalog_index') }}">Voir le catalogue</a></p>
+        {% if contact.whatsapp or contact.phoneNumber %}
+            <p>Une question ? Écrivez-nous ou appelez-nous.</p>
+            {% include 'layout/_contact_buttons.html.twig' with {message: wa_message} %}
+        {% endif %}
+    </div>
+{% endblock %}

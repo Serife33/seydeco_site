@@ -39,3 +39,9 @@ liip_imagine:
             quality: 82
             filters:
                 thumbnail: { size: [1600, 1600], mode: inset }
+        # Photo facultative d'une page de contenu (À propos…) et son aperçu de partage (3:2)
+        page_photo:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                thumbnail: { size: [1200, 800], mode: outbound }

@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ page.title }} | Seydeco{% endblock %}
+{% set description = page.description ?: page.content|simple_markdown_text %}
+{% set og_image = page.photo ? page.photo|imagine_filter('page_photo') : null %}
+
+{% block body %}
+    <article class="container content-page">
+        <h1>{{ page.title }}</h1>
+        {% if page.photo %}
+            <img class="content-page__photo" src="{{ page.photo|imagine_filter('page_photo') }}" width="1200" height="800" alt="{{ page.photoAlt }}">
+        {% endif %}
+        <div class="rich-text">{{ page.content|simple_markdown }}</div>
+        {% if page.slug == 'contact' %}
+            {# Contact (FR-46) : aucun formulaire, aucune donnée collectée ici #}
+            <section class="contact-details" aria-labelledby="joindre-titre">
+                <h2 id="joindre-titre">Nous joindre</h2>
+                {% if contact.address %}<p>{{ contact.address|nl2br }}</p>{% endif %}
+                {% include 'layout/_contact_buttons.html.twig' with {message: wa_message} %}
+                {% if contact.email %}<p><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></p>{% endif %}
+            </section>
+        {% endif %}
+    </article>
+{% endblock %}

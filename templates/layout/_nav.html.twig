@@ -1,11 +1,19 @@
 {# Navigation principale (UX-DR11) : Catalogue · Réalisations · Comment ça marche · À propos · Contact.
-   Une entrée n'est ajoutée ici qu'avec la story qui crée sa page (aucun lien mort). #}
+   Réalisations arrive avec la story 2.5 ; À propos et Contact n'apparaissent que si leur page est visible (aucun lien mort). #}
 {% set route = app.request.attributes.get('_route')|default('') %}
+{% set current_slug = app.request.attributes.get('slug') %}
+{% set visible_pages = site_pages() %}
 {% set entries = [
-    {label: 'Catalogue', route: 'catalog_index', section: 'catalog_'},
+    {label: 'Catalogue', url: path('catalog_index'), current: route == 'catalog_index' ? 'page' : (route starts with 'catalog_' ? 'true')},
+    {label: 'Comment ça marche', url: path('how_it_works'), current: route == 'how_it_works' ? 'page'},
 ] %}
+{% for page_slug, label in {'a-propos': 'À propos', 'contact': 'Contact'} %}
+    {% if visible_pages[page_slug] is defined %}
+        {% set entries = entries|merge([{label: label, url: path('page_show', {slug: page_slug}), current: route == 'page_show' and current_slug == page_slug ? 'page'}]) %}
+    {% endif %}
+{% endfor %}
 <ul class="{{ class }}">
     {% for entry in entries %}
-        <li><a href="{{ path(entry.route) }}"{% if route == entry.route %} aria-current="page"{% elseif route starts with entry.section %} aria-current="true"{% endif %}>{{ entry.label }}</a></li>
+        <li><a href="{{ entry.url }}"{% if entry.current %} aria-current="{{ entry.current }}"{% endif %}>{{ entry.label }}</a></li>
     {% endfor %}
 </ul>

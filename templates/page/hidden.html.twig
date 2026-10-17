@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ page.title }} n'est plus disponible | Seydeco{% endblock %}
+{# Ancienne URL d'une page masquée : page conservée, non indexée (AD-23) #}
+{% set noindex = true %}
+{% set description = 'La page « ' ~ page.title ~ ' » n\'est plus disponible sur le site Seydeco, location de matériel de réception.' %}
+
+{% block body %}
+    <div class="container content-page">
+        <h1>{{ page.title }}</h1>
+        <p>Cette page n'est plus disponible.</p>
+        <p><a href="{{ path('app_home') }}">Retour à l'accueil</a></p>
+    </div>
+{% endblock %}

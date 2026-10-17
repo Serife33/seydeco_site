@@ -1,0 +1,42 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = page.id ? 'Modifier la page' : 'Ajouter une page' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_page_index') }}">← Pages</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+    {% if page.slug %}<p class="admin-field__help">Adresse : /{{ page.slug }} (ne change pas)</p>{% endif %}
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        {{ form_row(form.title) }}
+        {{ form_row(form.content) }}
+        {{ form_row(form.description) }}
+        {% if page.photo %}
+            <img class="admin-thumb" src="{{ page.photo|imagine_filter('admin_thumb') }}" width="48" height="48" alt="Photo actuelle de la page">
+            {{ form_row(form.removePhoto) }}
+        {% endif %}
+        {{ form_row(form.photoUpload, {help: page.photo ? 'Choisir une photo seulement pour remplacer l\'actuelle.' : null}) }}
+        {{ form_row(form.photoAlt) }}
+        <section class="admin-section" aria-labelledby="s-visibility">
+            <h2 class="admin-title" id="s-visibility">Visibilité</h2>
+            {% if page.id %}
+                <p>{{ page.visible ? 'Visible sur le site.' : 'Masquée : son adresse affiche « Cette page n\'est plus disponible. »' }}</p>
+                <button type="submit" form="page-visibility" class="admin-button admin-button--secondary">{{ page.visible ? 'Masquer' : 'Afficher à nouveau' }}</button>
+            {% else %}
+                <p>La page sera visible dès l'enregistrement. Elle pourra être masquée ensuite.</p>
+            {% endif %}
+        </section>
+        {{ form_rest(form) }}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+    {% if page.id %}
+        <form id="page-visibility" method="post" action="{{ path('admin_page_toggle', {id: page.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('page' ~ page.id) }}">
+        </form>
+    {% endif %}
+{% endblock %}

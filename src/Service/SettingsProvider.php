@@ -22,6 +22,10 @@ final class SettingsProvider
     public const string PHONE = 'phone';
     public const string ADDRESS = 'address';
     public const string SIRET = 'siret';
+    /** Lien `mailto:` de la page Contact (story 2.3) ; vide = pas de lien. */
+    public const string EMAIL = 'email';
+    /** Pourcentage d'acompte demandé à la réservation (« 50 »), affiché sur Comment ça marche (story 2.4). */
+    public const string DEPOSIT_PERCENT = 'deposit_percent';
     /** Réseau affiché → clé ; l'ordre est celui du pied de page. */
     public const array SOCIAL_NETWORKS = [
         'Instagram' => 'instagram_url',

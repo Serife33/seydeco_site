@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Service\SettingsProvider;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -31,6 +32,11 @@ final class ContactSettingsType extends AbstractType
         $builder
             ->add(SettingsProvider::PHONE, TelType::class, $text + ['label' => 'Téléphone', 'constraints' => $phone, 'help' => 'Vide : le numéro WhatsApp sert aussi pour les appels.'])
             ->add(SettingsProvider::WHATSAPP_PHONE, TelType::class, $text + ['label' => 'Numéro WhatsApp', 'constraints' => $phone])
+            ->add(SettingsProvider::EMAIL, EmailType::class, $text + [
+                'label' => 'Email',
+                'help' => 'Affiché sur la page Contact.',
+                'constraints' => [new Assert\Length(max: 180), new Assert\Email(message: 'Saisir un email, par exemple contact@seydeco.fr.')],
+            ])
             ->add(SettingsProvider::ADDRESS, TextareaType::class, $text + ['label' => 'Adresse', 'attr' => ['rows' => 3], 'constraints' => [new Assert\Length(max: 300)]])
             ->add(SettingsProvider::SIRET, TextType::class, $text + [
                 'label' => 'SIRET',

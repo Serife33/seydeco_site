@@ -62,3 +62,17 @@
         {{- form_errors(form) -}}
     </fieldset>
 {%- endblock fieldset_row -%}
+
+{# Texte mis en forme simple : barre de boutons au-dessus de la zone de texte (contrôleur markdown-toolbar) #}
+{%- block markdown_widget -%}
+    <div class="admin-markdown" data-controller="markdown-toolbar">
+        <div class="admin-markdown__bar" role="toolbar" aria-label="Mise en forme" aria-controls="{{ id }}">
+            <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="markdown-toolbar#heading">Titre</button>
+            <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="markdown-toolbar#bold">Gras</button>
+            <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="markdown-toolbar#list">Liste</button>
+            <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="markdown-toolbar#link">Lien</button>
+        </div>
+        {%- set attr = attr|merge({'data-markdown-toolbar-target': 'input'}) -%}
+        {{- block('textarea_widget') -}}
+    </div>
+{%- endblock markdown_widget -%}

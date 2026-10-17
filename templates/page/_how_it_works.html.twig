@@ -1,0 +1,36 @@
+{#
+    Comment ça marche en 4 étapes (UX-DR42), fond cream : composant autonome, repris tel quel sur l'accueil (story 2.10).
+    Variable facultative : `title` (défaut « Comment ça marche »).
+    Vitrine honnête : tant que « Devis en ligne » est désactivé, aucune promesse de devis en ligne.
+#}
+<section class="how-it-works" aria-labelledby="how-it-works-title">
+    <div class="container">
+        <h2 class="how-it-works__title" id="how-it-works-title">{{ title|default('Comment ça marche') }}</h2>
+        <ol class="how-it-works__steps">
+            <li>
+                <span class="accent-numeral" aria-hidden="true">i</span>
+                <h3 class="label-caps">Je compose</h3>
+                <p>Je choisis chaises, tables, vaisselle et décoration dans le catalogue.</p>
+            </li>
+            <li>
+                <span class="accent-numeral" aria-hidden="true">ii</span>
+                <h3 class="label-caps">J'obtiens mon devis</h3>
+                {% if quote_online() %}
+                    <p>J'envoie ma sélection et je reçois aussitôt mon devis détaillé.</p>
+                {% else %}
+                    <p>J'envoie ma sélection sur WhatsApp ou par téléphone : Seydeco me répond rapidement avec un devis.</p>
+                {% endif %}
+            </li>
+            <li>
+                <span class="accent-numeral" aria-hidden="true">iii</span>
+                <h3 class="label-caps">Je réserve</h3>
+                <p>Je renvoie le devis signé avec l'acompte : le matériel est réservé pour ma date.</p>
+            </li>
+            <li>
+                <span class="accent-numeral" aria-hidden="true">iv</span>
+                <h3 class="label-caps">Je profite</h3>
+                <p>Je retire le matériel au dépôt ou je me fais livrer, puis je le rends après la fête.</p>
+            </li>
+        </ol>
+    </div>
+</section>

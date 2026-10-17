@@ -1,0 +1,8 @@
+{# FAQPage (FR-33) : exactement les questions et réponses affichées, dans le même ordre (réponse = HTML rendu, accepté par Google) #}
+{% set questions = [] %}
+{% for items in themes %}
+    {% for item in items %}
+        {% set questions = questions|merge([{'@type': 'Question', name: item.question, acceptedAnswer: {'@type': 'Answer', text: item.answer|simple_markdown}}]) %}
+    {% endfor %}
+{% endfor %}
+{% include 'seo/_json_ld.html.twig' with {data: {'@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: questions}} only %}
