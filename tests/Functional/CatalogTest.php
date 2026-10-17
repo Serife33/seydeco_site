@@ -325,6 +325,40 @@ final class CatalogTest extends WebTestCase
         self::assertCount(1, $crawler->filter('dialog.lightbox'));
     }
 
+    public function testTablesWithChairsNote(): void
+    {
+        $tables = $this->category('Tables', 1, type: PricingType::Tables);
+        $chaises = $this->category('Chaises', 2, type: PricingType::Chairs);
+        $round = $this->product($tables, 'Table ronde', [1 => 1500]);
+        $round->setSeats(8);
+        $round->setPriceWithChairs(1200);
+        $rectangular = $this->product($tables, 'Table rectangulaire', [1 => 2000]);
+        $chair = $this->product($chaises, 'Chaise Napoléon', [15 => 250]);
+        $this->em->flush();
+
+        $this->client->request('GET', '/location/tables/'.$round->getSlug());
+        self::assertSelectorTextSame('.product-panel__chairs.accent-sm', "Avec vos chaises Seydeco : 12,00\u{A0}€ la table au lieu de 15,00\u{A0}€ — dès que vous louez assez de chaises pour garnir toutes vos tables");
+
+        $crawler = $this->client->request('GET', '/location/tables/'.$rectangular->getSlug());
+        self::assertCount(0, $crawler->filter('.product-panel__chairs'));
+
+        $this->client->request('GET', '/location/chaises/'.$chair->getSlug());
+        self::assertSelectorTextSame('.product-panel__chairs', 'Bon à savoir : les tables rondes sont moins chères louées avec les chaises.');
+
+        // Aucune table visible avec prix avec chaises : pas de rappel sur la fiche chaise
+        $this->em->getRepository(Product::class)->find($round->getId())->setVisible(false);
+        $this->em->flush();
+        $crawler = $this->client->request('GET', '/location/chaises/'.$chair->getSlug());
+        self::assertCount(0, $crawler->filter('.product-panel__chairs'));
+        $this->em->getRepository(Product::class)->find($round->getId())->setVisible(true);
+        $this->em->flush();
+
+        // Le prix « dès » des cartes reste le prix du produit seul
+        $crawler = $this->client->request('GET', '/location/tables');
+        $card = $crawler->filter('.product-card')->reduce(fn (Crawler $c) => str_contains($c->text(), 'Table ronde'));
+        self::assertSame("dès 15,00\u{A0}€", $card->filter('.product-card__price')->text());
+    }
+
     public function testProductPageUsesSettingsAndCategoryValues(): void
     {
         $db = static::getContainer()->get(Connection::class);

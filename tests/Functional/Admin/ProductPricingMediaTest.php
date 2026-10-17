@@ -98,6 +98,29 @@ final class ProductPricingMediaTest extends CatalogTestCase
         self::assertSelectorTextContains('.admin-list__meta', "dès 1,90\u{A0}€");
     }
 
+    public function testPriceWithChairsIsOptionalAndStoredInCents(): void
+    {
+        $tables = $this->createCategory('Tables', 2, PricingType::Tables);
+        $this->post(['name' => 'Table ronde', 'category' => (string) $tables->getId(), 'minQty' => '1', 'seats' => '8', 'priceTiers' => [['minQty' => '1', 'price' => '15,00']], 'priceWithChairs' => '12,00']);
+        self::assertResponseRedirects('/admin/produits');
+        $id = $this->product()->getId();
+        self::assertSame(1200, $this->product()->getPriceWithChairs());
+
+        // Vidé (ex. table rectangulaire) : plus de prix réduit
+        $this->post(['priceWithChairs' => ''], id: $id);
+        self::assertResponseRedirects('/admin/produits');
+        self::assertNull($this->product()->getPriceWithChairs());
+
+        $this->post(['priceWithChairs' => '0'], id: $id);
+        self::assertResponseStatusCodeSame(422);
+        self::assertAnySelectorTextContains('.admin-field', 'Le prix avec chaises doit être supérieur à 0.');
+
+        // Hors catégorie « Tables » : refusé
+        $this->post(['category' => (string) $this->chairsId, 'priceWithChairs' => '12,00'], id: $id);
+        self::assertResponseStatusCodeSame(422);
+        self::assertAnySelectorTextContains('.admin-field', 'Le prix avec chaises est réservé aux tables : laisser ce champ vide.');
+    }
+
     public function testTierRowsCanBeRemoved(): void
     {
         $this->post(['priceTiers' => [['minQty' => '15', 'price' => '2,50'], ['minQty' => '50', 'price' => '2,20']]]);

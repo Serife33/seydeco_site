@@ -59,6 +59,7 @@
         <section class="admin-section" aria-labelledby="s-price">
             <h2 class="admin-title" id="s-price">Prix & dégressif</h2>
             {{ c.list('tier', form.priceTiers, 'Paliers de prix', 'Ajouter un palier', 'Le premier palier commence à la quantité minimale ; chaque palier suivant à une quantité plus grande.') }}
+            {{ form_row(form.priceWithChairs) }}
         </section>
         <section class="admin-section" aria-labelledby="s-min">
             <h2 class="admin-title" id="s-min">Quantité minimale</h2>

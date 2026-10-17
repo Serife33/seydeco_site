@@ -6,6 +6,7 @@ use App\Entity\Category;
 use App\Entity\Product;
 use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
+use App\Entity\PricingType;
 use App\Service\PricingCalculator;
 use App\Service\SettingsProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -86,6 +87,7 @@ final class CatalogController extends AbstractController
             'product' => $product,
             'category' => $category,
             'tiers' => $rows,
+            'chairsNote' => PricingType::Chairs === $category->getPricingType() && $this->products->hasPublicTableWithChairsPrice(),
             'video' => $this->video($product, $uploadDir),
             'whatsapp' => $s->whatsappNumber(),
             'info' => [

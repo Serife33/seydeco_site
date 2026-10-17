@@ -74,6 +74,11 @@
             <div class="product-panel">
                 <h1>{{ product.name }}</h1>
                 {% include 'catalog/_price_tiers.html.twig' %}
+                {% if category.pricingType.value == 'tables' and product.priceWithChairs and tiers %}
+                    <p class="accent-sm product-panel__chairs">Avec vos chaises Seydeco : {{ product.priceWithChairs|money }} la table au lieu de {{ (tiers|first).price|money }} — dès que vous louez assez de chaises pour garnir toutes vos tables</p>
+                {% elseif chairsNote %}
+                    <p class="product-panel__chairs">Bon à savoir : les tables rondes sont moins chères louées avec les chaises.</p>
+                {% endif %}
                 {% if product.minQty > 1 %}
                     <p class="product-panel__min">Minimum {{ product.minQty }} {{ {chairs: 'chaises', tables: 'tables'}[category.pricingType.value] ?? 'unités' }}</p>
                 {% endif %}

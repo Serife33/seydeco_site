@@ -433,7 +433,7 @@ a { color: var(--ink); }
 .price-tiers th, .price-tiers td { padding: var(--space-3) 0; border-top: 1px solid var(--hairline); text-align: left; font-weight: 400; }
 .price-tiers tr:last-child th, .price-tiers tr:last-child td { border-bottom: 1px solid var(--hairline); }
 .price-tiers td { text-align: right; }
-.product-panel__min, .product-panel__seats { margin: 0 0 var(--space-2); }
+.product-panel__min, .product-panel__seats, .product-panel__chairs { margin: 0 0 var(--space-2); }
 
 .color-picker { margin: var(--space-6) 0; }
 .color-picker p { margin: 0 0 var(--space-2); }

@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Category;
 use App\Entity\EventType;
+use App\Entity\PricingType;
 use App\Entity\Product;
 use App\Entity\Style;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
@@ -112,6 +113,17 @@ class ProductRepository extends ServiceEntityRepository
             'styles' => $em->getRepository(Style::class)->findBy(['id' => $ids('styles')], ['name' => 'ASC']),
             'events' => $em->getRepository(EventType::class)->findBy(['id' => $ids('eventTypes')], ['name' => 'ASC']),
         ];
+    }
+
+    /** Au moins une table visible a un prix avec chaises (rappel sur la fiche des chaises). */
+    public function hasPublicTableWithChairsPrice(): bool
+    {
+        return null !== $this->publicQuery(null)
+            ->select('p.id')
+            ->andWhere('c.pricingType = :tables')->setParameter('tables', PricingType::Tables)
+            ->andWhere('p.priceWithChairs IS NOT NULL')
+            ->setMaxResults(1)
+            ->getQuery()->getOneOrNullResult();
     }
 
     private function publicQuery(?Category $category): QueryBuilder

@@ -73,6 +73,12 @@ class Product
     #[Assert\Valid]
     private Collection $priceTiers;
 
+    /** Centimes ; prix de la table quand assez de chaises sont louées (tables rectangulaires : vide). */
+    #[ORM\Column(nullable: true)]
+    #[Assert\Positive(message: 'Le prix avec chaises doit être supérieur à 0.')]
+    #[Assert\LessThanOrEqual(100000000, message: 'Le montant ne peut pas dépasser 1 000 000,00 €.')]
+    private ?int $priceWithChairs = null;
+
     /** Centimes ; copié de la catégorie à la création, jamais écrasé ensuite. */
     #[ORM\Column(nullable: true)]
     #[Assert\PositiveOrZero(message: 'Le montant ne peut pas être négatif.')]
@@ -311,6 +317,24 @@ class Product
 
                 return;
             }
+        }
+    }
+
+    public function getPriceWithChairs(): ?int
+    {
+        return $this->priceWithChairs;
+    }
+
+    public function setPriceWithChairs(?int $priceWithChairs): void
+    {
+        $this->priceWithChairs = $priceWithChairs;
+    }
+
+    #[Assert\Callback]
+    public function validatePriceWithChairs(ExecutionContextInterface $context): void
+    {
+        if (null !== $this->priceWithChairs && null !== $this->category && PricingType::Tables !== $this->category->getPricingType()) {
+            $context->buildViolation('Le prix avec chaises est réservé aux tables : laisser ce champ vide.')->atPath('priceWithChairs')->addViolation();
         }
     }
 

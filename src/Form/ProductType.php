@@ -89,6 +89,10 @@ final class ProductType extends AbstractType
             ->add('minQty', IntegerType::class, $integer('Quantité minimale', '15', ['help' => '1 si aucun minimum.']))
             ->add('stock', IntegerType::class, $integer('Stock', '800'))
             ->add('priceTiers', CollectionType::class, $this->collection(PriceTierType::class, 'Paliers de prix'))
+            ->add('priceWithChairs', AdminMoneyType::class, [
+                'label' => 'Prix avec chaises (facultatif)',
+                'help' => 'Tables seulement : prix par table quand assez de chaises sont louées pour garnir toutes les tables. Laisser vide si pas de prix réduit.',
+            ])
             ->add('breakagePrice', AdminMoneyType::class, ['label' => 'Prix de casse (par unité)'])
             ->add('lossPrice', AdminMoneyType::class, ['label' => 'Prix de perte (par unité)'])
             ->add('returnInstructions', TextareaType::class, ['label' => 'Consignes de retour', 'required' => false, 'attr' => ['rows' => 4]])
