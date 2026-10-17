@@ -6,6 +6,19 @@
             {{ form_row(row.minQty) }}
             {{ form_row(row.price) }}
             {% set what = 'ce palier' %}
+        {% elseif kind == 'pack_item' %}
+            {{ form_row(row.product) }}
+            {{ form_row(row.quantity) }}
+            {% set item = row.vars.value %}
+            {% if item and item.id and not item.productPublic %}
+                <p class="admin-notice">Produit masqué : il n'apparaît pas sur la page du pack.</p>
+            {% endif %}
+            {% set what = 'ce produit' %}
+        {% elseif kind == 'related' %}
+            {{ form_row(row.related) }}
+            {{ form_widget(row.position) }}
+            {{ form_errors(row.position) }}
+            {% set what = 'ce produit associé' %}
         {% elseif kind == 'color' %}
             {{ form_row(row.name) }}
             {{ form_row(row.hex) }}
@@ -25,7 +38,7 @@
             {% set what = 'cette photo' %}
         {% endif %}
         <div class="admin-row__actions">
-            {% if kind == 'photo' %}
+            {% if kind in ['photo', 'related'] %}
                 <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="collection#up">Monter</button>
                 <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="collection#down">Descendre</button>
             {% endif %}

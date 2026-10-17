@@ -1,0 +1,49 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = pack.id ? 'Modifier le pack' : 'Ajouter un pack' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    {% import 'admin/product/_collections.html.twig' as c %}
+    <p><a class="admin-link" href="{{ path('admin_pack_index') }}">← Packs</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+    {% if pack.slug %}<p class="admin-field__help">Adresse : /location/packs/{{ pack.slug }} (ne change pas)</p>{% endif %}
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        <section class="admin-section" aria-labelledby="s-infos">
+            <h2 class="admin-title" id="s-infos">Infos</h2>
+            {{ form_row(form.name) }}
+            {{ form_row(form.description) }}
+            {% if pack.photo %}
+                <img class="admin-thumb" src="{{ pack.photo|imagine_filter('admin_thumb') }}" width="48" height="48" alt="Photo actuelle du pack">
+            {% endif %}
+            {{ form_row(form.photoUpload, {help: pack.photo ? 'Choisir une photo seulement pour remplacer l\'actuelle.' : null}) }}
+            {{ form_row(form.photoAlt) }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-items">
+            <h2 class="admin-title" id="s-items">Produits</h2>
+            {{ c.list('pack_item', form.items, 'Produits du pack', 'Ajouter un produit', 'Quantité proposée : au moins la quantité minimale du produit. La cliente pourra l\'ajuster.') }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-visibility">
+            <h2 class="admin-title" id="s-visibility">Visibilité</h2>
+            {% if pack.id %}
+                <p>{{ pack.visible ? 'Visible sur le site.' : 'Masqué : n\'apparaît plus sur le site.' }}</p>
+                {# Bouton du formulaire « pack-visibility », placé hors de ce formulaire (pas d'imbrication) #}
+                <button type="submit" form="pack-visibility" class="admin-button admin-button--secondary">{{ pack.visible ? 'Masquer' : 'Afficher à nouveau' }}</button>
+            {% else %}
+                <p>Le pack sera visible dès l'enregistrement. Il pourra être masqué ensuite.</p>
+            {% endif %}
+        </section>
+        {{ form_rest(form) }}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+    {% if pack.id %}
+        <form id="pack-visibility" method="post" action="{{ path('admin_pack_toggle', {id: pack.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('pack' ~ pack.id) }}">
+        </form>
+    {% endif %}
+{% endblock %}

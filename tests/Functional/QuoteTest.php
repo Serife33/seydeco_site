@@ -26,7 +26,7 @@ final class QuoteTest extends WebTestCase
         $this->client = static::createClient();
         $this->db = static::getContainer()->get(Connection::class);
         $this->db->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
-        foreach (['price_tier', 'product_photo', 'product_color', 'product', 'category'] as $table) {
+        foreach (['related_product', 'pack_item', 'pack', 'price_tier', 'product_photo', 'product_color', 'product', 'category'] as $table) {
             $this->db->executeStatement("TRUNCATE TABLE $table");
         }
         $this->db->executeStatement('SET FOREIGN_KEY_CHECKS = 1');

@@ -6,6 +6,7 @@ use App\Entity\Category;
 use App\Entity\EventType;
 use App\Entity\PricingType;
 use App\Entity\Product;
+use App\Entity\RelatedProduct;
 use App\Entity\Style;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -124,6 +125,37 @@ class ProductRepository extends ServiceEntityRepository
             ->andWhere('p.priceWithChairs IS NOT NULL')
             ->setMaxResults(1)
             ->getQuery()->getOneOrNullResult();
+    }
+
+    /**
+     * « Souvent loué avec » de plusieurs produits en une requête : seuls les associés visibles (catégorie visible), dans l'ordre choisi.
+     *
+     * @param list<int> $productIds
+     *
+     * @return array<int, list<Product>> id du produit → associés
+     */
+    public function findPublicRelated(array $productIds): array
+    {
+        if (!$productIds) {
+            return [];
+        }
+        $rows = $this->getEntityManager()->createQueryBuilder()
+            ->select('r', 'rel', 'relc')
+            ->from(RelatedProduct::class, 'r')
+            ->join('r.related', 'rel')
+            ->join('rel.category', 'relc')
+            ->andWhere('r.product IN (:ids)')->setParameter('ids', $productIds)
+            ->andWhere('rel.visible = true')
+            ->andWhere('relc.visible = true')
+            ->orderBy('r.position', 'ASC')
+            ->addOrderBy('r.id', 'ASC')
+            ->getQuery()->getResult();
+        $map = [];
+        foreach ($rows as $row) {
+            $map[$row->getProduct()->getId()][] = $row->getRelated();
+        }
+
+        return $map;
     }
 
     private function publicQuery(?Category $category): QueryBuilder

@@ -100,7 +100,7 @@
                     </div>
                 {% endif %}
 
-                {% include 'catalog/_add_to_quote.html.twig' with {quantity: true} %}
+                {% include 'catalog/_add_to_quote.html.twig' with {quantity: true, links: related} %}
 
                 {% include 'catalog/_contact.html.twig' %}
 
@@ -120,5 +120,17 @@
                 {% include 'catalog/_practical_info.html.twig' %}
             </div>
         </div>
+
+        {% if related %}
+            {# Après le Bloc infos pratiques, dans la page (jamais en popup) ; associés masqués déjà écartés #}
+            <section class="related" aria-labelledby="souvent-loue-avec">
+                <h2 class="accent-sm related__title" id="souvent-loue-avec">Souvent loué avec</h2>
+                <ul class="product-grid product-grid--related">
+                    {% for product in related %}
+                        {% include 'catalog/_product_card.html.twig' with {lazy: true, tag: 'h3', relatedLinks: {}} %}
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
     </div>
 {% endblock %}

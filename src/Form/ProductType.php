@@ -137,6 +137,10 @@ final class ProductType extends AbstractType
                     uploadErrorMessage: 'La photo n\'a pas pu être envoyée, réessayez.',
                 )],
             ])
+            ->add('relatedProducts', CollectionType::class, $this->collection(RelatedProductType::class, 'Produits associés', [
+                // Le produit lui-même n'est pas proposé
+                'exclude' => $options['data']?->getId(),
+            ]))
             ->add('removeVideoThumbnail', CheckboxType::class, ['label' => 'Retirer la miniature', 'mapped' => false, 'required' => false])
             ->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {
                 $form = $event->getForm();

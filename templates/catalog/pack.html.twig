@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pack.name }} en location — Seydeco{% endblock %}
+
+{# Page d'un pack (story 1.14) : produits visibles, quantités proposées ajustables, « Retirer », puis ajout éclaté en lignes produit.
+   Prix unitaires calculés par PricingCalculator ; le navigateur ne fait que choisir parmi les paliers rendus. Aucune mention de stock. #}
+{% block body %}
+    {% set url = path('catalog_pack', {slug: pack.slug}) %}
+    <div class="container catalog-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Location', url: path('catalog_index')}, {label: pack.name}]} only %}
+
+        <div class="product-page">
+            <div class="product-gallery">
+                <div class="pack-photo">
+                    <img src="{{ pack.photo|imagine_filter('product_800') }}"
+                         srcset="{{ pack.photo|imagine_filter('product_400') }} 400w, {{ pack.photo|imagine_filter('product_800') }} 800w"
+                         sizes="(min-width: 1024px) 600px, 100vw" width="800" height="800" alt="{{ pack.photoAlt }}" fetchpriority="high">
+                </div>
+            </div>
+
+            <div class="product-panel">
+                <p class="eyebrow">Pack</p>
+                <h1>{{ pack.name }}</h1>
+                {% if pack.description %}<p>{{ pack.description|nl2br }}</p>{% endif %}
+                <p class="pack-help">Ajustez les quantités à votre événement ou retirez un produit, puis ajoutez le pack.</p>
+
+                {% set whatsapp = whatsapp_number() %}
+                <form class="pack-form" novalidate data-action="submit->selection#addPack" data-pack-name="{{ pack.name }}">
+                    <ul class="pack-items">
+                        {% for item in items %}
+                            {% set product = item.product %}
+                            {% set photo = product.photos|first %}
+                            {% set minQty = product.minQty ?: 1 %}
+                            {% set units = {chairs: ['chaise', 'chaises'], tables: ['table', 'tables']}[product.category.pricingType.value] ?? ['unité', 'unités'] %}
+                            {% set id = 'quantite-' ~ loop.index %}
+                            <li class="pack-item" data-role="pack-item" data-product-id="{{ product.id }}" data-name="{{ product.name }}"
+                                data-min="{{ minQty }}" data-one="{{ units[0] }}" data-many="{{ units[1] }}"
+                                data-tiers="{{ item.tiers|map(t => [t.from, t.to, t.price|money])|json_encode }}">
+                                <div class="quote-line__media">
+                                    {% if photo %}<img src="{{ photo.filename|imagine_filter('product_thumb') }}" width="64" height="64" alt="" loading="lazy" decoding="async">{% endif %}
+                                </div>
+                                <div class="pack-item__body">
+                                    <a class="quote-line__name" href="{{ path('catalog_product', {categorySlug: product.category.slug, slug: product.slug}) }}">{{ product.name }}</a>
+                                    <p class="pack-item__price" data-role="price"{% if item.price is null %} hidden{% endif %}>{{ item.price is null ? '' : item.price|money ~ ' l\'unité' }}</p>
+                                    <div class="quantity">
+                                        <label class="label-caps" for="{{ id }}">Quantité<span class="visually-hidden"> : {{ product.name }}</span></label>
+                                        <div class="quantity__control">
+                                            <button type="button" class="quantity__step" data-action="selection#step" data-selection-step-param="-1" aria-label="Diminuer la quantité : {{ product.name }}">−</button>
+                                            <input type="number" id="{{ id }}" name="qty" value="{{ item.qty }}" min="{{ minQty }}" step="1" inputmode="numeric" required
+                                                   aria-describedby="{{ id }}-erreur" data-action="input->selection#quantity">
+                                            <button type="button" class="quantity__step" data-action="selection#step" data-selection-step-param="1" aria-label="Augmenter la quantité : {{ product.name }}">+</button>
+                                        </div>
+                                        <p class="field-error" id="{{ id }}-erreur" data-role="error" hidden></p>
+                                    </div>
+                                    <button type="button" class="link-button" data-role="remove" data-action="selection#removePackItem">Retirer<span class="visually-hidden"> {{ product.name }} du pack</span></button>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <p class="pack-empty" data-role="pack-empty" hidden>Vous avez retiré tous les produits. <a href="{{ url }}">Revenir au pack proposé</a></p>
+                    <div data-role="pack-action">
+                        {% if quote_online() %}
+                            <button type="submit" class="button-primary">Ajouter le pack à mon devis</button>
+                            <p class="add-confirm" data-role="confirm" aria-live="polite"></p>
+                        {% elseif whatsapp %}
+                            {% set message = 'Bonjour, je souhaite un devis pour le pack « ' ~ pack.name ~ ' » : {items}.' %}
+                            <a class="button-primary" data-role="whatsapp" data-number="{{ whatsapp }}" data-message="{{ message }}"
+                               href="https://wa.me/{{ whatsapp }}?text={{ message|replace({'{items}': items|map(i => i.product.name ~ ' × ' ~ i.qty)|join(', ')})|url_encode }}"
+                               target="_blank" rel="noopener">Demander sur WhatsApp<span class="visually-hidden"> : {{ pack.name }} (nouvel onglet)</span></a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -8,5 +8,9 @@
         <li class="admin-list__row"><a class="admin-list__main" href="{{ path('admin_category_index') }}"><span class="admin-list__name">Catégories</span></a></li>
         <li class="admin-list__row"><a class="admin-list__main" href="{{ path('admin_product_index') }}"><span class="admin-list__name">Produits</span></a></li>
     </ul>
+    <h2 class="admin-title">Contenus</h2>
+    <ul class="admin-list">
+        <li class="admin-list__row"><a class="admin-list__main" href="{{ path('admin_pack_index') }}"><span class="admin-list__name">Packs</span></a></li>
+    </ul>
     <a class="admin-button admin-button--secondary" href="{{ logout_path() }}">Se déconnecter</a>
 {% endblock %}

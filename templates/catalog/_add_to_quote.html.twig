@@ -30,6 +30,10 @@
             <button type="submit" class="button-secondary button-sm">Ajouter au devis<span class="visually-hidden"> : {{ product.name }}</span></button>
         {% endif %}
         <p class="add-confirm" data-role="confirm" aria-live="polite"></p>
+        {% if links|default([]) %}
+            {# Recopié dans la confirmation d'ajout par le contrôleur selection (story 1.15) #}
+            <template data-role="related">Souvent loué avec : {% for link in links %}<a href="{{ path('catalog_product', {categorySlug: link.category.slug, slug: link.slug}) }}" data-turbo-frame="_top">{{ link.name }}</a>{{ not loop.last ? ', ' }}{% endfor %}</template>
+        {% endif %}
     {% elseif whatsapp %}
         <a class="{{ quantity ? 'button-primary' : 'button-secondary button-sm' }}" data-role="whatsapp" data-number="{{ whatsapp }}" data-message="{{ message }}"
            href="https://wa.me/{{ whatsapp }}?text={{ message|replace({'{qty}': minQty})|url_encode }}" target="_blank" rel="noopener">Demander sur WhatsApp<span class="visually-hidden"> : {{ product.name }} (nouvel onglet)</span></a>

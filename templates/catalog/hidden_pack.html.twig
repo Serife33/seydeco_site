@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pack.name }} — Seydeco{% endblock %}
+
+{% block body %}
+    <div class="container catalog-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Location', url: path('catalog_index')}, {label: pack.name}]} only %}
+        <h1>{{ pack.name }}</h1>
+        <p>Ce pack n'est plus proposé.</p>
+        <p><a href="{{ path('catalog_index') }}">Voir le catalogue</a></p>
+    </div>
+{% endblock %}

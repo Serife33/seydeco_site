@@ -15,5 +15,21 @@
         {% else %}
             <p>Le catalogue arrive bientôt.</p>
         {% endif %}
+        {% if packs %}
+            <section class="packs" aria-labelledby="packs-titre">
+                <h2 id="packs-titre">Packs</h2>
+                <ul class="product-grid">
+                    {% for pack in packs %}
+                        <li class="product-card">
+                            <div class="product-card__media">
+                                <img src="{{ pack.photo|imagine_filter('catalog_card') }}" width="480" height="600" alt="{{ pack.photoAlt }}" loading="lazy" decoding="async">
+                            </div>
+                            <h3 class="product-card__name">{{ pack.name }}</h3>
+                            <a class="button-secondary button-sm pack-card__link" href="{{ path('catalog_pack', {slug: pack.slug}) }}">Voir le pack<span class="visually-hidden"> : {{ pack.name }}</span></a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
     </div>
 {% endblock %}

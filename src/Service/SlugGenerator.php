@@ -19,7 +19,8 @@ final class SlugGenerator
         $max = $repository->getClassMetadata()->getFieldMapping('slug')->length - 6;
         $base = $this->slugger->slug($name)->lower()->truncate($max)->trimEnd('-')->toString() ?: 'element';
         $slug = $base;
-        for ($i = 2; null !== $repository->findOneBy(['slug' => $slug]); ++$i) {
+        // « packs » réservé : /location/packs/… mène aux pages des packs (story 1.14)
+        for ($i = 2; 'packs' === $slug || null !== $repository->findOneBy(['slug' => $slug]); ++$i) {
             $slug = $base.'-'.$i;
         }
 

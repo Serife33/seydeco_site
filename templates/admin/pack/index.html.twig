@@ -1,0 +1,61 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Packs{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <div class="admin-head">
+        <h1 class="admin-title">Packs</h1>
+        <a class="admin-button" href="{{ path('admin_pack_new') }}">Ajouter un pack</a>
+    </div>
+    {{ include('admin/_flashes.html.twig') }}
+
+    {% set total = packs|length %}
+    {% if total == 0 %}
+        <p>Aucun pack.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for pack in packs %}
+                {% set rank = offset + loop.index0 %}
+                {% set token = csrf_token('pack' ~ pack.id) %}
+                {% set hidden = pack.hiddenItems|length %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_pack_edit', {id: pack.id}) }}">
+                        <img class="admin-thumb" src="{{ pack.photo|imagine_filter('admin_thumb') }}" width="48" height="48" alt="">
+                        <span>
+                            <span class="admin-list__name">{{ pack.name }}</span>
+                            <span class="admin-list__meta">
+                                {{- pack.items|length }} produit{{ pack.items|length > 1 ? 's' }}
+                                {%- if not pack.visible %} · <strong>Masqué</strong>{% endif %}
+                                {%- if hidden %} · <strong>{{ hidden }} produit{{ hidden > 1 ? 's' }} masqué{{ hidden > 1 ? 's' }}</strong>{% endif -%}
+                            </span>
+                        </span>
+                    </a>
+                    <div class="admin-list__actions">
+                        {% if rank > 0 %}
+                            <form method="post" action="{{ path('admin_pack_move_up', {id: pack.id}) }}">
+                                <input type="hidden" name="_token" value="{{ token }}">
+                                <input type="hidden" name="page" value="{{ page }}">
+                                <button class="admin-button admin-button--secondary admin-button--small" aria-label="Monter {{ pack.name }}">Monter</button>
+                            </form>
+                        {% endif %}
+                        {% if rank < total - 1 %}
+                            <form method="post" action="{{ path('admin_pack_move_down', {id: pack.id}) }}">
+                                <input type="hidden" name="_token" value="{{ token }}">
+                                <input type="hidden" name="page" value="{{ page }}">
+                                <button class="admin-button admin-button--secondary admin-button--small" aria-label="Descendre {{ pack.name }}">Descendre</button>
+                            </form>
+                        {% endif %}
+                        <form method="post" action="{{ path('admin_pack_toggle', {id: pack.id}) }}">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <input type="hidden" name="page" value="{{ page }}">
+                            {% set action = pack.visible ? 'Masquer' : 'Afficher à nouveau' %}
+                            <button class="admin-button admin-button--secondary admin-button--small" aria-label="{{ action }} {{ pack.name }}">{{ action }}</button>
+                        </form>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+        {{ include('admin/_pagination.html.twig') }}
+    {% endif %}
+{% endblock %}

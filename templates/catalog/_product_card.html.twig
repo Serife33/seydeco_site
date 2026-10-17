@@ -1,6 +1,9 @@
 {# Carte produit : photo 4:5, nom, « dès X € », ajout au devis du minimum (aucune mention de stock) #}
 {% set photo = product.photos|first %}
 {% set from = from_price(product) %}
+{# Associés visibles pour la confirmation d'ajout, calculés en une requête par le contrôleur (relatedLinks) #}
+{% set links = relatedLinks|default({})[product.id]|default([]) %}
+{% set tag = tag|default('h2') %}
 <li class="product-card">
     <div class="product-card__media">
         {% if photo %}
@@ -8,7 +11,7 @@
         {% endif %}
     </div>
     {# Lien étiré sur toute la carte ; hors du cadre Turbo du catalogue #}
-    <h2 class="product-card__name"><a href="{{ path('catalog_product', {categorySlug: product.category.slug, slug: product.slug}) }}" data-turbo-frame="_top">{{ product.name }}</a></h2>
+    <{{ tag }} class="product-card__name"><a href="{{ path('catalog_product', {categorySlug: product.category.slug, slug: product.slug}) }}" data-turbo-frame="_top">{{ product.name }}</a></{{ tag }}>
     {% if from is not null %}<p class="product-card__price">dès {{ from|money }}</p>{% endif %}
     {% include 'catalog/_add_to_quote.html.twig' with {quantity: false} %}
 </li>

@@ -76,6 +76,10 @@
             <h2 class="admin-title" id="s-stock">Stock</h2>
             {{ form_row(form.stock) }}
         </section>
+        <section class="admin-section" aria-labelledby="s-related">
+            <h2 class="admin-title" id="s-related">Souvent loué avec</h2>
+            {{ c.list('related', form.relatedProducts, 'Produits associés', 'Ajouter un produit associé', 'Jusqu\'à 4 produits, montrés sur la fiche dans cet ordre et proposés après un ajout au devis.') }}
+        </section>
         <section class="admin-section" aria-labelledby="s-visibility">
             <h2 class="admin-title" id="s-visibility">Visibilité</h2>
             {% if product.id %}

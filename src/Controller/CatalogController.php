@@ -4,9 +4,10 @@ namespace App\Controller;
 
 use App\Entity\Category;
 use App\Entity\Product;
-use App\Repository\CategoryRepository;
-use App\Repository\ProductRepository;
 use App\Entity\PricingType;
+use App\Repository\CategoryRepository;
+use App\Repository\PackRepository;
+use App\Repository\ProductRepository;
 use App\Service\PricingCalculator;
 use App\Service\SettingsProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -25,6 +26,7 @@ final class CatalogController extends AbstractController
         private readonly ProductRepository $products,
         private readonly SettingsProvider $settings,
         private readonly PricingCalculator $pricing,
+        private readonly PackRepository $packs,
     ) {
     }
 
@@ -33,7 +35,33 @@ final class CatalogController extends AbstractController
     {
         return $this->render('catalog/index.html.twig', [
             'categories' => $this->categories->findBy(['visible' => true], ['position' => 'ASC', 'id' => 'ASC']),
+            'packs' => $this->packs->findPublic(),
         ]);
+    }
+
+    /** Avant la route produit (même forme d'URL). Produits masqués retirés ; quantités proposées, ajustables dans la page. */
+    #[Route('/location/packs/{slug}', name: 'catalog_pack', methods: ['GET'], priority: 1)]
+    public function pack(string $slug): Response
+    {
+        $pack = $this->packs->findOneBy(['slug' => $slug]) ?? throw $this->createNotFoundException();
+        $items = [];
+        foreach ($pack->isVisible() ? $pack->getItems() : [] as $item) {
+            if (!$item->isProductPublic()) {
+                continue;
+            }
+            $product = $item->getProduct();
+            // Minimum relevé depuis la création du pack : la quantité proposée suit
+            $qty = max($item->getQuantity(), $product->getMinQty() ?? 1);
+            // Produit sans palier (saisie ancienne) : ligne gardée, sans prix
+            $price = $product->getPriceTiers()->isEmpty() ? null : $this->pricing->unitPrice($product, $qty);
+            $items[] = ['product' => $product, 'qty' => $qty, 'price' => $price, 'tiers' => $this->tierRows($product)];
+        }
+        if (!$items) {
+            // Pack masqué ou sans produit visible : page normale, jamais d'erreur
+            return $this->render('catalog/hidden_pack.html.twig', ['pack' => $pack]);
+        }
+
+        return $this->render('catalog/pack.html.twig', ['pack' => $pack, 'items' => $items]);
     }
 
     #[Route('/recherche', name: 'catalog_search', methods: ['GET'])]
@@ -70,15 +98,6 @@ final class CatalogController extends AbstractController
             ]);
         }
 
-        // Paliers « 15 à 49 », « 50 et plus » : prix unitaire calculé par PricingCalculator
-        $tiers = $product->getPriceTiers()->getValues();
-        $minQty = $product->getMinQty() ?? 1;
-        $rows = [];
-        foreach ($tiers as $i => $tier) {
-            $from = max($tier->getMinQty(), $minQty);
-            $next = $tiers[$i + 1] ?? null;
-            $rows[] = ['from' => $from, 'to' => $next ? $next->getMinQty() - 1 : null, 'price' => $this->pricing->unitPrice($product, $from)];
-        }
         $s = $this->settings;
         // Réglage vide ou invalide : null, la ligne (ou sa partie) n'est pas affichée
         $number = fn (string $name) => ctype_digit($s->get($name)) ? (int) $s->get($name) : null;
@@ -86,7 +105,8 @@ final class CatalogController extends AbstractController
         return $this->render('catalog/product.html.twig', [
             'product' => $product,
             'category' => $category,
-            'tiers' => $rows,
+            'tiers' => $this->tierRows($product),
+            'related' => $this->products->findPublicRelated([$product->getId()])[$product->getId()] ?? [],
             'chairsNote' => PricingType::Chairs === $category->getPricingType() && $this->products->hasPublicTableWithChairsPrice(),
             'video' => $this->video($product, $uploadDir),
             'whatsapp' => $s->whatsappNumber(),
@@ -98,6 +118,25 @@ final class CatalogController extends AbstractController
                 'depotCity' => trim($s->get(SettingsProvider::DEPOT_CITY)),
             ],
         ]);
+    }
+
+    /**
+     * Paliers « 15 à 49 », « 50 et plus » : prix unitaire calculé par PricingCalculator.
+     *
+     * @return list<array{from: int, to: int|null, price: int}>
+     */
+    private function tierRows(Product $product): array
+    {
+        $tiers = $product->getPriceTiers()->getValues();
+        $minQty = $product->getMinQty() ?? 1;
+        $rows = [];
+        foreach ($tiers as $i => $tier) {
+            $from = max($tier->getMinQty(), $minQty);
+            $next = $tiers[$i + 1] ?? null;
+            $rows[] = ['from' => $from, 'to' => $next ? $next->getMinQty() - 1 : null, 'price' => $this->pricing->unitPrice($product, $from)];
+        }
+
+        return $rows;
     }
 
     /** Vidéo déposée en fichier (original hors de public/), lue par le lecteur de la fiche. */
@@ -170,6 +209,8 @@ final class CatalogController extends AbstractController
         if ($page > $pages) {
             $products = $this->products->findPublic($category, $filters, $sort, ($page = $pages) * self::PER_PAGE);
         }
+        // Une seule exécution de la requête (le Paginator la relance à chaque parcours)
+        $products = iterator_to_array($products, false);
 
         return $this->render($template, [
             'category' => $category,
@@ -184,6 +225,8 @@ final class CatalogController extends AbstractController
             'facets' => $facets,
             'allCategories' => $allCategories,
             'whatsapp' => $this->settings->whatsappNumber(),
+            // Liens « Souvent loué avec » des confirmations d'ajout des cartes, en une requête
+            'relatedLinks' => $this->settings->quoteOnline() ? $this->products->findPublicRelated(array_map(fn (Product $p) => $p->getId(), $products)) : [],
         ]);
     }
 

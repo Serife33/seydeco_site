@@ -121,6 +121,13 @@ class Product
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $videoThumbnail = null;
 
+    /** @var Collection<int, RelatedProduct> « Souvent loué avec », 4 au plus, dans l'ordre choisi */
+    #[ORM\OneToMany(targetEntity: RelatedProduct::class, mappedBy: 'product', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC', 'id' => 'ASC'])]
+    #[Assert\Valid]
+    #[Assert\Count(max: 4, maxMessage: 'Choisir 4 produits associés au plus.')]
+    private Collection $relatedProducts;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -134,6 +141,7 @@ class Product
         $this->priceTiers = new ArrayCollection();
         $this->photos = new ArrayCollection();
         $this->colors = new ArrayCollection();
+        $this->relatedProducts = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -447,5 +455,43 @@ class Product
     public function setVideoThumbnail(?string $videoThumbnail): void
     {
         $this->videoThumbnail = $videoThumbnail;
+    }
+
+    /** @return Collection<int, RelatedProduct> */
+    public function getRelatedProducts(): Collection
+    {
+        return $this->relatedProducts;
+    }
+
+    public function addRelatedProduct(RelatedProduct $related): void
+    {
+        if (!$this->relatedProducts->contains($related)) {
+            $related->setProduct($this);
+            $this->relatedProducts->add($related);
+        }
+    }
+
+    public function removeRelatedProduct(RelatedProduct $related): void
+    {
+        $this->relatedProducts->removeElement($related);
+    }
+
+    /** Ni le produit lui-même, ni deux fois le même produit. */
+    #[Assert\Callback]
+    public function validateRelatedProducts(ExecutionContextInterface $context): void
+    {
+        $seen = [];
+        foreach ($this->relatedProducts as $i => $row) {
+            $related = $row->getRelated();
+            if (null === $related) {
+                continue;
+            }
+            if ($related === $this) {
+                $context->buildViolation('Un produit ne peut pas être associé à lui-même.')->atPath("relatedProducts[$i].related")->addViolation();
+            } elseif (\in_array($related, $seen, true)) {
+                $context->buildViolation('Ce produit est déjà choisi.')->atPath("relatedProducts[$i].related")->addViolation();
+            }
+            $seen[] = $related;
+        }
     }
 }

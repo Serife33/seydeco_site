@@ -100,6 +100,14 @@ final class CategoryTest extends CatalogTestCase
         self::assertSame('chaises-2', $this->em()->getRepository(Category::class)->findOneBy(['name' => 'Chaises !'])->getSlug());
     }
 
+    public function testPacksSlugIsReserved(): void
+    {
+        $this->client->request('GET', '/admin/categories/ajouter');
+        $this->client->submitForm('Enregistrer', ['category[name]' => 'Packs', 'category[pricingType]' => 'other', 'category[refurbishDelay]' => '0']);
+
+        self::assertSame('packs-2', $this->em()->getRepository(Category::class)->findOneBy(['name' => 'Packs'])->getSlug());
+    }
+
     public function testLongNameGivesSlugThatFits(): void
     {
         $this->client->request('GET', '/admin/categories/ajouter');

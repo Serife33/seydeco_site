@@ -36,7 +36,7 @@ final class ProductTest extends CatalogTestCase
     public function testCreateProduct(): void
     {
         $crawler = $this->client->request('GET', '/admin/produits/ajouter');
-        self::assertSame(['Photos & vidéo', 'Infos', 'Prix & dégressif', 'Quantité minimale', 'Casse/perte & consignes', 'Stock', 'Visibilité'], $crawler->filter('form h2')->each(fn ($h) => $h->text()));
+        self::assertSame(['Photos & vidéo', 'Infos', 'Prix & dégressif', 'Quantité minimale', 'Casse/perte & consignes', 'Stock', 'Souvent loué avec', 'Visibilité'], $crawler->filter('form h2')->each(fn ($h) => $h->text()));
         // Délai de remise en état de la catégorie, en lecture seule
         self::assertStringContainsString('remise en état : 0 h', $crawler->filter('#product_category option[value="'.$this->chairsId.'"]')->text());
 

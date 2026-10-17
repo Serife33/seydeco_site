@@ -16,7 +16,7 @@ abstract class CatalogTestCase extends AdminTestCase
         parent::setUp();
         $db = static::getContainer()->get(Connection::class);
         $db->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
-        foreach (['product_style', 'product_event_type', 'style', 'event_type', 'price_tier', 'product_photo', 'product_color', 'product', 'category'] as $table) {
+        foreach (['related_product', 'pack_item', 'pack', 'product_style', 'product_event_type', 'style', 'event_type', 'price_tier', 'product_photo', 'product_color', 'product', 'category'] as $table) {
             $db->executeStatement("TRUNCATE TABLE $table");
         }
         $db->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
