@@ -1,0 +1,17 @@
+{# Tableau tarif dégressif : prix calculés par PricingCalculator (contrôleur), formatés par money #}
+{% if tiers %}
+    <table class="price-tiers">
+        <caption class="label-caps">Prix par unité</caption>
+        <thead class="visually-hidden">
+            <tr><th scope="col">Quantité</th><th scope="col">Prix unitaire</th></tr>
+        </thead>
+        <tbody>
+            {% for tier in tiers %}
+                <tr>
+                    <th scope="row">{{ tier.to is null ? tier.from ~ ' et plus' : tier.from ~ ' à ' ~ tier.to }}</th>
+                    <td>{{ tier.price|money }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}

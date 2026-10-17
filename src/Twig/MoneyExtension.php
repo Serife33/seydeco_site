@@ -13,11 +13,11 @@ final class MoneyExtension
     {
     }
 
-    /** Seul filtre d'affichage des montants : 123450 → « 1 234,50 € » (espaces insécables). */
+    /** Seul filtre d'affichage des montants : 123450 → « 1 234,50 € » (espaces insécables) ; `short` : 100 → « 1 € ». */
     #[AsTwigFilter('money')]
-    public function money(int $cents): string
+    public function money(int $cents, bool $short = false): string
     {
-        return number_format($cents / 100, 2, ',', "\u{A0}")."\u{A0}€";
+        return number_format($cents / 100, $short && 0 === $cents % 100 ? 0 : 2, ',', "\u{A0}")."\u{A0}€";
     }
 
     /** Prix « dès » en centimes (calculé par PricingCalculator, jamais dans Twig). */

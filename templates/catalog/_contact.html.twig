@@ -1,0 +1,8 @@
+{# Question sur le produit : WhatsApp pré-rempli + téléphone ; masqués tant que le numéro n'est pas renseigné #}
+{% if whatsapp %}
+    <p class="product-contact">
+        Une question ?
+        <a href="https://wa.me/{{ whatsapp }}?text={{ ('Bonjour, j\'ai une question sur ' ~ product.name)|url_encode }}" target="_blank" rel="noopener">Nous écrire sur WhatsApp</a>
+        · <a href="tel:+{{ whatsapp }}">Nous appeler</a>
+    </p>
+{% endif %}

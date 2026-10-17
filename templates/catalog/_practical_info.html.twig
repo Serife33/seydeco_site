@@ -1,0 +1,49 @@
+{# Bloc infos pratiques : toujours déplié, texte indexable ; valeurs lues via SettingsProvider #}
+<section class="info-block" aria-labelledby="infos-titre">
+    <h2 class="label-caps" id="infos-titre">Infos pratiques</h2>
+    <dl>
+        <div>
+            <dt>Caution</dt>
+            <dd>{{ info.deposit is null ? 'Montant indiqué dans votre devis' : info.deposit|money }}</dd>
+        </div>
+        <div>
+            <dt>Casse ou perte</dt>
+            <dd>
+                {%- if product.breakagePrice is null and product.lossPrice is null -%}
+                    Montant indiqué dans votre devis
+                {%- else -%}
+                    {{ [
+                        product.breakagePrice is null ? null : 'Casse : ' ~ product.breakagePrice|money,
+                        product.lossPrice is null ? null : 'Perte : ' ~ product.lossPrice|money,
+                    ]|filter(v => v)|join(' · ') }} par unité
+                {%- endif -%}
+            </dd>
+        </div>
+        <div>
+            <dt>Retrait et retour</dt>
+            <dd>{{ info.depotCity ? 'Au dépôt de ' ~ info.depotCity ~ ', sur' : 'Sur' }} un créneau choisi dans votre demande.</dd>
+        </div>
+        {# Chaque partie n'apparaît que si son réglage est renseigné #}
+        {% set delivery = [
+            info.kmPrice is null ? null : info.kmPrice|money(true) ~ ' / km par la route' ~ (info.depotCity ? ' depuis ' ~ info.depotCity),
+            info.minChairs is null ? null : 'dès ' ~ info.minChairs ~ ' chaises',
+            info.maxKm is null ? null : info.maxKm ~ ' km max',
+        ]|filter(v => v) %}
+        {% if delivery %}
+            <div>
+                <dt>Livraison</dt>
+                <dd>{{ delivery|join(', ') }}</dd>
+            </div>
+        {% endif %}
+        <div>
+            <dt>Installation</dt>
+            <dd>{{ category.installPrice is null ? 'Tarif sur demande' : category.installPrice|money }}</dd>
+        </div>
+        {% if product.returnInstructions %}
+            <div>
+                <dt>Consignes</dt>
+                <dd>{{ product.returnInstructions|nl2br }}</dd>
+            </div>
+        {% endif %}
+    </dl>
+</section>

@@ -7,6 +7,7 @@
             <img src="{{ photo.filename|imagine_filter('catalog_card') }}" width="480" height="600" alt="{{ photo.alt }}"{% if lazy %} loading="lazy"{% endif %} decoding="async">
         {% endif %}
     </div>
-    <h2 class="product-card__name">{{ product.name }}</h2>
+    {# Lien étiré sur toute la carte ; hors du cadre Turbo du catalogue #}
+    <h2 class="product-card__name"><a href="{{ path('catalog_product', {categorySlug: product.category.slug, slug: product.slug}) }}" data-turbo-frame="_top">{{ product.name }}</a></h2>
     {% if from is not null %}<p class="product-card__price">dès {{ from|money }}</p>{% endif %}
 </li>

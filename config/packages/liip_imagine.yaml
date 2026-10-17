@@ -18,3 +18,24 @@ liip_imagine:
             quality: 80
             filters:
                 thumbnail: { size: [480, 600], mode: outbound }
+        # Fiche produit : image principale 1:1 (srcset 400/800), vignettes, plein écran (proportions conservées)
+        product_400:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                thumbnail: { size: [400, 400], mode: outbound }
+        product_800:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                thumbnail: { size: [800, 800], mode: outbound }
+        product_thumb:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                thumbnail: { size: [240, 240], mode: outbound }
+        product_full:
+            format: '%app.image_format%'
+            quality: 82
+            filters:
+                thumbnail: { size: [1600, 1600], mode: inset }

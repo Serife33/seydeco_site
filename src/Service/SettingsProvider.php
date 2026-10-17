@@ -9,6 +9,13 @@ use Doctrine\ORM\EntityManagerInterface;
 final class SettingsProvider
 {
     public const string WHATSAPP_PHONE = 'whatsapp_phone';
+    /** Centimes ; vide = non renseigné. */
+    public const string DEPOSIT_AMOUNT = 'deposit_amount';
+    /** Centimes par km. */
+    public const string DELIVERY_PRICE_PER_KM = 'delivery_price_per_km';
+    public const string DELIVERY_MIN_CHAIRS = 'delivery_min_chairs';
+    public const string DELIVERY_MAX_KM = 'delivery_max_km';
+    public const string DEPOT_CITY = 'depot_city';
 
     /** @var array<string, string>|null */
     private ?array $values = null;

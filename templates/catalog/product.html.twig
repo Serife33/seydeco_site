@@ -1,0 +1,117 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }} en location — Seydeco{% endblock %}
+
+{% block body %}
+    {% set photos = product.photos %}
+    {% set colors = product.colors %}
+    {% set first = photos|first %}
+    <div class="container catalog-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Location', url: path('catalog_index')}, {label: category.name, url: path('catalog_category', {slug: category.slug})}, {label: product.name}]} only %}
+
+        <div class="product-page" data-controller="gallery color-picker" data-action="color-picker:change->gallery#filter">
+            <div class="product-gallery">
+                {% if first %}
+                    {# Seule la photo principale est chargée tout de suite ; les autres à l'approche ou à l'ouverture #}
+                    <a class="product-gallery__main" href="{{ first.filename|imagine_filter('product_full') }}" data-gallery-target="main" data-action="gallery#open">
+                        <img src="{{ first.filename|imagine_filter('product_800') }}"
+                             srcset="{{ first.filename|imagine_filter('product_400') }} 400w, {{ first.filename|imagine_filter('product_800') }} 800w"
+                             sizes="(min-width: 1024px) 600px, 100vw" width="800" height="800" alt="{{ first.alt }}" fetchpriority="high">
+                        <span class="visually-hidden">(agrandir)</span>
+                    </a>
+                    {% if photos|length > 1 %}
+                        <ul class="product-gallery__thumbs">
+                            {% for photo in photos %}
+                                <li data-gallery-target="item" data-color="{{ photo.color ? photo.color.id }}"
+                                    data-src="{{ photo.filename|imagine_filter('product_800') }}"
+                                    data-srcset="{{ photo.filename|imagine_filter('product_400') }} 400w, {{ photo.filename|imagine_filter('product_800') }} 800w"
+                                    data-full="{{ photo.filename|imagine_filter('product_full') }}" data-alt="{{ photo.alt }}">
+                                    <a class="product-gallery__thumb" href="{{ photo.filename|imagine_filter('product_full') }}" data-action="gallery#open"{% if loop.first %} aria-current="true"{% endif %}>
+                                        <img src="{{ photo.filename|imagine_filter('product_thumb') }}" width="240" height="240" alt="{{ photo.alt }}" loading="lazy" decoding="async">
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                    <dialog class="lightbox" aria-label="Photos : {{ product.name }}" data-gallery-target="dialog"
+                            data-action="keydown->gallery#key touchstart->gallery#touchStart:passive touchend->gallery#touchEnd close->gallery#closed">
+                        <img class="lightbox__image" data-gallery-target="full" alt="">
+                        <p class="lightbox__count" data-gallery-target="count" aria-live="polite"></p>
+                        <button type="button" class="lightbox__button lightbox__prev" data-gallery-target="nav" data-action="gallery#prev" aria-label="Photo précédente">‹</button>
+                        <button type="button" class="lightbox__button lightbox__next" data-gallery-target="nav" data-action="gallery#next" aria-label="Photo suivante">›</button>
+                        <button type="button" class="lightbox__button lightbox__close" data-action="gallery#close">×<span class="visually-hidden">Fermer</span></button>
+                    </dialog>
+                {% else %}
+                    <div class="product-gallery__empty"></div>
+                {% endif %}
+
+                {% if video %}
+                    {% set poster = product.videoThumbnail ?? (first ? first.filename : null) %}
+                    <div class="product-video">
+                        {% if video.type == 'file' %}
+                            <video controls preload="none" playsinline width="800" height="450"{% if poster %} poster="{{ poster|imagine_filter('product_800') }}"{% endif %}
+                                   src="{{ path('catalog_product_video', {categorySlug: category.slug, slug: product.slug}) }}"
+                                   aria-label="Vidéo : {{ product.name }}"></video>
+                        {% else %}
+                            {# Façade : aucun iframe ni script tiers avant le clic #}
+                            <a class="video-facade" target="_blank" rel="noopener"
+                               {% if video.type == 'youtube' %}
+                                   href="https://www.youtube.com/watch?v={{ video.id }}" data-controller="video-facade"
+                                   data-video-facade-id-value="{{ video.id }}" data-video-facade-title-value="Vidéo : {{ product.name }}" data-action="video-facade#play"
+                               {% else %}
+                                   href="{{ video.url }}"
+                               {% endif %}>
+                                {% if poster %}<img src="{{ poster|imagine_filter('product_800') }}" width="800" height="800" alt="" loading="lazy" decoding="async">{% endif %}
+                                <span class="video-facade__play" aria-hidden="true"></span>
+                                <span class="video-facade__label label-caps">Vidéo<span class="visually-hidden"> : {{ product.name }}{% if video.type == 'link' %} (nouvel onglet){% endif %}</span></span>
+                            </a>
+                            <p class="product-video__note">La vidéo est fournie par {{ video.type == 'youtube' ? 'YouTube' : video.provider }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="product-panel">
+                <h1>{{ product.name }}</h1>
+                {% include 'catalog/_price_tiers.html.twig' %}
+                {% if product.minQty > 1 %}
+                    <p class="product-panel__min">Minimum {{ product.minQty }} {{ {chairs: 'chaises', tables: 'tables'}[category.pricingType.value] ?? 'unités' }}</p>
+                {% endif %}
+                {% if product.seats %}
+                    <p class="product-panel__seats">{{ product.seats }} place{{ product.seats > 1 ? 's' }}</p>
+                {% endif %}
+
+                {% if colors|length %}
+                    {# Le coloris choisi est mémorisé ici pour l'ajout au devis (story 1.13) #}
+                    <div class="color-picker">
+                        <p class="label-caps" id="coloris-titre">Coloris : <span data-color-picker-target="name">{{ colors.first.name }}</span></p>
+                        <div class="color-picker__swatches" role="group" aria-labelledby="coloris-titre">
+                            {% for color in colors %}
+                                <button type="button" class="swatch" style="--swatch: {{ color.hex }}" aria-pressed="{{ loop.first ? 'true' : 'false' }}"
+                                        data-color-picker-target="swatch" data-action="color-picker#choose"
+                                        data-color-id="{{ color.id }}" data-color-name="{{ color.name }}"><span class="visually-hidden">{{ color.name }}</span></button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% include 'catalog/_contact.html.twig' %}
+
+                {% if product.dimensions or product.description %}
+                    <section class="product-details">
+                        {% if product.dimensions %}
+                            <h2 class="label-caps">Dimensions</h2>
+                            <p>{{ product.dimensions }}</p>
+                        {% endif %}
+                        {% if product.description %}
+                            <h2 class="label-caps">Description</h2>
+                            <p>{{ product.description|nl2br }}</p>
+                        {% endif %}
+                    </section>
+                {% endif %}
+
+                {% include 'catalog/_practical_info.html.twig' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -3,10 +3,14 @@
 namespace App\Controller;
 
 use App\Entity\Category;
+use App\Entity\Product;
 use App\Repository\CategoryRepository;
 use App\Repository\ProductRepository;
+use App\Service\PricingCalculator;
 use App\Service\SettingsProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -19,6 +23,7 @@ final class CatalogController extends AbstractController
         private readonly CategoryRepository $categories,
         private readonly ProductRepository $products,
         private readonly SettingsProvider $settings,
+        private readonly PricingCalculator $pricing,
     ) {
     }
 
@@ -46,6 +51,91 @@ final class CatalogController extends AbstractController
         }
 
         return $this->listing($request, 'catalog/category.html.twig', $category, $this->filters($request));
+    }
+
+    #[Route('/location/{categorySlug}/{slug}', name: 'catalog_product', methods: ['GET'])]
+    public function product(string $categorySlug, string $slug, #[Autowire('%app.upload_dir%')] string $uploadDir): Response
+    {
+        $product = $this->products->findOneBy(['slug' => $slug]) ?? throw $this->createNotFoundException();
+        $category = $product->getCategory();
+        if ($category->getSlug() !== $categorySlug) {
+            return $this->redirectToRoute('catalog_product', ['categorySlug' => $category->getSlug(), 'slug' => $slug], Response::HTTP_MOVED_PERMANENTLY);
+        }
+        if (!$product->isVisible() || !$category->isVisible()) {
+            // Ancienne URL d'un produit masqué : page normale avec les produits visibles de la catégorie, sans prix
+            return $this->render('catalog/hidden_product.html.twig', [
+                'product' => $product,
+                'products' => $this->products->findPublic($category, ['q' => '', 'categories' => [], 'colors' => [], 'styles' => [], 'events' => []], 'populaires', self::PER_PAGE),
+            ]);
+        }
+
+        // Paliers « 15 à 49 », « 50 et plus » : prix unitaire calculé par PricingCalculator
+        $tiers = $product->getPriceTiers()->getValues();
+        $minQty = $product->getMinQty() ?? 1;
+        $rows = [];
+        foreach ($tiers as $i => $tier) {
+            $from = max($tier->getMinQty(), $minQty);
+            $next = $tiers[$i + 1] ?? null;
+            $rows[] = ['from' => $from, 'to' => $next ? $next->getMinQty() - 1 : null, 'price' => $this->pricing->unitPrice($product, $from)];
+        }
+        $s = $this->settings;
+        // Réglage vide ou invalide : null, la ligne (ou sa partie) n'est pas affichée
+        $number = fn (string $name) => ctype_digit($s->get($name)) ? (int) $s->get($name) : null;
+
+        return $this->render('catalog/product.html.twig', [
+            'product' => $product,
+            'category' => $category,
+            'tiers' => $rows,
+            'video' => $this->video($product, $uploadDir),
+            'whatsapp' => $s->whatsappNumber(),
+            'info' => [
+                'deposit' => $number(SettingsProvider::DEPOSIT_AMOUNT),
+                'kmPrice' => $number(SettingsProvider::DELIVERY_PRICE_PER_KM),
+                'minChairs' => $number(SettingsProvider::DELIVERY_MIN_CHAIRS),
+                'maxKm' => $number(SettingsProvider::DELIVERY_MAX_KM),
+                'depotCity' => trim($s->get(SettingsProvider::DEPOT_CITY)),
+            ],
+        ]);
+    }
+
+    /** Vidéo déposée en fichier (original hors de public/), lue par le lecteur de la fiche. */
+    #[Route('/location/{categorySlug}/{slug}/video', name: 'catalog_product_video', methods: ['GET'])]
+    public function productVideo(string $categorySlug, string $slug, #[Autowire('%app.upload_dir%')] string $uploadDir): BinaryFileResponse
+    {
+        $product = $this->products->findOneBy(['slug' => $slug]);
+        $file = $product?->getVideoFile();
+        $category = $product?->getCategory();
+        if (null === $file || $category->getSlug() !== $categorySlug || !$product->isVisible() || !$category->isVisible() || !is_file($uploadDir.'/'.$file)) {
+            throw $this->createNotFoundException();
+        }
+
+        return new BinaryFileResponse($uploadDir.'/'.$file, headers: ['Content-Type' => 'video/mp4']);
+    }
+
+    /** @return array{type: 'file'}|array{type: 'youtube', id: string}|array{type: 'link', url: string, provider: string}|null */
+    private function video(Product $product, string $uploadDir): ?array
+    {
+        $file = $product->getVideoFile();
+        if ($file) {
+            // Fichier absent du disque : pas de lecteur cassé
+            return is_file($uploadDir.'/'.$file) ? ['type' => 'file'] : null;
+        }
+        $url = $product->getVideoUrl();
+        if (null === $url) {
+            return null;
+        }
+        if (preg_match('~(?:youtu\.be/|youtube\.com/(?:watch\?(?:\S*&)?v=|shorts/|embed/|live/))([\w-]{11})~i', $url, $m)) {
+            return ['type' => 'youtube', 'id' => $m[1]];
+        }
+        $host = parse_url($url, \PHP_URL_HOST) ?: '';
+        $provider = match (true) {
+            str_contains($host, 'instagram') => 'Instagram',
+            str_contains($host, 'tiktok') => 'TikTok',
+            default => 'YouTube',
+        };
+
+        // Instagram, TikTok, lien YouTube non reconnu : ouverture dans un nouvel onglet, aucun script tiers
+        return ['type' => 'link', 'url' => $url, 'provider' => $provider];
     }
 
     /** @param array{q: string, categories: list<string>, colors: list<string>, styles: list<int>, events: list<int>} $filters */

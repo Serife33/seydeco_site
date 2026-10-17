@@ -16,7 +16,7 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 
-/** Catalogue public : catégories, grille, recherche, filtres, tri (stories 1.8 + 1.11). */
+/** Catalogue public : catégories, grille, recherche, filtres, tri, fiche produit (stories 1.8 à 1.11). */
 final class CatalogTest extends WebTestCase
 {
     private KernelBrowser $client;
@@ -32,6 +32,7 @@ final class CatalogTest extends WebTestCase
         }
         $db->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
         $db->executeStatement("UPDATE setting SET value = '06 12 34 56 78' WHERE name = 'whatsapp_phone'");
+        $db->executeStatement("UPDATE setting SET value = '' WHERE name = 'deposit_amount'");
         $this->em = static::getContainer()->get(EntityManagerInterface::class);
     }
 
@@ -80,7 +81,7 @@ final class CatalogTest extends WebTestCase
         $product->setStock(3);
         $this->em->flush();
 
-        foreach (['/location', '/location/chaises', '/recherche?q=chaise'] as $url) {
+        foreach (['/location', '/location/chaises', '/recherche?q=chaise', '/location/chaises/'.$product->getSlug()] as $url) {
             $crawler = $this->client->request('GET', $url);
             self::assertResponseIsSuccessful();
             $text = mb_strtolower($crawler->filter('body')->text());
@@ -261,19 +262,242 @@ final class CatalogTest extends WebTestCase
         self::assertStringStartsWith('/location/chaises?', $crawler->selectLink('Voir plus')->attr('href'));
     }
 
+    public function testProductCardLinksToProductPage(): void
+    {
+        $product = $this->product($this->category('Chaises', 1), 'Chaise Napoléon', [1 => 300]);
+
+        $link = $this->client->request('GET', '/location/chaises')->filter('.product-card__name a');
+        self::assertSame('/location/chaises/'.rawurlencode($product->getSlug()), $link->attr('href'));
+        // La grille est dans un cadre Turbo : la fiche s'ouvre en page entière
+        self::assertSame('_top', $link->attr('data-turbo-frame'));
+    }
+
+    public function testProductPageFollowsUxOrderWithTiersAndPracticalInfo(): void
+    {
+        $chaises = $this->category('Chaises', 1, type: PricingType::Chairs);
+        $product = $this->product($chaises, 'Chaise Napoléon', [15 => 350, 50 => 300], description: 'Chaise en résine', photo: true);
+        $product->setDimensions('H 92 cm');
+        $product->setBreakagePrice(2500);
+        $product->setLossPrice(3000);
+        $product->setReturnInstructions('Empiler par 6.');
+        $second = new ProductPhoto();
+        $second->setFilename('dos.jpg');
+        $second->setAlt('Chaise Napoléon de dos');
+        $product->addPhoto($second);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/location/chaises/'.$product->getSlug());
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextSame('h1', 'Chaise Napoléon');
+        self::assertSame(['15 à 49', '50 et plus'], $crawler->filter('.price-tiers tbody th')->each(fn (Crawler $c) => $c->text()));
+        self::assertSame(["3,50\u{A0}€", "3,00\u{A0}€"], $crawler->filter('.price-tiers tbody td')->each(fn (Crawler $c) => $c->text()));
+        self::assertSelectorTextSame('.product-panel__min', 'Minimum 15 chaises');
+        self::assertCount(0, $crawler->filter('.product-panel__seats'));
+
+        // Ordre UX-DR27 : galerie, nom, tarifs, minimum, dimensions/description, infos pratiques
+        $html = (string) $this->client->getResponse()->getContent();
+        $positions = array_map(fn (string $needle) => strpos($html, $needle), ['product-gallery__main', '<h1>', 'price-tiers', 'Minimum 15 chaises', '>Dimensions<', '>Description<', 'Infos pratiques']);
+        self::assertNotContains(false, $positions);
+        $sorted = $positions;
+        sort($sorted);
+        self::assertSame($sorted, $positions);
+
+        $info = $crawler->filter('.info-block dl > div')->each(fn (Crawler $row) => [$row->filter('dt')->text(), $row->filter('dd')->text()]);
+        self::assertSame([
+            ['Caution', 'Montant indiqué dans votre devis'],
+            ['Casse ou perte', "Casse : 25,00\u{A0}€ · Perte : 30,00\u{A0}€ par unité"],
+            ['Retrait et retour', 'Au dépôt de Bassens, sur un créneau choisi dans votre demande.'],
+            ['Livraison', "1\u{A0}€ / km par la route depuis Bassens, dès 80 chaises, 70 km max"],
+            ['Installation', 'Tarif sur demande'],
+            ['Consignes', 'Empiler par 6.'],
+        ], $info);
+
+        // Contact
+        self::assertSame('https://wa.me/33612345678?text='.rawurlencode("Bonjour, j'ai une question sur Chaise Napoléon"), $crawler->selectLink('Nous écrire sur WhatsApp')->attr('href'));
+        self::assertSame('tel:+33612345678', $crawler->selectLink('Nous appeler')->attr('href'));
+
+        // Images : seule la principale est chargée tout de suite, en srcset, dimensions réservées
+        $main = $crawler->filter('.product-gallery__main img');
+        self::assertSame(['800', '800', null], [$main->attr('width'), $main->attr('height'), $main->attr('loading')]);
+        self::assertStringContainsString('400w', $main->attr('srcset'));
+        self::assertSame(['lazy', 'lazy'], $crawler->filter('.product-gallery__thumbs img')->each(fn (Crawler $i) => $i->attr('loading')));
+        self::assertCount(1, $crawler->filter('dialog.lightbox'));
+    }
+
+    public function testProductPageUsesSettingsAndCategoryValues(): void
+    {
+        $db = static::getContainer()->get(Connection::class);
+        $db->executeStatement("UPDATE setting SET value = '15000' WHERE name = 'deposit_amount'");
+        $db->executeStatement("UPDATE setting SET value = '' WHERE name = 'whatsapp_phone'");
+        $tables = $this->category('Tables', 1, type: PricingType::Tables);
+        $tables->setInstallPrice(500);
+        $product = $this->product($tables, 'Table ronde', [1 => 1500]);
+        $product->setSeats(8);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/location/tables/'.$product->getSlug());
+
+        self::assertSelectorTextSame('.product-panel__seats', '8 places');
+        self::assertCount(0, $crawler->filter('.product-panel__min'), 'pas de minimum affiché pour 1');
+        self::assertSame(['1 et plus'], $crawler->filter('.price-tiers tbody th')->each(fn (Crawler $c) => $c->text()));
+        $info = $crawler->filter('.info-block dd')->each(fn (Crawler $c) => $c->text());
+        self::assertSame("150,00\u{A0}€", $info[0]);
+        self::assertSame('Montant indiqué dans votre devis', $info[1]);
+        self::assertSame("5,00\u{A0}€", $info[4]);
+        // Numéro non renseigné : liens masqués
+        self::assertCount(0, $crawler->filter('a[href^="https://wa.me/"], a[href^="tel:"]'));
+    }
+
+    public function testHiddenProductOrCategoryKeepsOldUrlAlive(): void
+    {
+        $chaises = $this->category('Chaises', 1);
+        $hidden = $this->product($chaises, 'Chaise ancienne', [1 => 300], visible: false);
+        $this->product($chaises, 'Chaise Napoléon', [1 => 300]);
+        $archives = $this->category('Archives', 2, visible: false);
+        $archived = $this->product($archives, 'Banc', [1 => 500]);
+
+        $crawler = $this->client->request('GET', '/location/chaises/'.$hidden->getSlug());
+        self::assertResponseStatusCodeSame(200);
+        self::assertSelectorTextContains('main', "Ce produit n'est plus proposé");
+        self::assertSame(['Chaise Napoléon'], $this->names($crawler));
+        self::assertCount(0, $crawler->filter('.price-tiers'));
+
+        $crawler = $this->client->request('GET', '/location/archives/'.$archived->getSlug());
+        self::assertResponseStatusCodeSame(200);
+        self::assertSelectorTextContains('main', "Ce produit n'est plus proposé");
+        self::assertSame([], $this->names($crawler));
+        self::assertCount(0, $crawler->filter('.price-tiers'));
+    }
+
+    public function testWrongCategoryRedirectsAndUnknownProductIs404(): void
+    {
+        $chaises = $this->category('Chaises', 1);
+        $this->category('Tables', 2);
+        $product = $this->product($chaises, 'Chaise Napoléon', [1 => 300]);
+
+        $this->client->request('GET', '/location/tables/'.$product->getSlug());
+        self::assertResponseStatusCodeSame(301);
+        self::assertResponseRedirects('/location/chaises/'.rawurlencode($product->getSlug()));
+
+        $this->client->request('GET', '/location/inconnue/'.$product->getSlug());
+        self::assertResponseStatusCodeSame(301);
+
+        $this->client->request('GET', '/location/chaises/inconnu');
+        self::assertResponseStatusCodeSame(404);
+    }
+
+    public function testColorSwatches(): void
+    {
+        $product = $this->product($this->category('Chaises', 1), 'Chaise Napoléon', [1 => 300], colors: ['Blanc', 'Or'], photo: true);
+        [$white, $gold] = $product->getColors()->getValues();
+        $gold->setHex('#C9A13B');
+        $photo = new ProductPhoto();
+        $photo->setFilename('or.jpg');
+        $photo->setAlt('Chaise Napoléon dorée');
+        $photo->setColor($gold);
+        $product->addPhoto($photo);
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/location/chaises/'.$product->getSlug());
+
+        $swatches = $crawler->filter('.color-picker button.swatch');
+        self::assertSame(['true', 'false'], $swatches->each(fn (Crawler $b) => $b->attr('aria-pressed')));
+        self::assertSame(['Blanc', 'Or'], $swatches->each(fn (Crawler $b) => $b->text()));
+        self::assertSame((string) $gold->getId(), $swatches->eq(1)->attr('data-color-id'));
+        self::assertSelectorTextSame('[data-color-picker-target="name"]', 'Blanc');
+        // Photos rattachées à leur coloris pour le filtre de la galerie
+        self::assertSame(['', (string) $gold->getId()], $crawler->filter('[data-gallery-target="item"]')->each(fn (Crawler $li) => $li->attr('data-color')));
+        self::assertNotSame((string) $white->getId(), $crawler->filter('[data-gallery-target="item"]')->eq(1)->attr('data-color'));
+    }
+
+    public function testVideoFacadesLoadNoThirdPartyBeforeClick(): void
+    {
+        $chaises = $this->category('Chaises', 1);
+        $youtube = $this->product($chaises, 'Chaise YouTube', [1 => 300], photo: true);
+        $youtube->setVideoUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+        $instagram = $this->product($chaises, 'Chaise Instagram', [1 => 300]);
+        $instagram->setVideoUrl('https://www.instagram.com/reel/abc123/');
+        $file = $this->product($chaises, 'Chaise fichier', [1 => 300]);
+        $file->setVideoFile('video.mp4');
+        $this->em->flush();
+
+        $crawler = $this->client->request('GET', '/location/chaises/'.$youtube->getSlug());
+        $html = (string) $this->client->getResponse()->getContent();
+        self::assertCount(0, $crawler->filter('iframe, script[src*="youtube"]'));
+        self::assertStringNotContainsString('youtube-nocookie.com', $html, 'lecteur chargé seulement au clic (JS)');
+        $facade = $crawler->filter('.video-facade');
+        self::assertSame('dQw4w9WgXcQ', $facade->attr('data-video-facade-id-value'));
+        self::assertSame('video-facade#play', $facade->attr('data-action'));
+        self::assertStringContainsString('Vidéo', $facade->text());
+        self::assertSelectorTextSame('.product-video__note', 'La vidéo est fournie par YouTube');
+
+        $crawler = $this->client->request('GET', '/location/chaises/'.$instagram->getSlug());
+        $facade = $crawler->filter('.video-facade');
+        self::assertSame(['https://www.instagram.com/reel/abc123/', '_blank', null], [$facade->attr('href'), $facade->attr('target'), $facade->attr('data-controller')]);
+        self::assertCount(0, $crawler->filter('iframe, script[src*="instagram"]'));
+
+        // Fichier absent du disque : aucun lecteur
+        $crawler = $this->client->request('GET', '/location/chaises/'.$file->getSlug());
+        self::assertCount(0, $crawler->filter('video'));
+
+        $path = static::getContainer()->getParameter('app.upload_dir').'/video.mp4';
+        $fs = new \Symfony\Component\Filesystem\Filesystem();
+        $fs->dumpFile($path, 'mp4');
+        try {
+            $crawler = $this->client->request('GET', '/location/chaises/'.$file->getSlug());
+            $video = $crawler->filter('video');
+            self::assertSame('none', $video->attr('preload'));
+            $this->client->request('GET', $video->attr('src'));
+            self::assertResponseIsSuccessful();
+            self::assertResponseHeaderSame('Content-Type', 'video/mp4');
+
+            // Autre catégorie dans l'URL de la vidéo : 404
+            $this->client->request('GET', str_replace('/chaises/', '/tables/', $video->attr('src')));
+            self::assertResponseStatusCodeSame(404);
+
+            static::getContainer()->get(Connection::class)->executeStatement('UPDATE product SET visible = 0 WHERE id = ?', [$file->getId()]);
+            $this->client->request('GET', $video->attr('src'));
+            self::assertResponseStatusCodeSame(404);
+        } finally {
+            $fs->remove($path);
+        }
+    }
+
+    public function testPracticalInfoHidesEmptyOrInvalidSettings(): void
+    {
+        $db = static::getContainer()->get(Connection::class);
+        $db->executeStatement("UPDATE setting SET value = '150 €' WHERE name = 'deposit_amount'");
+        $db->executeStatement("UPDATE setting SET value = '' WHERE name IN ('delivery_min_chairs', 'depot_city')");
+        try {
+            $product = $this->product($this->category('Chaises', 1), 'Chaise Napoléon', [1 => 300]);
+            $crawler = $this->client->request('GET', '/location/chaises/'.$product->getSlug());
+            $info = $crawler->filter('.info-block dl > div')->each(fn (Crawler $row) => [$row->filter('dt')->text(), $row->filter('dd')->text()]);
+            self::assertSame(['Caution', 'Montant indiqué dans votre devis'], $info[0]);
+            self::assertSame(['Retrait et retour', 'Sur un créneau choisi dans votre demande.'], $info[2]);
+            self::assertSame(['Livraison', "1\u{A0}€ / km par la route, 70 km max"], $info[3]);
+
+            $db->executeStatement("UPDATE setting SET value = '' WHERE name IN ('delivery_price_per_km', 'delivery_max_km')");
+            $crawler = $this->client->request('GET', '/location/chaises/'.$product->getSlug());
+            self::assertNotContains('Livraison', $crawler->filter('.info-block dt')->each(fn (Crawler $dt) => $dt->text()));
+        } finally {
+            $db->executeStatement("UPDATE setting SET value = CASE name WHEN 'delivery_price_per_km' THEN '100' WHEN 'delivery_min_chairs' THEN '80' WHEN 'delivery_max_km' THEN '70' ELSE 'Bassens' END WHERE name IN ('delivery_price_per_km', 'delivery_min_chairs', 'delivery_max_km', 'depot_city')");
+        }
+    }
+
     /** @return list<string> */
     private function names(Crawler $crawler): array
     {
         return $crawler->filter('.product-card__name')->each(fn (Crawler $n) => $n->text());
     }
 
-    private function category(string $name, int $position, bool $visible = true): Category
+    private function category(string $name, int $position, bool $visible = true, PricingType $type = PricingType::Other): Category
     {
         $category = new Category();
         $category->setName($name);
         $category->initSlug(mb_strtolower($name));
         $category->setPosition($position);
-        $category->setPricingType(PricingType::Other);
+        $category->setPricingType($type);
         $category->setVisible($visible);
         $this->em->persist($category);
         $this->em->flush();

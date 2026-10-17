@@ -58,8 +58,8 @@ class ProductRepository extends ServiceEntityRepository
     public function findPublic(?Category $category, array $filters, string $sort, int $limit): Paginator
     {
         $qb = $this->publicQuery($category)
-            ->addSelect('t', 'ph')
-            // Prix « dès » et photo principale sans requête par produit
+            ->addSelect('c', 't', 'ph')
+            // Catégorie (lien de la carte), prix « dès » et photo principale sans requête par produit
             ->leftJoin('p.priceTiers', 't')
             ->leftJoin('p.photos', 'ph')
             ->setMaxResults($limit);

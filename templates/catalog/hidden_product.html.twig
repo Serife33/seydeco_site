@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }} — Seydeco{% endblock %}
+
+{% block body %}
+    {% set category = product.category %}
+    <div class="container catalog-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Location', url: path('catalog_index')}, {label: category.name, url: path('catalog_category', {slug: category.slug})}, {label: product.name}]} only %}
+        <h1>{{ product.name }}</h1>
+        <p>Ce produit n'est plus proposé.</p>
+        {% if products|length %}
+            <h2>Dans la même catégorie</h2>
+            <ul class="product-grid">
+                {% for product in products %}
+                    {% include 'catalog/_product_card.html.twig' with {lazy: loop.index > 4} %}
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p><a href="{{ path('catalog_index') }}">Voir le catalogue</a></p>
+        {% endif %}
+    </div>
+{% endblock %}
