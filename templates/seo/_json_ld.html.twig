@@ -1,0 +1,2 @@
+{# JSON_HEX_TAG : un « </script> » saisi dans un contenu ne peut pas fermer la balise #}
+<script type="application/ld+json">{{ data|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_UNESCAPED_SLASHES') b-or constant('JSON_UNESCAPED_UNICODE'))|raw }}</script>

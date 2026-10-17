@@ -1,6 +1,9 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ pack.name }} en location — Seydeco{% endblock %}
+{% block title %}{{ pack.name }} — pack en location | Seydeco{% endblock %}
+{% set description = pack.description|trim ?: 'Pack ' ~ pack.name ~ ' en location chez Seydeco : ' ~ items|map(i => i.product.name ~ ' × ' ~ i.qty)|join(', ') ~ '.' %}
+{% set og_image = pack.photo|imagine_filter('product_800') %}
+{% set whatsapp_message = 'Bonjour, j\'ai une question sur le pack ' ~ pack.name %}
 
 {# Page d'un pack (story 1.14) : produits visibles, quantités proposées ajustables, « Retirer », puis ajout éclaté en lignes produit.
    Prix unitaires calculés par PricingCalculator ; le navigateur ne fait que choisir parmi les paliers rendus. Aucune mention de stock. #}

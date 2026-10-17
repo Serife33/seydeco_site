@@ -1,6 +1,8 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Catalogue de location — Seydeco{% endblock %}
+{% block title %}Catalogue de location | Seydeco{% endblock %}
+{% set description = categories ? 'Matériel de réception à louer : ' ~ categories|map(c => c.name)|join(', ') ~ '. Prix dégressifs selon la quantité.' : 'Catalogue de location de matériel de réception Seydeco.' %}
+{% set og_image = packs ? (packs|first).photo|imagine_filter('product_800') : null %}
 
 {% block body %}
     <div class="container catalog-page">

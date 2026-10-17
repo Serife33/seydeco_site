@@ -134,21 +134,6 @@ a { color: var(--ink); }
 }
 .skip-link:focus { top: var(--space-4); }
 
-.site-header {
-    border-bottom: 1px solid var(--hairline);
-    padding: var(--space-6) 0;
-}
-.wordmark {
-    font-family: var(--font-display);
-    font-size: 24px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    min-height: var(--target-min);
-}
-
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -159,27 +144,99 @@ a { color: var(--ink); }
     white-space: nowrap;
 }
 
-/* En-tête provisoire (remplacé à la story 2.1) : marque, lien Catalogue, recherche */
-.site-header__inner {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-3) var(--space-6);
+/* En-tête (UX-DR9/10) : fin, filet hairline ; non collant sur desktop, réaffiché en remontant sur mobile */
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--surface);
+    border-bottom: 1px solid var(--hairline);
+    padding: var(--space-2) 0;
+    transition: transform 0.2s ease;
 }
-.site-nav a {
+.site-header.is-hidden { transform: translateY(-100%); }
+.site-header__inner { display: flex; align-items: center; gap: var(--space-3); }
+.site-header__menu, .site-header__tools { flex: 1 1 0; }
+.site-header__tools { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-4); }
+.site-header__menu, .mobile-menu__close {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.site-header__menu { justify-content: flex-start; }
+.site-header__quote {
     display: inline-flex;
     align-items: center;
     min-height: var(--target-min);
     font-size: 13px;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     text-decoration: none;
+    white-space: nowrap;
 }
-.site-search {
+.site-header .site-nav, .site-header__tools .site-search, .site-header__contacts { display: none; }
+
+.brand { display: inline-flex; align-items: center; gap: var(--space-3); min-height: var(--target-min); text-decoration: none; }
+/* Monogramme rond provisoire « S » (seule forme ronde avec les pastilles de coloris) */
+.monogram {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 3px var(--surface), inset 0 0 0 4px var(--ink);
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 1;
+}
+.wordmark, .wordmark--compact {
+    font-family: var(--font-display);
+    font-size: 20px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.site-nav__list, .mobile-menu__list { display: flex; margin: 0; padding: 0; list-style: none; }
+.site-nav__list { gap: var(--space-6); }
+.site-nav a, .mobile-menu__list a { display: inline-flex; align-items: center; min-height: var(--target-min); text-decoration: none; }
+.site-nav a { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; }
+.site-nav a[aria-current], .mobile-menu__list a[aria-current] { color: var(--gold); }
+
+/* Menu mobile : panneau plein écran blanc, entrées headline-md-mobile, contacts en pied */
+.mobile-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
     display: flex;
-    flex: 1 1 100%;
-    min-width: 0;
+    flex-direction: column;
+    gap: var(--space-6);
+    overflow-y: auto;
+    padding: var(--space-2) var(--gutter) var(--space-8);
+    background: var(--surface);
 }
+.mobile-menu[hidden] { display: none; }
+.mobile-menu__close { align-self: flex-start; }
+.mobile-menu__list { flex-direction: column; gap: var(--space-2); }
+.mobile-menu__list a { font-family: var(--font-display); font-size: 22px; line-height: 1.35; letter-spacing: 0.04em; }
+.mobile-menu__contacts { margin-top: auto; padding-top: var(--space-6); border-top: 1px solid var(--hairline); }
+body.has-open-panel { overflow: hidden; }
+
+.site-search { display: flex; min-width: 0; }
 .site-search input {
     flex: 1;
     min-width: 0;
@@ -191,9 +248,62 @@ a { color: var(--ink); }
     color: var(--ink);
 }
 .site-search button { border-left: 0; }
-@media (min-width: 768px) {
-    .site-search { flex: 0 1 360px; margin-left: auto; }
+
+/* Boutons contact (UX-DR12) : icône trait 20px, cible 44px, libellé visible */
+.contact-buttons { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); }
+.contact-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    min-width: var(--target-min);
+    text-decoration: none;
+    white-space: nowrap;
 }
+.icon { flex: none; }
+
+@media (min-width: 1024px) {
+    .site-header { position: static; padding: var(--space-3) 0; transition: none; }
+    .site-header.is-hidden { transform: none; }
+    .site-header__menu, .mobile-menu { display: none; }
+    .site-header .site-nav, .site-header__tools .site-search, .site-header__contacts { display: flex; }
+    .site-header__tools .site-search { flex: 0 1 280px; }
+    .site-header .monogram { width: 40px; height: 40px; font-size: 22px; }
+    .site-header .wordmark { font-size: 24px; letter-spacing: 0.32em; }
+    .site-header__tools { flex: 0 1 auto; margin-left: auto; }
+    .site-header:not(.site-header--home) .site-nav { margin-left: var(--space-6); }
+    /* Accueil : contacts · monogramme + wordmark · recherche + « Mon devis », navigation centrée dessous */
+    .site-header--home .site-header__inner {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        grid-template-areas: 'contacts brand tools' 'nav nav nav';
+        row-gap: var(--space-2);
+    }
+    .site-header--home .site-header__contacts { grid-area: contacts; }
+    .site-header--home .brand { grid-area: brand; }
+    .site-header--home .site-header__tools { grid-area: tools; margin-left: 0; }
+    .site-header--home .site-nav { grid-area: nav; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .site-header { transition: none; }
+}
+
+/* Pied de page (UX-DR44) : fond cream-deep, métadonnées ink-muted */
+.site-footer { margin-top: var(--space-16); padding: var(--space-12) 0 var(--space-8); background: var(--cream-deep); }
+.site-footer__inner { display: grid; gap: var(--space-8); }
+.site-footer .wordmark--compact { margin: 0 0 var(--space-3); }
+.site-footer address { font-style: normal; }
+.site-footer address p { margin: 0 0 var(--space-2); }
+.site-footer__social { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-6); margin: 0; padding: 0; list-style: none; }
+.site-footer__social a { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); text-decoration: none; }
+.site-footer__meta { margin: 0; font-size: 14px; color: var(--ink-muted); }
+@media (min-width: 768px) {
+    .site-footer__inner { grid-template-columns: 1fr auto; }
+    .site-footer__meta { grid-column: 1 / -1; }
+}
+
+/* « Épingler » (Pinterest) : simple lien, aucun script */
+.pin-link { display: inline-flex; align-items: center; gap: var(--space-2); min-height: var(--target-min); font-size: 14px; }
 
 /* Boutons */
 .button-primary, .button-secondary, .site-search button {

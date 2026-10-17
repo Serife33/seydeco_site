@@ -1,6 +1,14 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ product.name }} en location — Seydeco{% endblock %}
+{% set from = from_price(product) %}
+{% set first = product.photos|first %}
+{% block title %}{{ product.name }} — location{% if from is not null %} dès {{ from|money }}{% endif %} | Seydeco{% endblock %}
+{% set description = product.description|trim ?: product.name ~ ' en location' ~ (from is not null ? ' dès ' ~ from|money : '') ~ ' chez Seydeco' ~ (product.dimensions ? ' (' ~ product.dimensions ~ ')' : '') ~ ', pour vos mariages et événements.' %}
+{% set og_type = 'product' %}
+{% set og_price = from %}
+{% set og_image = first ? first.filename|imagine_filter('product_800') : null %}
+{% set whatsapp_message = 'Bonjour, j\'ai une question sur ' ~ product.name %}
+{% block structured_data %}{{ parent() }}{% include 'seo/product.html.twig' %}{% endblock %}
 
 {% block body %}
     {% set photos = product.photos %}
@@ -18,6 +26,10 @@
                              srcset="{{ first.filename|imagine_filter('product_400') }} 400w, {{ first.filename|imagine_filter('product_800') }} 800w"
                              sizes="(min-width: 1024px) 600px, 100vw" width="800" height="800" alt="{{ first.alt }}" fetchpriority="high">
                         <span class="visually-hidden">(agrandir)</span>
+                    </a>
+                    {# Lien de partage simple : aucun script Pinterest chargé (NFR-11) #}
+                    <a class="pin-link" href="https://www.pinterest.com/pin/create/button/?{{ {url: canonical, media: og_image, description: description}|url_encode }}" target="_blank" rel="noopener">
+                        {% include 'layout/_icon.html.twig' with {name: 'pinterest', size: 18} only %}Épingler<span class="visually-hidden"> sur Pinterest (nouvel onglet)</span>
                     </a>
                     {% if photos|length > 1 %}
                         <ul class="product-gallery__thumbs">

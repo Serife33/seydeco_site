@@ -1,0 +1,10 @@
+{# LocalBusiness sur toutes les pages publiques (FR-33) : valeurs lues dans les Réglages, champs vides omis #}
+{% set contact = site_contact() %}
+{% set data = {'@context': 'https://schema.org', '@type': 'LocalBusiness', name: 'Seydeco', url: url('app_home')} %}
+{% if contact.phoneNumber %}{% set data = data|merge({telephone: '+' ~ contact.phoneNumber}) %}{% endif %}
+{% if contact.address %}{% set data = data|merge({address: contact.address|split("\n")|map(l => l|trim)|filter(l => l)|join(', ')}) %}{% endif %}
+{% if contact.maxKm %}
+    {% set data = data|merge({areaServed: 'Dans un rayon de ' ~ contact.maxKm ~ ' km' ~ (contact.depotCity ? ' autour de ' ~ contact.depotCity : '')}) %}
+{% endif %}
+{% if contact.social %}{% set data = data|merge({sameAs: contact.social|reduce((links, link) => links|merge([link]), [])}) %}{% endif %}
+{% include 'seo/_json_ld.html.twig' with {data: data} only %}

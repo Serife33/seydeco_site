@@ -1,6 +1,9 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ category.name }} — Seydeco{% endblock %}
+{% block title %}{{ category.name }} n'est plus proposée | Seydeco{% endblock %}
+{# Ancienne URL d'un élément masqué : page conservée, non indexée, sans JSON-LD produit (AD-23) #}
+{% set noindex = true %}
+{% set description = 'Cette catégorie « ' ~ category.name ~ ' » n\'est plus proposée chez Seydeco. Découvrez le reste du catalogue de location.' %}
 
 {% block body %}
     <div class="container catalog-page">

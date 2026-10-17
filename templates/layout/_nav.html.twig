@@ -1,0 +1,11 @@
+{# Navigation principale (UX-DR11) : Catalogue · Réalisations · Comment ça marche · À propos · Contact.
+   Une entrée n'est ajoutée ici qu'avec la story qui crée sa page (aucun lien mort). #}
+{% set route = app.request.attributes.get('_route')|default('') %}
+{% set entries = [
+    {label: 'Catalogue', route: 'catalog_index', section: 'catalog_'},
+] %}
+<ul class="{{ class }}">
+    {% for entry in entries %}
+        <li><a href="{{ path(entry.route) }}"{% if route == entry.route %} aria-current="page"{% elseif route starts with entry.section %} aria-current="true"{% endif %}>{{ entry.label }}</a></li>
+    {% endfor %}
+</ul>

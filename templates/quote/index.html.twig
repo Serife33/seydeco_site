@@ -1,6 +1,7 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mon devis — Seydeco{% endblock %}
+{% block title %}{{ quoteOnline ? 'Mon devis' : 'Demander un devis' }} | Seydeco{% endblock %}
+{% set description = quoteOnline ? 'Votre sélection de matériel de réception Seydeco, prête pour votre demande de devis.' : 'Demandez votre devis de location de matériel de réception à Seydeco sur WhatsApp.' %}
 
 {% block body %}
     <div class="container catalog-page quote-page">

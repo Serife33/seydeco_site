@@ -1,6 +1,11 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Recherche{% if filters.q %} « {{ filters.q }} »{% endif %} — Seydeco{% endblock %}
+{% block title %}Recherche{% if filters.q %} « {{ filters.q }} »{% endif %} | Seydeco{% endblock %}
+{% set description = (filters.q ? 'Résultats pour « ' ~ filters.q ~ ' »' : 'Recherche') ~ ' dans le catalogue de location Seydeco : ' ~ total ~ ' produit' ~ (total > 1 ? 's' : '') ~ '.' %}
+{# Seule la recherche garde un paramètre dans son adresse canonique : les filtres et pages n'en ont pas #}
+{% set canonical = url('catalog_search', filters.q ? {q: filters.q} : {}) %}
+{# Résultats de recherche hors index : adresses en nombre illimité #}
+{% set noindex = true %}
 {% block search_value %}{{ filters.q }}{% endblock %}
 
 {% block body %}

@@ -47,9 +47,9 @@ final class CatalogTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(['Chaises', 'Tables'], $crawler->filter('.category-tile a')->each(fn (Crawler $a) => $a->text()));
         self::assertSame('/location/chaises', $crawler->filter('.category-tile a')->first()->attr('href'));
-        // En-tête : lien Catalogue et recherche
-        self::assertCount(1, $crawler->filter('header a[href="/location"]'));
-        self::assertCount(1, $crawler->filter('header form[action="/recherche"] input[name="q"]'));
+        // En-tête : lien Catalogue (navigation desktop ; le menu mobile le répète) et recherche
+        self::assertCount(1, $crawler->filter('header .site-nav a[href="/location"]'));
+        self::assertCount(1, $crawler->filter('header .site-header__tools form[action="/recherche"] input[name="q"]'));
     }
 
     public function testCategoryPageShowsVisibleProductsWithFromPrice(): void

@@ -1,9 +1,36 @@
 <!DOCTYPE html>
 <html lang="fr">
+    {#
+        Chaque page complète le bloc SEO unique (AD-23) avec : le bloc `title`, et en variables `description`,
+        `og_image` (URL LiipImagine absolue), `og_type`, `og_price` (centimes, Rich Pins), `canonical`, `noindex`, `whatsapp_message` ;
+        le bloc `structured_data` ajoute ses JSON-LD (templates/seo/) au LocalBusiness.
+    #}
+    {% set contact = site_contact() %}
+    {% set current_route = app.request.attributes.get('_route') %}
+    {% set canonical = canonical|default(current_route ? url(current_route, app.request.attributes.get('_route_params')) : null) %}
+    {% set description = description|default('Seydeco loue du matériel de réception (chaises, tables, vaisselle, décoration) pour vos mariages et événements.')|replace({"\r": '', "\n": ' '})|trim %}
+    {% set description = description|length > 160 ? description|slice(0, 157)|trim ~ '…' : description %}
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}Seydeco — Location de matériel de réception{% endblock %}</title>
+        {% block seo %}
+            <title>{% block title %}Seydeco — Location de matériel de réception{% endblock %}</title>
+            <meta name="description" content="{{ description }}">
+            {% if noindex|default(false) or not contact.indexable %}<meta name="robots" content="noindex">{% endif %}
+            {% if canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
+            <meta property="og:site_name" content="Seydeco">
+            <meta property="og:locale" content="fr_FR">
+            <meta property="og:type" content="{{ og_type|default('website') }}">
+            <meta property="og:title" content="{{ block('title') }}">
+            <meta property="og:description" content="{{ description }}">
+            {% if canonical %}<meta property="og:url" content="{{ canonical }}">{% endif %}
+            {% if og_image|default(null) %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+            {% if og_price|default(null) is not null %}
+                <meta property="product:price:amount" content="{{ (og_price / 100)|number_format(2, '.', '') }}">
+                <meta property="product:price:currency" content="EUR">
+            {% endif %}
+            {% block structured_data %}{% include 'seo/local_business.html.twig' %}{% endblock %}
+        {% endblock %}
         <link rel="preload" href="{{ asset('fonts/jost-latin-400-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
         {% block stylesheets %}
         {% endblock %}
@@ -14,25 +41,71 @@
     </head>
     <body data-controller="selection" data-selection-quote-url-value="{{ path('quote') }}">
         <a class="skip-link" href="#contenu">Aller au contenu</a>
-        <header class="site-header">
+        {% set home = current_route == 'app_home' %}
+        {% set wa_message = whatsapp_message|default('Bonjour, j\'ai une question sur Seydeco') %}
+        {# Non collant sur desktop ; sur mobile, se masque en descendant et réapparaît en remontant (contrôleur menu) #}
+        <header class="site-header{{ home ? ' site-header--home' }}" data-controller="menu" data-action="scroll@window->menu#scroll">
             <div class="container site-header__inner">
-                <a class="wordmark" href="{{ path('app_home') }}">Seydeco</a>
-                <nav class="site-nav" aria-label="Navigation principale">
-                    <a href="{{ path('catalog_index') }}">Catalogue</a>
+                <button type="button" class="site-header__menu" aria-expanded="false" aria-controls="menu-mobile" data-menu-target="toggle" data-action="menu#open">
+                    {% include 'layout/_icon.html.twig' with {name: 'menu'} only %}<span>Menu</span>
+                </button>
+                {% if home %}<div class="site-header__contacts">{% include 'layout/_contact_buttons.html.twig' with {message: wa_message} %}</div>{% endif %}
+                <a class="brand" href="{{ path('app_home') }}">
+                    {# Monogramme provisoire du canevas, en attendant le vrai logo #}
+                    <span class="monogram" aria-hidden="true">S</span>
+                    <span class="wordmark">Seydeco</span>
+                </a>
+                {% if not home %}<nav class="site-nav" aria-label="Navigation principale">{% include 'layout/_nav.html.twig' with {class: 'site-nav__list'} %}</nav>{% endif %}
+                <div class="site-header__tools">
+                    <form class="site-search" role="search" method="get" action="{{ path('catalog_search') }}">
+                        <label class="visually-hidden" for="site-search-q">Rechercher dans le catalogue</label>
+                        <input type="search" id="site-search-q" name="q" value="{% block search_value %}{% endblock %}" placeholder="Rechercher (chaise, nappe…)" maxlength="100">
+                        <button type="submit">Rechercher</button>
+                    </form>
+                    {% if not home %}<div class="site-header__contacts">{% include 'layout/_contact_buttons.html.twig' with {message: wa_message} %}</div>{% endif %}
                     {% if quote_online() %}
                         {# « Mon devis (n) » rempli par le navigateur : le HTML servi (cacheable) ne contient ni sélection ni compteur #}
-                        <a href="{{ path('quote') }}" data-selection-target="counter" hidden></a>
+                        <a class="site-header__quote" href="{{ path('quote') }}" data-selection-target="counter" hidden></a>
                     {% endif %}
-                </nav>
+                </div>
+                {% if home %}<nav class="site-nav" aria-label="Navigation principale">{% include 'layout/_nav.html.twig' with {class: 'site-nav__list'} %}</nav>{% endif %}
+            </div>
+            {# Menu mobile (< 1024 px) : panneau plein écran, focus piégé, Échap ou « Fermer » rend le focus à « Menu » #}
+            <div class="mobile-menu" id="menu-mobile" aria-label="Menu" data-menu-target="panel" hidden>
+                <button type="button" class="mobile-menu__close" data-action="menu#close">
+                    {% include 'layout/_icon.html.twig' with {name: 'close'} only %}<span>Fermer</span>
+                </button>
+                <nav aria-label="Navigation principale (menu)">{% include 'layout/_nav.html.twig' with {class: 'mobile-menu__list'} %}</nav>
                 <form class="site-search" role="search" method="get" action="{{ path('catalog_search') }}">
-                    <label class="visually-hidden" for="site-search-q">Rechercher dans le catalogue</label>
-                    <input type="search" id="site-search-q" name="q" value="{% block search_value %}{% endblock %}" placeholder="Rechercher (chaise, nappe…)" maxlength="100">
+                    <label class="visually-hidden" for="menu-search-q">Rechercher dans le catalogue</label>
+                    <input type="search" id="menu-search-q" name="q" value="{{ block('search_value') }}" placeholder="Rechercher (chaise, nappe…)" maxlength="100">
                     <button type="submit">Rechercher</button>
                 </form>
+                <div class="mobile-menu__contacts">{% include 'layout/_contact_buttons.html.twig' with {message: wa_message} %}</div>
             </div>
         </header>
         <main id="contenu" tabindex="-1">
             {% block body %}{% endblock %}
         </main>
+        <footer class="site-footer">
+            <div class="container site-footer__inner">
+                <div class="site-footer__contact">
+                    <p class="wordmark wordmark--compact">Seydeco</p>
+                    <address>
+                        {% if contact.address %}<p>{{ contact.address|nl2br }}</p>{% endif %}
+                        {% include 'layout/_contact_buttons.html.twig' with {message: wa_message} %}
+                    </address>
+                </div>
+                {% if contact.social %}
+                    {# Liens simples : aucun script ni widget des réseaux (NFR-11) #}
+                    <ul class="site-footer__social" aria-label="Seydeco sur les réseaux">
+                        {% for network, link in contact.social %}
+                            <li><a href="{{ link }}" target="_blank" rel="noopener">{% include 'layout/_icon.html.twig' with {name: network|lower, size: 18} only %}{{ network }}<span class="visually-hidden"> (nouvel onglet)</span></a></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                <p class="site-footer__meta">© {{ 'now'|date('Y') }} Seydeco{% if contact.siret %} · SIRET {{ contact.siret }}{% endif %}</p>
+            </div>
+        </footer>
     </body>
 </html>

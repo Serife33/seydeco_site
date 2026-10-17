@@ -1,0 +1,9 @@
+{# Product sur une fiche visible (FR-33) : prix « dès » en EUR, jamais de disponibilité ni de stock (UX-DR74) #}
+{% set from = from_price(product) %}
+{% set first = product.photos|first %}
+{% set data = {'@context': 'https://schema.org', '@type': 'Product', name: product.name, url: canonical, description: description} %}
+{% if first %}{% set data = data|merge({image: [first.filename|imagine_filter('product_800')]}) %}{% endif %}
+{% if from is not null %}
+    {% set data = data|merge({offers: {'@type': 'Offer', price: (from / 100)|number_format(2, '.', ''), priceCurrency: 'EUR', url: canonical}}) %}
+{% endif %}
+{% include 'seo/_json_ld.html.twig' with {data: data} only %}

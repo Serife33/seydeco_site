@@ -39,4 +39,31 @@ final class SettingsProviderTest extends TestCase
 
         self::assertSame($expected, (new SettingsProvider($em))->quoteOnline());
     }
+
+    public function testPhoneFallsBackToWhatsappAndSearchEnginesClosedByDefault(): void
+    {
+        $provider = $this->provider([SettingsProvider::WHATSAPP_PHONE => '06 12 34 56 78']);
+        self::assertSame(['06 12 34 56 78', '33612345678', false], [$provider->phoneDisplay(), $provider->phoneNumber(), $provider->searchEnginesOpen()]);
+
+        $provider = $this->provider([SettingsProvider::WHATSAPP_PHONE => '06 12 34 56 78', SettingsProvider::PHONE => '05 56 00 00 00', SettingsProvider::SEARCH_ENGINES_OPEN => '1']);
+        self::assertSame(['05 56 00 00 00', '33556000000', true], [$provider->phoneDisplay(), $provider->phoneNumber(), $provider->searchEnginesOpen()]);
+    }
+
+    public function testSocialLinksKeepFilledOnesInFooterOrder(): void
+    {
+        $provider = $this->provider(['pinterest_url' => 'https://pin.it/x', 'youtube_url' => ' ', 'instagram_url' => 'https://instagram.com/x']);
+
+        self::assertSame(['Instagram' => 'https://instagram.com/x', 'Pinterest' => 'https://pin.it/x'], $provider->socialLinks());
+    }
+
+    /** @param array<string, string> $values */
+    private function provider(array $values): SettingsProvider
+    {
+        $repository = $this->createStub(EntityRepository::class);
+        $repository->method('findAll')->willReturn(array_map(fn (string $name) => new Setting($name, $values[$name]), array_keys($values)));
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($repository);
+
+        return new SettingsProvider($em);
+    }
 }

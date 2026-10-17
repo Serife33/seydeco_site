@@ -1,0 +1,17 @@
+{# Boutons contact (UX-DR12) : WhatsApp pré-rempli selon la page et appel ; absents tant que le numéro n'est pas renseigné. Jamais de bulle flottante. #}
+{% if contact.whatsapp or contact.phoneNumber %}
+    <div class="contact-buttons">
+        {% if contact.whatsapp %}
+            <a class="contact-button" href="https://wa.me/{{ contact.whatsapp }}?text={{ message|url_encode }}" target="_blank" rel="noopener">
+                {% include 'layout/_icon.html.twig' with {name: 'whatsapp'} only %}
+                <span class="contact-button__label">WhatsApp</span><span class="visually-hidden"> (nouvel onglet)</span>
+            </a>
+        {% endif %}
+        {% if contact.phoneNumber %}
+            <a class="contact-button" href="tel:+{{ contact.phoneNumber }}">
+                {% include 'layout/_icon.html.twig' with {name: 'phone'} only %}
+                <span class="contact-button__label"><span class="visually-hidden">Appeler le </span>{{ contact.phone }}</span>
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
