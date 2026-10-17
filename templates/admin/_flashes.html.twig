@@ -1,0 +1,6 @@
+{% for message in app.flashes('success') %}
+    <p class="admin-notice" role="status">{{ message }}</p>
+{% endfor %}
+{% for message in app.flashes('error') %}
+    <p class="admin-error" role="alert">{{ message }}</p>
+{% endfor %}

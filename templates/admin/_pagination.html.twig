@@ -1,0 +1,11 @@
+{% if pages > 1 %}
+    <nav class="admin-pagination" aria-label="Pagination">
+        {% if page > 1 %}
+            <a class="admin-button admin-button--secondary" href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({page: page - 1})) }}">Précédent</a>
+        {% endif %}
+        <span>Page {{ page }} sur {{ pages }}</span>
+        {% if page < pages %}
+            <a class="admin-button admin-button--secondary" href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({page: page + 1})) }}">Suivant</a>
+        {% endif %}
+    </nav>
+{% endif %}

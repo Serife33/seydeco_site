@@ -1,0 +1,19 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = category.id ? 'Modifier la catégorie' : 'Ajouter une catégorie' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_category_index') }}">← Catégories</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+    {% if category.slug %}<p class="admin-field__help">Adresse : {{ category.slug }} (ne change pas)</p>{% endif %}
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        {{ form_rest(form) }}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}

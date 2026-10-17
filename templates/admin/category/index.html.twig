@@ -1,0 +1,54 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Catégories{% endblock %}
+
+{% block body %}
+    <div class="admin-head">
+        <h1 class="admin-title">Catégories</h1>
+        <a class="admin-button" href="{{ path('admin_category_new') }}">Ajouter une catégorie</a>
+    </div>
+    {{ include('admin/_flashes.html.twig') }}
+
+    {% set total = categories|length %}
+    {% if total == 0 %}
+        <p>Aucune catégorie.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for category in categories %}
+                {% set rank = offset + loop.index0 %}
+                {% set token = csrf_token('category' ~ category.id) %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_category_edit', {id: category.id}) }}">
+                        <span>
+                            <span class="admin-list__name">{{ category.name }}</span>
+                            <span class="admin-list__meta">{{ category.pricingType.label }}{% if not category.visible %} · <strong>Masquée</strong>{% endif %}</span>
+                        </span>
+                    </a>
+                    <div class="admin-list__actions">
+                        {% if rank > 0 %}
+                            <form method="post" action="{{ path('admin_category_move_up', {id: category.id}) }}">
+                                <input type="hidden" name="_token" value="{{ token }}">
+                                <input type="hidden" name="page" value="{{ page }}">
+                                <button class="admin-button admin-button--secondary admin-button--small" aria-label="Monter {{ category.name }}">Monter</button>
+                            </form>
+                        {% endif %}
+                        {% if rank < total - 1 %}
+                            <form method="post" action="{{ path('admin_category_move_down', {id: category.id}) }}">
+                                <input type="hidden" name="_token" value="{{ token }}">
+                                <input type="hidden" name="page" value="{{ page }}">
+                                <button class="admin-button admin-button--secondary admin-button--small" aria-label="Descendre {{ category.name }}">Descendre</button>
+                            </form>
+                        {% endif %}
+                        <form method="post" action="{{ path('admin_category_toggle', {id: category.id}) }}">
+                            <input type="hidden" name="_token" value="{{ token }}">
+                            <input type="hidden" name="page" value="{{ page }}">
+                            {% set action = category.visible ? 'Masquer' : 'Afficher à nouveau' %}
+                            <button class="admin-button admin-button--secondary admin-button--small" aria-label="{{ action }} {{ category.name }}">{{ action }}</button>
+                        </form>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+        {{ include('admin/_pagination.html.twig') }}
+    {% endif %}
+{% endblock %}

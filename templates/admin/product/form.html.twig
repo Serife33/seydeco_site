@@ -1,0 +1,64 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = product.id ? 'Modifier le produit' : 'Ajouter un produit' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_product_index') }}">← Produits</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+    {% if product.slug %}<p class="admin-field__help">Adresse : {{ product.slug }} (ne change pas) · créé le {{ product.createdAt|date('d/m/Y') }}</p>{% endif %}
+
+    {{ form_start(form, {attr: {
+        class: 'admin-form admin-form--sticky',
+        novalidate: 'novalidate',
+        'data-controller': 'unsaved-changes form-draft',
+        'data-form-draft-key-value': 'seydeco.draft.product.' ~ draft_key,
+    }}) }}
+        {{ form_errors(form) }}
+        <div class="admin-notice" role="status" hidden data-form-draft-notice>
+            <p>Votre saisie non enregistrée a été restaurée.</p>
+            <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="form-draft#discard">Ignorer</button>
+        </div>
+        <section class="admin-section" aria-labelledby="s-infos">
+            <h2 class="admin-title" id="s-infos">Infos</h2>
+            {{ form_row(form.name) }}
+            {{ form_row(form.category, {help: 'Le délai de remise en état vient de la catégorie.'}) }}
+            {{ form_row(form.dimensions) }}
+            {{ form_row(form.description) }}
+            {{ form_row(form.seats) }}
+            {{ form_row(form.styles) }}
+            {{ form_row(form.newStyle) }}
+            {{ form_row(form.eventTypes) }}
+            {{ form_row(form.newEventType) }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-min">
+            <h2 class="admin-title" id="s-min">Quantité minimale</h2>
+            {{ form_row(form.minQty) }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-stock">
+            <h2 class="admin-title" id="s-stock">Stock</h2>
+            {{ form_row(form.stock) }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-visibility">
+            <h2 class="admin-title" id="s-visibility">Visibilité</h2>
+            {% if product.id %}
+                <p>{{ product.visible ? 'Visible sur le site.' : 'Masqué : n\'apparaît plus sur le site.' }}</p>
+                {# Bouton du formulaire « product-visibility », placé hors de ce formulaire (pas d'imbrication) #}
+                <button type="submit" form="product-visibility" class="admin-button admin-button--secondary">{{ product.visible ? 'Masquer' : 'Afficher à nouveau' }}</button>
+            {% else %}
+                <p>Le produit sera visible dès l'enregistrement. Il pourra être masqué ensuite.</p>
+            {% endif %}
+        </section>
+        {{ form_rest(form) }}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+    {% if product.id %}
+        <form id="product-visibility" method="post" action="{{ path('admin_product_toggle', {id: product.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('product' ~ product.id) }}">
+            <input type="hidden" name="from" value="edit">
+        </form>
+    {% endif %}
+{% endblock %}
