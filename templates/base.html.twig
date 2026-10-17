@@ -12,13 +12,17 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body>
+    <body data-controller="selection" data-selection-quote-url-value="{{ path('quote') }}">
         <a class="skip-link" href="#contenu">Aller au contenu</a>
         <header class="site-header">
             <div class="container site-header__inner">
                 <a class="wordmark" href="{{ path('app_home') }}">Seydeco</a>
                 <nav class="site-nav" aria-label="Navigation principale">
                     <a href="{{ path('catalog_index') }}">Catalogue</a>
+                    {% if quote_online() %}
+                        {# « Mon devis (n) » rempli par le navigateur : le HTML servi (cacheable) ne contient ni sélection ni compteur #}
+                        <a href="{{ path('quote') }}" data-selection-target="counter" hidden></a>
+                    {% endif %}
                 </nav>
                 <form class="site-search" role="search" method="get" action="{{ path('catalog_search') }}">
                     <label class="visually-hidden" for="site-search-q">Rechercher dans le catalogue</label>

@@ -24,4 +24,19 @@ final class SettingsProviderTest extends TestCase
 
         self::assertSame($expected, (new SettingsProvider($em))->whatsappNumber());
     }
+
+    /** Désactivé par défaut (migration : « 0 ») ; seule la valeur « 1 » ouvre le devis en ligne. */
+    #[TestWith([null, false])]
+    #[TestWith(['0', false])]
+    #[TestWith(['', false])]
+    #[TestWith(['1', true])]
+    public function testQuoteOnline(?string $stored, bool $expected): void
+    {
+        $repository = $this->createStub(EntityRepository::class);
+        $repository->method('findAll')->willReturn(null === $stored ? [] : [new Setting(SettingsProvider::QUOTE_ONLINE, $stored)]);
+        $em = $this->createStub(EntityManagerInterface::class);
+        $em->method('getRepository')->willReturn($repository);
+
+        self::assertSame($expected, (new SettingsProvider($em))->quoteOnline());
+    }
 }

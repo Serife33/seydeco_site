@@ -1,0 +1,37 @@
+{# Ajout au devis (story 1.13), fiche (quantity: true) ou carte : le contrôleur selection écrit dans localStorage.
+   Devis en ligne désactivé : « Demander sur WhatsApp », message pré-rempli avec le nom et la quantité. #}
+{% set minQty = product.minQty ?: 1 %}
+{% set units = {chairs: ['chaise', 'chaises'], tables: ['table', 'tables']}[product.category.pricingType.value] ?? ['unité', 'unités'] %}
+{% set whatsapp = whatsapp_number() %}
+{% set message = 'Bonjour, je souhaite un devis pour : ' ~ product.name ~ ', quantité {qty}.' %}
+<form class="add-form{{ quantity ? '' : ' add-form--card' }}" novalidate data-action="submit->selection#add"
+      data-product-id="{{ product.id }}" data-min="{{ minQty }}" data-one="{{ units[0] }}" data-many="{{ units[1] }}">
+    {% if quantity %}
+        <div class="quantity">
+            <label class="label-caps" for="quantite">Quantité</label>
+            <div class="quantity__control">
+                <button type="button" class="quantity__step" data-action="selection#step" data-selection-step-param="-1" aria-label="Diminuer la quantité">−</button>
+                <input type="number" id="quantite" name="qty" value="{{ minQty }}" min="{{ minQty }}" step="1" inputmode="numeric" required
+                       aria-describedby="quantite-erreur" data-action="input->selection#quantity">
+                <button type="button" class="quantity__step" data-action="selection#step" data-selection-step-param="1" aria-label="Augmenter la quantité">+</button>
+            </div>
+            <p class="field-error" id="quantite-erreur" data-role="error" hidden></p>
+            {% if tiers %}
+                {# Palier atteint : repris des lignes du tableau déjà rendues, aucun prix calculé dans le navigateur #}
+                {% set tier = tiers|first %}
+                <p class="quantity__tier" data-role="tier" aria-live="polite">Palier appliqué : {{ tier.to is null ? tier.from ~ ' et plus' : tier.from ~ ' à ' ~ tier.to }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+    {% if quote_online() %}
+        {% if quantity %}
+            <button type="submit" class="button-primary">Ajouter à mon devis</button>
+        {% else %}
+            <button type="submit" class="button-secondary button-sm">Ajouter au devis<span class="visually-hidden"> : {{ product.name }}</span></button>
+        {% endif %}
+        <p class="add-confirm" data-role="confirm" aria-live="polite"></p>
+    {% elseif whatsapp %}
+        <a class="{{ quantity ? 'button-primary' : 'button-secondary button-sm' }}" data-role="whatsapp" data-number="{{ whatsapp }}" data-message="{{ message }}"
+           href="https://wa.me/{{ whatsapp }}?text={{ message|replace({'{qty}': minQty})|url_encode }}" target="_blank" rel="noopener">Demander sur WhatsApp<span class="visually-hidden"> : {{ product.name }} (nouvel onglet)</span></a>
+    {% endif %}
+</form>

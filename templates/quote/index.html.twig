@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon devis — Seydeco{% endblock %}
+
+{% block body %}
+    <div class="container catalog-page quote-page">
+        {% if quoteOnline %}
+            <h1>Mon devis</h1>
+            {# Rempli par le contrôleur selection à partir du navigateur ; le HTML servi ne contient aucune sélection #}
+            <p class="quote-page__storage-error" data-selection-target="storageError" hidden>Votre navigateur ne peut pas garder votre sélection.</p>
+            <turbo-frame id="mon-devis-lignes" target="_top" data-selection-target="lines" data-url="{{ path('quote_lines') }}" aria-busy="true"></turbo-frame>
+            <noscript><p>Activez JavaScript pour voir votre sélection, ou <a href="{{ path('catalog_index') }}">parcourez le catalogue</a>.</p></noscript>
+        {% else %}
+            {# Devis en ligne désactivé (vitrine) : la demande passe par WhatsApp #}
+            <h1>Demander un devis</h1>
+            {% if whatsapp %}
+                <p>Dites-nous ce qu'il vous faut, nous vous répondons avec un devis.</p>
+                <p><a class="button-primary" href="https://wa.me/{{ whatsapp }}?text={{ 'Bonjour, je souhaite un devis.'|url_encode }}" target="_blank" rel="noopener">Demander sur WhatsApp</a></p>
+            {% endif %}
+            <p><a href="{{ path('catalog_index') }}">Voir le catalogue</a></p>
+        {% endif %}
+    </div>
+{% endblock %}

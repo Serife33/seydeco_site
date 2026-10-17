@@ -16,6 +16,8 @@ final class SettingsProvider
     public const string DELIVERY_MIN_CHAIRS = 'delivery_min_chairs';
     public const string DELIVERY_MAX_KM = 'delivery_max_km';
     public const string DEPOT_CITY = 'depot_city';
+    /** « 1 » = devis en ligne ouvert ; sinon « Demander sur WhatsApp » à la place (story 1.13). */
+    public const string QUOTE_ONLINE = 'quote_online';
 
     /** @var array<string, string>|null */
     private ?array $values = null;
@@ -34,6 +36,11 @@ final class SettingsProvider
         }
 
         return $this->values[$name] ?? '';
+    }
+
+    public function quoteOnline(): bool
+    {
+        return '1' === $this->get(self::QUOTE_ONLINE);
     }
 
     /** Numéro au format international sans « + » pour wa.me (06 12 34 56 78 → 33612345678) ; vide si non renseigné. */

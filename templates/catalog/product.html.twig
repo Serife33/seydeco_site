@@ -100,6 +100,8 @@
                     </div>
                 {% endif %}
 
+                {% include 'catalog/_add_to_quote.html.twig' with {quantity: true} %}
+
                 {% include 'catalog/_contact.html.twig' %}
 
                 {% if product.dimensions or product.description %}

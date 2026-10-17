@@ -7,7 +7,8 @@
         </thead>
         <tbody>
             {% for tier in tiers %}
-                <tr>
+                {# Palier atteint surligné ; suivi en direct par le contrôleur selection #}
+                <tr data-from="{{ tier.from }}" data-to="{{ tier.to }}"{% if loop.first %} class="is-reached"{% endif %}>
                     <th scope="row">{{ tier.to is null ? tier.from ~ ' et plus' : tier.from ~ ' à ' ~ tier.to }}</th>
                     <td>{{ tier.price|money }}</td>
                 </tr>

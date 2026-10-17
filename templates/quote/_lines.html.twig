@@ -1,0 +1,33 @@
+{# Lignes de « Mon devis », chargées dans le cadre Turbo de la page (story 1.13 ; quantités modifiables et estimation : Epic 3) #}
+<turbo-frame id="mon-devis-lignes" target="_top">
+    {% if rows %}
+        <ul class="quote-lines">
+            {% for row in rows %}
+                {% set product = row.product %}
+                <li class="quote-line">
+                    <div class="quote-line__media">
+                        {% set photo = row.available ? product.photos|first : null %}
+                        {% if photo %}<img src="{{ photo.filename|imagine_filter('product_thumb') }}" width="64" height="64" alt="" loading="lazy" decoding="async">{% endif %}
+                    </div>
+                    <div class="quote-line__body">
+                        {% if row.available %}
+                            <a class="quote-line__name" href="{{ path('catalog_product', {categorySlug: product.category.slug, slug: product.slug}) }}">{{ product.name }}</a>
+                            {% if row.color %}<p>Coloris : {{ row.color.name }}</p>{% endif %}
+                            <p>Quantité : {{ row.qty }}</p>
+                        {% else %}
+                            {% if product %}<p class="quote-line__name">{{ product.name }}</p>{% endif %}
+                            <p>Ce produit n'est plus proposé</p>
+                            <button type="button" class="button-secondary button-sm" data-action="selection#remove"
+                                    data-selection-product-id-param="{{ row.productId }}" data-selection-color-id-param="{{ row.colorId }}">Retirer<span class="visually-hidden"> {{ product ? product.name : 'ce produit' }}</span></button>
+                        {% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="quote-empty">
+            <p>Votre devis est vide.</p>
+            <p><a href="{{ path('catalog_index') }}">Parcourir le catalogue</a></p>
+        </div>
+    {% endif %}
+</turbo-frame>
