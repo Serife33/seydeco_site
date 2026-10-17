@@ -22,8 +22,11 @@ class ProductRepository extends ServiceEntityRepository
     public function search(string $query, ?Category $category, int $page, int $perPage): Paginator
     {
         $qb = $this->createQueryBuilder('p')
-            ->addSelect('c')
+            ->addSelect('c', 't', 'ph')
             ->join('p.category', 'c')
+            // Prix « dès » et miniature de la liste, sans requête par produit
+            ->leftJoin('p.priceTiers', 't')
+            ->leftJoin('p.photos', 'ph')
             ->orderBy('p.name', 'ASC')
             ->addOrderBy('p.id', 'ASC')
             ->setFirstResult(($page - 1) * $perPage)

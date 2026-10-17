@@ -1,0 +1,14 @@
+# Originaux hors de public/ ; seules les versions redimensionnées sont servies (public/media/cache).
+liip_imagine:
+    driver: gd
+    loaders:
+        default:
+            filesystem:
+                data_root: '%app.upload_dir%'
+    filter_sets:
+        # Miniature de la liste et du formulaire admin (48 px affichés, 96 px pour les écrans haute densité)
+        admin_thumb:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                thumbnail: { size: [96, 96], mode: outbound }

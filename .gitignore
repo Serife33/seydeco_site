@@ -26,3 +26,7 @@ _bmad/
 
 # Valeurs serveur de deploy.sh (jamais commitées)
 /deploy.env
+
+# Photos et vidéos envoyées (originaux) et images redimensionnées par LiipImagine
+/uploads/
+/public/media/

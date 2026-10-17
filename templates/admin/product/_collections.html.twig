@@ -1,0 +1,55 @@
+{# Lignes des collections du formulaire produit : même balisage pour les lignes existantes et le modèle des lignes ajoutées. #}
+
+{% macro row(kind, row) %}
+    <li class="admin-row{{ kind == 'photo' ? ' admin-row--photo' }}" data-collection-row>
+        {% if kind == 'tier' %}
+            {{ form_row(row.minQty) }}
+            {{ form_row(row.price) }}
+            {% set what = 'ce palier' %}
+        {% elseif kind == 'color' %}
+            {{ form_row(row.name) }}
+            {{ form_row(row.hex) }}
+            {% set what = 'ce coloris' %}
+        {% else %}
+            {% set photo = row.vars.value %}
+            {% if photo and photo.filename %}
+                {% do row.file.setRendered() %}
+                <img class="admin-thumb" src="{{ photo.filename|imagine_filter('admin_thumb') }}" width="48" height="48" alt="">
+            {% else %}
+                {{ form_row(row.file) }}
+            {% endif %}
+            {{ form_row(row.alt) }}
+            {{ form_row(row.color) }}
+            {{ form_widget(row.position) }}
+            {{ form_errors(row.position) }}
+            {% set what = 'cette photo' %}
+        {% endif %}
+        <div class="admin-row__actions">
+            {% if kind == 'photo' %}
+                <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="collection#up">Monter</button>
+                <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="collection#down">Descendre</button>
+            {% endif %}
+            <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="collection#remove" aria-label="Retirer {{ what }}">Retirer</button>
+        </div>
+    </li>
+{% endmacro %}
+
+{# Liste + bouton « Ajouter » ; les erreurs de la liste entière s'affichent sous le tableau. #}
+{% macro list(kind, collection, legend, add_label, help = null) %}
+    {% import _self as m %}
+    {% set errors = collection.vars.errors %}
+    <fieldset class="admin-fieldset admin-collection"
+        data-controller="collection"
+        data-collection-prototype-value="{{ m.row(kind, collection.vars.prototype)|e('html') }}"
+        data-collection-index-value="{{ collection|length ? max(collection|keys) + 1 : 0 }}"
+        {%- if errors|length %} data-invalid-group tabindex="-1" aria-describedby="{% for e in errors %}{{ collection.vars.id }}_error{{ loop.index }}{{ not loop.last ? ' ' }}{% endfor %}"{% endif %}>
+        <legend>{{ legend }}</legend>
+        {% if help %}<p class="admin-field__help">{{ help }}</p>{% endif %}
+        <ul class="admin-rows" data-collection-target="list">
+            {% for row in collection %}{{ m.row(kind, row) }}{% endfor %}
+        </ul>
+        {{ form_errors(collection) }}
+        {% do collection.setRendered() %}
+        <p><button type="button" class="admin-button admin-button--secondary" data-action="collection#add">{{ add_label }}</button></p>
+    </fieldset>
+{% endmacro %}

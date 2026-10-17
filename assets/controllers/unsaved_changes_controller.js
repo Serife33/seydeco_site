@@ -28,7 +28,8 @@ export default class extends Controller {
         document.addEventListener('turbo:before-visit', this.onBeforeVisit);
 
         // Formulaire refusé par le serveur : focus sur le premier champ en erreur
-        this.element.querySelector('[aria-invalid="true"]')?.focus();
+        // (ou sur une liste en erreur, ex. paliers de prix : message sous le tableau)
+        this.element.querySelector('[aria-invalid="true"], [data-invalid-group]')?.focus();
     }
 
     disconnect() {

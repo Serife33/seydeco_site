@@ -80,6 +80,9 @@ REL="releases/$NAME"
 mkdir "$REL"
 tar -x -C "$REL"   # code du commit, envoyé par la machine de dev
 ln -s ../../shared/.env.local "$REL/.env.local"
+# Photos et vidéos envoyées depuis le back-office : conservées d'une release à l'autre
+mkdir -p shared/uploads
+ln -s ../../shared/uploads "$REL/uploads"
 [ -L current ] && basename "$(readlink current)" > "$REL/.previous_release"
 
 echo "→ Dump de la base dans dumps/$NAME.sql.gz"

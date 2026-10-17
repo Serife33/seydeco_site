@@ -96,4 +96,6 @@ Remet la release précédente **et** la base telle qu'elle était avant le derni
 - [ ] Après le premier déploiement : `app:admin:create` en SSH pour créer le compte de Serife.
 - [ ] Racine web du domaine pointée sur `REMOTE_DIR/current/public`.
 - [ ] HTTPS activé (AutoSSL) ; la redirection HTTP → HTTPS est faite par `public/.htaccess`.
+- [ ] Images : `php bin/console app:images:check` en SSH ; si le WebP n'est pas pris en charge, passer `app.image_format` à `jpeg` dans `config/services.yaml`.
+- [ ] PHP : `upload_max_filesize` ≥ 50M et `post_max_size` ≥ 60M (photos 10 Mo, vidéo MP4 50 Mo).
 - [ ] Fuseau MySQL : `SET time_zone = 'Europe/Paris'` accepté par le serveur (sinon demander le chargement des fuseaux à o2switch).

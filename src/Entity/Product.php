@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_product_slug', fields: ['slug'])]
@@ -66,6 +67,54 @@ class Product
     #[Assert\LessThanOrEqual(1000000, message: 'Le stock ne peut pas dépasser 1 000 000.')]
     private ?int $stock = 0;
 
+    /** @var Collection<int, PriceTier> */
+    #[ORM\OneToMany(targetEntity: PriceTier::class, mappedBy: 'product', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['minQty' => 'ASC'])]
+    #[Assert\Valid]
+    private Collection $priceTiers;
+
+    /** Centimes ; copié de la catégorie à la création, jamais écrasé ensuite. */
+    #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: 'Le montant ne peut pas être négatif.')]
+    #[Assert\LessThanOrEqual(100000000, message: 'Le montant ne peut pas dépasser 1 000 000,00 €.')]
+    private ?int $breakagePrice = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Assert\PositiveOrZero(message: 'Le montant ne peut pas être négatif.')]
+    #[Assert\LessThanOrEqual(100000000, message: 'Le montant ne peut pas dépasser 1 000 000,00 €.')]
+    private ?int $lossPrice = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $returnInstructions = null;
+
+    /** @var Collection<int, ProductPhoto> */
+    #[ORM\OneToMany(targetEntity: ProductPhoto::class, mappedBy: 'product', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC', 'id' => 'ASC'])]
+    #[Assert\Valid]
+    private Collection $photos;
+
+    /** @var Collection<int, ProductColor> */
+    #[ORM\OneToMany(targetEntity: ProductColor::class, mappedBy: 'product', cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['id' => 'ASC'])]
+    #[Assert\Valid]
+    private Collection $colors;
+
+    /** Fichier MP4 dans le dossier d'envoi ; exclusif avec `videoUrl`. */
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $videoFile = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Assert\Length(max: 255, maxMessage: 'Le lien ne doit pas dépasser {{ limit }} caractères.')]
+    #[Assert\Regex(
+        pattern: '~^https://(www\.|m\.|vm\.)?(youtube\.com|youtu\.be|instagram\.com|tiktok\.com)/\S+$~i',
+        message: 'Seuls les liens YouTube, Instagram ou TikTok sont acceptés (https://…).',
+    )]
+    private ?string $videoUrl = null;
+
+    /** Image facultative ; sinon la photo principale sert de miniature. */
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $videoThumbnail = null;
+
     #[ORM\Column]
     private \DateTimeImmutable $createdAt;
 
@@ -76,6 +125,9 @@ class Product
     {
         $this->styles = new ArrayCollection();
         $this->eventTypes = new ArrayCollection();
+        $this->priceTiers = new ArrayCollection();
+        $this->photos = new ArrayCollection();
+        $this->colors = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
 
@@ -216,5 +268,160 @@ class Product
     public function setVisible(bool $visible): void
     {
         $this->visible = $visible;
+    }
+
+    /** @return Collection<int, PriceTier> */
+    public function getPriceTiers(): Collection
+    {
+        return $this->priceTiers;
+    }
+
+    public function addPriceTier(PriceTier $tier): void
+    {
+        if (!$this->priceTiers->contains($tier)) {
+            $tier->setProduct($this);
+            $this->priceTiers->add($tier);
+        }
+    }
+
+    public function removePriceTier(PriceTier $tier): void
+    {
+        $this->priceTiers->removeElement($tier);
+    }
+
+    /** Paliers : au moins un, le 1er égal à minQty, seuils strictement croissants (prix > 0 : sur PriceTier). */
+    #[Assert\Callback]
+    public function validatePriceTiers(ExecutionContextInterface $context): void
+    {
+        $thresholds = $this->priceTiers->map(fn (PriceTier $t) => $t->getMinQty())->getValues();
+        if ([] === $thresholds) {
+            $context->buildViolation('Ajouter au moins un palier de prix.')->atPath('priceTiers')->addViolation();
+
+            return;
+        }
+        if (\in_array(null, $thresholds, true)) {
+            return;
+        }
+        if (null !== $this->minQty && $thresholds[0] !== $this->minQty) {
+            $context->buildViolation(\sprintf('Le premier palier doit commencer à %d, la quantité minimale.', $this->minQty))->atPath('priceTiers')->addViolation();
+        }
+        for ($i = 1, $n = \count($thresholds); $i < $n; ++$i) {
+            if ($thresholds[$i] <= $thresholds[$i - 1]) {
+                $context->buildViolation('Les quantités des paliers doivent aller en croissant, sans doublon.')->atPath('priceTiers')->addViolation();
+
+                return;
+            }
+        }
+    }
+
+    public function getBreakagePrice(): ?int
+    {
+        return $this->breakagePrice;
+    }
+
+    public function setBreakagePrice(?int $breakagePrice): void
+    {
+        $this->breakagePrice = $breakagePrice;
+    }
+
+    public function getLossPrice(): ?int
+    {
+        return $this->lossPrice;
+    }
+
+    public function setLossPrice(?int $lossPrice): void
+    {
+        $this->lossPrice = $lossPrice;
+    }
+
+    public function getReturnInstructions(): ?string
+    {
+        return $this->returnInstructions;
+    }
+
+    public function setReturnInstructions(?string $returnInstructions): void
+    {
+        $this->returnInstructions = $returnInstructions;
+    }
+
+    /** À la création seulement : les valeurs laissées vides reprennent celles de la catégorie. */
+    public function applyCategoryDefaults(): void
+    {
+        $this->breakagePrice ??= $this->category?->getBreakagePrice();
+        $this->lossPrice ??= $this->category?->getLossPrice();
+        $this->returnInstructions ??= $this->category?->getReturnInstructions();
+    }
+
+    /** @return Collection<int, ProductPhoto> */
+    public function getPhotos(): Collection
+    {
+        return $this->photos;
+    }
+
+    public function addPhoto(ProductPhoto $photo): void
+    {
+        if (!$this->photos->contains($photo)) {
+            $photo->setProduct($this);
+            $this->photos->add($photo);
+        }
+    }
+
+    public function removePhoto(ProductPhoto $photo): void
+    {
+        $this->photos->removeElement($photo);
+    }
+
+    /** @return Collection<int, ProductColor> */
+    public function getColors(): Collection
+    {
+        return $this->colors;
+    }
+
+    public function addColor(ProductColor $color): void
+    {
+        if (!$this->colors->contains($color)) {
+            $color->setProduct($this);
+            $this->colors->add($color);
+        }
+    }
+
+    public function removeColor(ProductColor $color): void
+    {
+        $this->colors->removeElement($color);
+        foreach ($this->photos as $photo) {
+            if ($photo->getColor() === $color) {
+                $photo->setColor(null);
+            }
+        }
+    }
+
+    public function getVideoFile(): ?string
+    {
+        return $this->videoFile;
+    }
+
+    public function setVideoFile(?string $videoFile): void
+    {
+        $this->videoFile = $videoFile;
+    }
+
+    public function getVideoUrl(): ?string
+    {
+        return $this->videoUrl;
+    }
+
+    public function setVideoUrl(?string $videoUrl): void
+    {
+        $this->videoUrl = $videoUrl;
+    }
+
+    public function getVideoThumbnail(): ?string
+    {
+        return $this->videoThumbnail;
+    }
+
+    public function setVideoThumbnail(?string $videoThumbnail): void
+    {
+        $this->videoThumbnail = $videoThumbnail;
     }
 }

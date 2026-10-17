@@ -35,6 +35,9 @@
             "migrations/.gitignore"
         ]
     },
+    "liip/imagine-bundle": {
+        "version": "2.18.1"
+    },
     "phpunit/phpunit": {
         "version": "13.4",
         "recipe": {

@@ -6,6 +6,7 @@ use App\Entity\Category;
 use App\Entity\PricingType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Filesystem\Filesystem;
 
 /** Connecté, catalogue vide. */
 abstract class CatalogTestCase extends AdminTestCase
@@ -15,10 +16,11 @@ abstract class CatalogTestCase extends AdminTestCase
         parent::setUp();
         $db = static::getContainer()->get(Connection::class);
         $db->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
-        foreach (['product_style', 'product_event_type', 'style', 'event_type', 'product', 'category'] as $table) {
+        foreach (['product_style', 'product_event_type', 'style', 'event_type', 'price_tier', 'product_photo', 'product_color', 'product', 'category'] as $table) {
             $db->executeStatement("TRUNCATE TABLE $table");
         }
         $db->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
+        (new Filesystem())->remove(static::getContainer()->getParameter('app.upload_dir'));
         $this->loginFully();
     }
 

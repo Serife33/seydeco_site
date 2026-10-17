@@ -2,16 +2,20 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\PriceTier;
 use App\Entity\Product;
 use App\Form\ProductType;
 use App\Repository\CategoryRepository;
 use App\Repository\EventTypeRepository;
 use App\Repository\ProductRepository;
 use App\Repository\StyleRepository;
+use App\Service\MediaStorage;
 use App\Service\SlugGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,6 +29,7 @@ final class ProductController extends AbstractController
     public function __construct(
         private readonly ProductRepository $products,
         private readonly EntityManagerInterface $em,
+        private readonly MediaStorage $media,
     ) {
     }
 
@@ -54,9 +59,12 @@ final class ProductController extends AbstractController
     public function new(Request $request, SlugGenerator $slugs, StyleRepository $styles, EventTypeRepository $eventTypes): Response
     {
         $product = new Product();
+        // Une première ligne de palier, à compléter
+        $product->addPriceTier(new PriceTier());
         $form = $this->createForm(ProductType::class, $product)->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $product->initSlug($slugs->generate($product->getName(), $this->products));
+            $product->applyCategoryDefaults();
             $this->em->persist($product);
 
             return $this->save($form, $product, $styles, $eventTypes, 'new');
@@ -101,11 +109,43 @@ final class ProductController extends AbstractController
         if ('' !== $name = trim((string) $form->get('newEventType')->getData())) {
             $product->addEventType($eventTypes->findOrCreate($name));
         }
-        $this->em->flush();
+        try {
+            $this->storeMedia($form, $product);
+            // Les anciens fichiers ne sont effacés qu'après ce flush réussi (MediaStorage::postFlush)
+            $this->em->flush();
+        } catch (FileException) {
+            $this->media->abort();
+            $form->addError(new FormError('Impossible d\'enregistrer le fichier, réessayez.'));
+
+            return $this->render('admin/product/form.html.twig', ['form' => $form, 'product' => $product, 'draft_key' => $draftKey], new Response(status: 422));
+        } catch (\Throwable $e) {
+            $this->media->abort();
+            throw $e;
+        }
         $this->addFlash('success', 'Produit enregistré.');
         // Le navigateur efface alors le brouillon local de ce formulaire
         $this->addFlash('draft_saved', $draftKey);
 
         return $this->redirectToRoute('admin_product_index');
+    }
+
+    /** Fichiers envoyés : rangés hors de public/ ; les anciens fichiers remplacés ou retirés seront effacés après enregistrement. */
+    private function storeMedia(FormInterface $form, Product $product): void
+    {
+        foreach ($form->get('photos') as $row) {
+            if ($file = $row->get('file')->getData()) {
+                $row->getData()->setFilename($this->media->store($file));
+            }
+        }
+        $video = $form->get('videoUpload')->getData();
+        if ($video || $form->get('removeVideoFile')->getData()) {
+            $this->media->discard($product->getVideoFile());
+            $product->setVideoFile($video ? $this->media->store($video) : null);
+        }
+        $thumbnail = $form->get('videoThumbnailUpload')->getData();
+        if ($thumbnail || $form->get('removeVideoThumbnail')->getData()) {
+            $this->media->discard($product->getVideoThumbnail());
+            $product->setVideoThumbnail($thumbnail ? $this->media->store($thumbnail) : null);
+        }
     }
 }

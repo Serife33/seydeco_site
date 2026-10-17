@@ -36,10 +36,15 @@
             {% for product in products %}
                 <li class="admin-list__row">
                     <a class="admin-list__main" href="{{ path('admin_product_edit', {id: product.id}) }}">
-                        <span class="admin-thumb" aria-hidden="true"></span>
+                        {% set main = product.photos|first %}
+                        {% if main %}
+                            <img class="admin-thumb" src="{{ main.filename|imagine_filter('admin_thumb') }}" width="48" height="48" alt="">
+                        {% else %}
+                            <span class="admin-thumb" aria-hidden="true"></span>
+                        {% endif %}
                         <span>
                             <span class="admin-list__name">{{ product.name }}</span>
-                            <span class="admin-list__meta">{{ product.category.name }} · stock {{ product.stock }}{% if not product.visible %} · <strong>Masqué</strong>{% endif %}</span>
+                            <span class="admin-list__meta">{{ product.category.name }}{% set from = from_price(product) %}{% if from is not null %} · dès {{ from|money }}{% endif %} · stock {{ product.stock }}{% if not product.visible %} · <strong>Masqué</strong>{% endif %}</span>
                         </span>
                     </a>
                     <form class="admin-list__actions" method="post" action="{{ path('admin_product_toggle', app.request.query.all|merge({id: product.id})) }}">

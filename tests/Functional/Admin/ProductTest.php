@@ -28,13 +28,15 @@ final class ProductTest extends CatalogTestCase
             'product[category]' => (string) $this->chairsId,
             'product[minQty]' => '15',
             'product[stock]' => '800',
+            'product[priceTiers][0][minQty]' => '15',
+            'product[priceTiers][0][price]' => '2,50',
         ]);
     }
 
     public function testCreateProduct(): void
     {
         $crawler = $this->client->request('GET', '/admin/produits/ajouter');
-        self::assertSame(['Infos', 'Quantité minimale', 'Stock', 'Visibilité'], $crawler->filter('form h2')->each(fn ($h) => $h->text()));
+        self::assertSame(['Photos & vidéo', 'Infos', 'Prix & dégressif', 'Quantité minimale', 'Casse/perte & consignes', 'Stock', 'Visibilité'], $crawler->filter('form h2')->each(fn ($h) => $h->text()));
         // Délai de remise en état de la catégorie, en lecture seule
         self::assertStringContainsString('remise en état : 0 h', $crawler->filter('#product_category option[value="'.$this->chairsId.'"]')->text());
 
@@ -183,6 +185,8 @@ final class ProductTest extends CatalogTestCase
             'product[category]' => (string) $this->chairsId,
             'product[minQty]' => '1',
             'product[stock]' => '20',
+            'product[priceTiers][0][minQty]' => '1',
+            'product[priceTiers][0][price]' => '15',
             'product[newStyle]' => ' bohème ',
         ]));
 
