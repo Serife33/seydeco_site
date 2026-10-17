@@ -25,4 +25,7 @@ return [
     '@hotwired/turbo' => [
         'version' => '8.0.23',
     ],
+    'heic2any' => [
+        'version' => '0.0.4',
+    ],
 ];

@@ -9,7 +9,7 @@
         {% block javascripts %}{{ importmap('app') }}{% endblock %}
         <link rel="stylesheet" href="{{ asset('styles/admin.css') }}">
     </head>
-    <body class="admin">
+    <body class="admin" data-controller="heic">
         <a class="skip-link" href="#contenu">Aller au contenu</a>
         {% block layout %}
             <div class="admin-shell">

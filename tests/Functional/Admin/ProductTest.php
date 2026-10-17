@@ -147,6 +147,7 @@ final class ProductTest extends CatalogTestCase
         yield 'stock énorme' => [['product[stock]' => '3000000000'], 'product_stock', 'Le stock ne peut pas dépasser 1 000 000.'];
         yield 'stock hors entier' => [['product[stock]' => '99999999999999999999'], 'product_stock', 'Saisir un nombre entier'];
         yield 'places énormes' => [['product[seats]' => '3000000000'], 'product_seats', 'Le nombre de places ne peut pas dépasser'];
+        yield 'places en fourchette' => [['product[seats]' => '8-10'], 'product_seats', 'Saisir un seul nombre, par exemple 10'];
     }
 
     /** @param array<string, string> $override */

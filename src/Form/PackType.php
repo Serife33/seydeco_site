@@ -26,7 +26,7 @@ final class PackType extends AbstractType
                 'label' => 'Photo (JPEG, PNG ou WebP, 10 Mo maximum)',
                 'mapped' => false,
                 'required' => false,
-                'attr' => ['accept' => 'image/jpeg,image/png,image/webp'],
+                'attr' => ['accept' => 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif'],
                 'constraints' => [new File(
                     maxSize: '10M',
                     mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],

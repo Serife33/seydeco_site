@@ -28,13 +28,13 @@ final class ProductType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $integer = fn (string $label, string $example, array $extra = []) => [
+        $integer = fn (string $label, string $example, array $extra = []) => $extra + [
             'label' => $label,
             'invalid_message' => "Saisir un nombre entier, par exemple $example.",
             // Format français : « 1,5 » est refusé au lieu d'être lu comme 15
             'grouping' => true,
             'attr' => ['inputmode' => 'numeric'],
-        ] + $extra;
+        ];
         $byName = fn (EntityRepository $r) => $r->createQueryBuilder('x')->orderBy('x.name', 'ASC');
 
         $builder
@@ -55,7 +55,12 @@ final class ProductType extends AbstractType
             ])
             ->add('dimensions', TextType::class, ['label' => 'Dimensions', 'required' => false, 'help' => 'Par exemple : 45 × 50 × 90 cm'])
             ->add('description', TextareaType::class, ['label' => 'Description', 'required' => false, 'attr' => ['rows' => 5]])
-            ->add('seats', IntegerType::class, $integer('Nombre de places (facultatif)', '8', ['required' => false]))
+            ->add('seats', IntegerType::class, $integer('Nombre de places (facultatif)', '8', [
+                'required' => false,
+                // Sert au calcul de la remise tables avec chaises : un seul nombre
+                'invalid_message' => 'Saisir un seul nombre, par exemple 10 (pas « 8-10 »).',
+                'help' => 'Un seul nombre : le maximum de personnes autour de la table.',
+            ]))
             ->add('styles', EntityType::class, [
                 'label' => 'Styles',
                 'class' => Style::class,
@@ -127,7 +132,7 @@ final class ProductType extends AbstractType
                 'help' => 'Sans miniature, la photo principale est utilisée.',
                 'mapped' => false,
                 'required' => false,
-                'attr' => ['accept' => 'image/jpeg,image/png,image/webp'],
+                'attr' => ['accept' => 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif'],
                 'constraints' => [new File(
                     maxSize: '10M',
                     mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
