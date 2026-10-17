@@ -1,0 +1,16 @@
+{# Formulaire refusé : toutes les erreurs en haut, le navigateur ne pouvant pas garder les fichiers choisis #}
+{% macro list(view) %}
+    {% for error in view.vars.errors %}
+        <li><a href="#{{ view.vars.id }}">{{ view.vars.label ?: view.vars.name|humanize }}</a> : {{ error.message }}</li>
+    {% endfor %}
+    {% for child in view.children %}{{ _self.list(child) }}{% endfor %}
+{% endmacro %}
+{% if form.vars.submitted and not form.vars.valid %}
+    <div class="admin-error" role="alert">
+        <p><strong>Rien n'a été enregistré.</strong> À corriger :</p>
+        <ul>{% for child in form.children %}{{ _self.list(child) }}{% endfor %}</ul>
+        {% if form.photos is defined or form.photoUpload is defined %}
+            <p>Si vous aviez choisi des photos, choisissez-les à nouveau : elles n'ont pas été gardées.</p>
+        {% endif %}
+    </div>
+{% endif %}

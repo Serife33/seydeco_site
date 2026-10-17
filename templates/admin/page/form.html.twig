@@ -11,6 +11,7 @@
 
     {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
         {{ form_errors(form) }}
+        {{ include('admin/_error_summary.html.twig') }}
         {{ form_row(form.title) }}
         {{ form_row(form.content) }}
         {{ form_row(form.description) }}

@@ -12,6 +12,7 @@
 
     {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
         {{ form_errors(form) }}
+        {{ include('admin/_error_summary.html.twig') }}
         <section class="admin-section" aria-labelledby="s-infos">
             <h2 class="admin-title" id="s-infos">Infos</h2>
             {{ form_row(form.name) }}

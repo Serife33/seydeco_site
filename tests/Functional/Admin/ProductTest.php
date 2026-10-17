@@ -164,6 +164,8 @@ final class ProductTest extends CatalogTestCase
         self::assertStringContainsString($message, $crawler->filter('#'.end($describedBy))->text());
         self::assertSame('40 cm', $crawler->filter('#product_dimensions')->attr('value'));
         self::assertSame(0, $this->em()->getRepository(Product::class)->count());
+        // Récapitulatif en haut du formulaire : l'erreur se voit même loin du champ
+        self::assertStringContainsString($message, $crawler->filter('.admin-error[role="alert"]')->text());
     }
 
     public function testFirstInvalidFieldComesFirst(): void

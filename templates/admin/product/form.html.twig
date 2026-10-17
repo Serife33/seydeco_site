@@ -17,6 +17,7 @@
         'data-form-draft-key-value': 'seydeco.draft.product.' ~ draft_key,
     }}) }}
         {{ form_errors(form) }}
+        {{ include('admin/_error_summary.html.twig') }}
         <div class="admin-notice" role="status" hidden data-form-draft-notice>
             <p>Votre saisie non enregistrée a été restaurée.</p>
             <button type="button" class="admin-button admin-button--secondary admin-button--small" data-action="form-draft#discard">Ignorer</button>
