@@ -5,7 +5,7 @@ import { Controller } from '@hotwired/stimulus';
  * la saisie revient après reconnexion. Effacé une fois le produit enregistré (clear: true).
  */
 export default class extends Controller {
-    static values = { key: String, clear: Boolean };
+    static values = { key: String, clear: Boolean, submitted: Boolean };
 
     connect() {
         if (this.clearValue) {
@@ -13,7 +13,12 @@ export default class extends Controller {
             return;
         }
         this.save = () => this.write(JSON.stringify(this.entries()));
-        this.restore();
+        // Formulaire refusé puis réaffiché : le serveur montre déjà la dernière saisie, le brouillon la suit
+        if (this.submittedValue) {
+            this.save();
+        } else {
+            this.restore();
+        }
         this.element.addEventListener('input', this.save);
         this.element.addEventListener('change', this.save);
     }
@@ -51,6 +56,7 @@ export default class extends Controller {
         if (!Array.isArray(entries)) {
             return;
         }
+        const before = JSON.stringify(this.entries());
         for (const field of this.element.elements) {
             if (field.type === 'checkbox' || field.type === 'radio') {
                 field.checked = false;
@@ -64,6 +70,11 @@ export default class extends Controller {
                     field.value = value;
                 }
             }
+        }
+        // Brouillon sans effet (ex. lignes de photo qui n'existent plus) : pas de message, brouillon remis à jour
+        if (JSON.stringify(this.entries()) === before) {
+            this.save();
+            return;
         }
         this.notice()?.removeAttribute('hidden');
         // Saisie restaurée = saisie non enregistrée : l'avertissement de sortie s'applique

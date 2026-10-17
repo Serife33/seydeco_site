@@ -15,6 +15,7 @@
         novalidate: 'novalidate',
         'data-controller': 'unsaved-changes form-draft' ~ (product.id ? '' : ' category-defaults'),
         'data-form-draft-key-value': 'seydeco.draft.product.' ~ draft_key,
+        'data-form-draft-submitted-value': form.vars.submitted ? 'true' : 'false',
     }}) }}
         {{ form_errors(form) }}
         {{ include('admin/_error_summary.html.twig') }}
