@@ -36,6 +36,10 @@ final class SettingsProvider
     ];
     /** Lien « Voir tous nos avis sur Google » du Bloc avis (story 2.8) ; vide = pas de lien. */
     public const string GOOGLE_REVIEWS_URL = 'google_reviews_url';
+    /** « Depuis 2026 » de Nos engagements (story 2.10) ; vide = engagement non affiché. */
+    public const string FOUNDED_YEAR = 'founded_year';
+    /** Texte de l'encadré L'entreprise de l'accueil (texte mis en forme simple, story 2.10). */
+    public const string COMPANY_TEXT = 'company_text';
     /** « 1 » = site ouvert aux moteurs de recherche ; sinon noindex partout et robots.txt fermé (story 2.2). */
     public const string SEARCH_ENGINES_OPEN = 'search_engines_open';
 

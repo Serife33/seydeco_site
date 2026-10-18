@@ -1,4 +1,4 @@
-{# Monter / Descendre / Masquer d'une ligne de liste (contenus sans suppression). Attend : prefix (ex. admin_page), id, token, name, first, last, visible ; facultatif : page (liste paginée) #}
+{# Monter / Descendre / Masquer d'une ligne de liste (contenus sans suppression). Attend : prefix (ex. admin_page), id, token, name, first, last, visible ; facultatif : page (liste paginée), toggle_label (autre libellé que Masquer) #}
 <div class="admin-list__actions">
     {% if not first %}
         <form method="post" action="{{ path(prefix ~ '_move_up', {id: id}) }}">
@@ -17,7 +17,7 @@
     <form method="post" action="{{ path(prefix ~ '_toggle', {id: id}) }}">
         <input type="hidden" name="_token" value="{{ token }}">
         {% if page|default(null) %}<input type="hidden" name="page" value="{{ page }}">{% endif %}
-        {% set action = visible ? 'Masquer' : 'Afficher à nouveau' %}
+        {% set action = toggle_label|default(visible ? 'Masquer' : 'Afficher à nouveau') %}
         <button class="admin-button admin-button--secondary admin-button--small" aria-label="{{ action }} {{ name }}">{{ action }}</button>
     </form>
 </div>

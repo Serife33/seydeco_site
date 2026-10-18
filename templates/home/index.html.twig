@@ -1,13 +1,149 @@
 {% extends 'base.html.twig' %}
 
+{#
+    Accueil (story 2.10), ordre fixe : hero → catégories → Les incontournables → Nos engagements → Réalisations
+    → Comment ça marche → avis → bande sombre → L'entreprise. Une section sans contenu n'est pas affichée.
+    `preview` : aperçu du brouillon du hero dans le back-office (story 2.9).
+#}
 {% block title %}Location de matériel de réception pour vos événements | Seydeco{% endblock %}
+{% set canonical = url('app_home') %}
+{% set noindex = preview %}
+{% set og_image = hero.photo ? hero.photo|imagine_filter('page_photo') : null %}
+
+{% block structured_data %}
+    {{ parent() }}
+    {% include 'seo/reviews.html.twig' %}
+{% endblock %}
 
 {% block body %}
-    <section class="home-hero">
-        <div class="container">
-            <p class="eyebrow">Location de matériel de réception</p>
-            <h1>Seydeco</h1>
-            <p class="accent-sm">Site en préparation</p>
+    {% set contact = site_contact() %}
+    {% if preview %}
+        <p class="preview-banner" role="status">Aperçu du brouillon : le site ne change qu'après « Publier ». <a href="{{ path('admin_home_hero') }}">Retour au back-office</a></p>
+    {% endif %}
+
+    {# Hero (story 2.9) : photos sans texte, puis titre unique, texte et bouton ; première photo prioritaire (LCP) #}
+    <section class="hero">
+        {% if hero.photo %}
+            {% set two = hero.photo2 is not null %}
+            <div class="hero__photos{{ two ? ' hero__photos--two' }}">
+                {% for photo in [{file: hero.photo, alt: hero.photoAlt}]|merge(two ? [{file: hero.photo2, alt: hero.photo2Alt}] : []) %}
+                    {% if two %}
+                        <img src="{{ photo.file|imagine_filter('hero_half_1200') }}" srcset="{{ photo.file|imagine_filter('hero_half_600') }} 600w, {{ photo.file|imagine_filter('hero_half_1200') }} 1200w" sizes="(min-width: 768px) 50vw, 100vw" width="1200" height="900" alt="{{ photo.alt }}"{% if loop.first %} fetchpriority="high"{% endif %}>
+                    {% else %}
+                        <img src="{{ photo.file|imagine_filter('hero_1600') }}" srcset="{{ photo.file|imagine_filter('hero_800') }} 800w, {{ photo.file|imagine_filter('hero_1600') }} 1600w" sizes="100vw" width="1600" height="900" alt="{{ photo.alt }}" fetchpriority="high">
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        <div class="container hero__body">
+            <h1 class="hero__title">{{ hero.title }}</h1>
+            <p class="hero__text">{{ hero.text }}</p>
+            <a class="button-primary" href="{{ hero.buttonLink }}">{{ hero.buttonLabel }}</a>
         </div>
     </section>
+
+    {% if categories %}
+        <section class="home-section" aria-labelledby="categories-titre">
+            <div class="container">
+                <h2 class="home-section__title" id="categories-titre">Le catalogue</h2>
+                <ul class="category-tiles">
+                    {% for category in categories %}
+                        {% include 'catalog/_category_tile.html.twig' %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </section>
+    {% endif %}
+
+    {% if featured %}
+        <section class="home-section home-section--cream" aria-labelledby="incontournables-titre">
+            <div class="container">
+                <h2 class="home-section__title" id="incontournables-titre">Les incontournables</h2>
+                <ul class="product-grid">
+                    {% for product in featured %}
+                        {% include 'catalog/_product_card.html.twig' with {tag: 'h3', lazy: true} %}
+                    {% endfor %}
+                </ul>
+                <p class="home-section__more"><a class="button-secondary" href="{{ path('catalog_index') }}">Voir tout le catalogue</a></p>
+            </div>
+        </section>
+    {% endif %}
+
+    {# Nos engagements : non cliquables ; valeurs lues dans les réglages ; vitrine honnête tant que le devis en ligne est éteint #}
+    <section class="home-section commitments" aria-labelledby="engagements-titre">
+        <div class="container">
+            <h2 class="home-section__title" id="engagements-titre">Nos engagements</h2>
+            <ul class="commitments__list">
+                {% if contact.foundedYear %}
+                    <li>
+                        {% include 'layout/_icon.html.twig' with {name: 'calendar', size: 32} only %}
+                        <h3 class="label-caps">Depuis {{ contact.foundedYear }}</h3>
+                        <p>Une entreprise locale qui prépare et vérifie chaque commande.</p>
+                    </li>
+                {% endif %}
+                <li>
+                    {% include 'layout/_icon.html.twig' with {name: 'phone', size: 32} only %}
+                    <h3 class="label-caps">Toujours joignable</h3>
+                    <p>Une vraie personne vous répond, sur WhatsApp ou au téléphone.</p>
+                </li>
+                <li>
+                    {% include 'layout/_icon.html.twig' with {name: 'truck', size: 32} only %}
+                    <h3 class="label-caps">{{ contact.maxKm ? 'Livraison jusqu\'à ' ~ contact.maxKm ~ ' km' : 'Livraison ou retrait' }}</h3>
+                    <p>{{ contact.depotCity ? 'Autour de ' ~ contact.depotCity ~ ', ou retrait au dépôt.' : 'Ou retrait au dépôt.' }}</p>
+                </li>
+                <li>
+                    {% if quote_online() %}
+                        {% include 'layout/_icon.html.twig' with {name: 'document', size: 32} only %}
+                        <h3 class="label-caps">Devis immédiat en ligne</h3>
+                        <p>Composez votre sélection : votre devis s'affiche aussitôt.</p>
+                    {% else %}
+                        {% include 'layout/_icon.html.twig' with {name: 'whatsapp', size: 32} only %}
+                        <h3 class="label-caps">Réponse rapide sur WhatsApp</h3>
+                        <p>Envoyez votre sélection : nous vous répondons avec un devis.</p>
+                    {% endif %}
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    {% if realisations %}
+        <section class="home-section" aria-labelledby="realisations-titre">
+            <div class="container">
+                <h2 class="home-section__title" id="realisations-titre">Nos réalisations</h2>
+                <ul class="product-grid realisation-grid">
+                    {% for realisation in realisations %}
+                        {% include 'realisation/_card.html.twig' with {tag: 'h3', lazy: true} %}
+                    {% endfor %}
+                </ul>
+                <p class="home-section__more"><a class="accent-link" href="{{ path('realisation_index') }}">Voir nos réalisations</a></p>
+            </div>
+        </section>
+    {% endif %}
+
+    {% include 'page/_how_it_works.html.twig' %}
+
+    {% include 'review/_block.html.twig' %}
+
+    <section class="dark-band" aria-labelledby="evenement-titre">
+        <div class="container">
+            <h2 class="dark-band__title" id="evenement-titre">Votre événement approche ?</h2>
+            <p class="dark-band__accent">{{ quote_online() ? 'Composez votre sélection et obtenez votre devis tout de suite.' : 'Composez votre sélection, puis demandez votre devis sur WhatsApp.' }}</p>
+            <a class="button-inverse" href="{{ path('catalog_index') }}">Voir le catalogue</a>
+        </div>
+    </section>
+
+    <div class="container">
+        <section class="company-box" aria-labelledby="entreprise-titre">
+            <h2 class="company-box__title" id="entreprise-titre">L'entreprise</h2>
+            {% if contact.companyText %}<div class="rich-text">{{ contact.companyText|simple_markdown }}</div>{% endif %}
+            {% if contact.social %}
+                <ul class="company-box__social" aria-label="Seydeco sur les réseaux">
+                    {% for network, link in contact.social %}
+                        <li><a href="{{ link }}" target="_blank" rel="noopener">{% include 'layout/_icon.html.twig' with {name: network|lower, size: 18} only %}{{ network }}<span class="visually-hidden"> (nouvel onglet)</span></a></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% include 'layout/_contact_buttons.html.twig' with {message: 'Bonjour, j\'ai une question sur Seydeco'} %}
+        </section>
+    </div>
 {% endblock %}

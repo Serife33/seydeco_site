@@ -1,13 +1,17 @@
 {% extends 'admin/base.html.twig' %}
 {% form_theme form 'admin/_form_theme.html.twig' %}
 
-{% block title %}Coordonnées et réseaux{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block body %}
     <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
-    <h1 class="admin-title">Coordonnées et réseaux</h1>
+    <h1 class="admin-title">{{ title }}</h1>
     {% include 'admin/_flashes.html.twig' %}
-    <p class="admin-field__help">Affichés dans l'en-tête et le pied de page du site. Un champ laissé vide n'est affiché nulle part.</p>
+    {% if app.request.attributes.get('_route') == 'admin_company_settings' %}
+        <p class="admin-field__help">Encadré « L'entreprise » en bas de l'accueil, avec vos réseaux et vos contacts (Coordonnées et réseaux).</p>
+    {% else %}
+        <p class="admin-field__help">Affichés dans l'en-tête et le pied de page du site. Un champ laissé vide n'est affiché nulle part.</p>
+    {% endif %}
 
     {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
         {{ form_errors(form) }}

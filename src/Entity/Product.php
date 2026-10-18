@@ -120,6 +120,13 @@ class Product
     #[ORM\Column]
     private bool $visible = true;
 
+    /** « Mettre en avant sur l'accueil » : Les incontournables (8 au plus), dans l'ordre réglé dans Contenus (story 2.10). */
+    #[ORM\Column]
+    private bool $featured = false;
+
+    #[ORM\Column]
+    private int $featuredPosition = 0;
+
     public function __construct()
     {
         $this->styles = new ArrayCollection();
@@ -268,6 +275,26 @@ class Product
     public function setVisible(bool $visible): void
     {
         $this->visible = $visible;
+    }
+
+    public function isFeatured(): bool
+    {
+        return $this->featured;
+    }
+
+    public function setFeatured(bool $featured): void
+    {
+        $this->featured = $featured;
+    }
+
+    public function getFeaturedPosition(): int
+    {
+        return $this->featuredPosition;
+    }
+
+    public function setFeaturedPosition(int $featuredPosition): void
+    {
+        $this->featuredPosition = $featuredPosition;
     }
 
     /** @return Collection<int, PriceTier> */

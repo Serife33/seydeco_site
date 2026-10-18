@@ -158,6 +158,44 @@ class ProductRepository extends ServiceEntityRepository
         return $map;
     }
 
+    /** Les incontournables de l'accueil (story 2.10). */
+    public const int FEATURED_MAX = 8;
+
+    /**
+     * Produits mis en avant dans l'ordre de Serife ; $public : seulement les visibles (catégorie visible), avec photo et prix « dès ».
+     *
+     * @return list<Product>
+     */
+    public function findFeatured(bool $public): array
+    {
+        $qb = ($public ? $this->publicQuery(null)->addSelect('c', 't', 'ph')->leftJoin('p.priceTiers', 't')->leftJoin('p.photos', 'ph') : $this->createQueryBuilder('p'))
+            ->andWhere('p.featured = true')
+            ->orderBy('p.featuredPosition', 'ASC')
+            ->addOrderBy('p.id', 'ASC');
+        $products = $qb->getQuery()->getResult();
+
+        // Limite après la requête : les jointures de collections multiplient les lignes SQL
+        return $public ? \array_slice($products, 0, self::FEATURED_MAX) : $products;
+    }
+
+    public function nextFeaturedPosition(): int
+    {
+        return 1 + (int) $this->createQueryBuilder('p')->select('MAX(p.featuredPosition)')->andWhere('p.featured = true')->getQuery()->getSingleScalarResult();
+    }
+
+    /** Voisin dans la liste des incontournables, ou null en tête / en fin de liste. */
+    public function findFeaturedNeighbor(Product $product, bool $before): ?Product
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.featured = true')
+            ->andWhere($before ? 'p.featuredPosition < :position' : 'p.featuredPosition > :position')
+            ->setParameter('position', $product->getFeaturedPosition())
+            ->orderBy('p.featuredPosition', $before ? 'DESC' : 'ASC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     private function publicQuery(?Category $category): QueryBuilder
     {
         $qb = $this->createQueryBuilder('p')

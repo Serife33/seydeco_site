@@ -26,9 +26,9 @@ final class SettingsExtension
     }
 
     /**
-     * Coordonnées, réseaux et réglages SEO du layout public (en-tête, pied, JSON-LD LocalBusiness, robots), lus en une fois.
+     * Coordonnées, réseaux et réglages SEO du layout public (en-tête, pied, JSON-LD LocalBusiness, robots, accueil), lus en une fois.
      *
-     * @return array{whatsapp: string, phone: string, phoneNumber: string, address: string, siret: string, email: string, social: array<string, string>, maxKm: string, depotCity: string, indexable: bool, googleReviews: string}
+     * @return array{whatsapp: string, phone: string, phoneNumber: string, address: string, siret: string, email: string, social: array<string, string>, maxKm: string, depotCity: string, indexable: bool, googleReviews: string, foundedYear: string, companyText: string}
      */
     #[AsTwigFunction('site_contact')]
     public function siteContact(): array
@@ -47,6 +47,8 @@ final class SettingsExtension
             'depotCity' => trim($s->get(SettingsProvider::DEPOT_CITY)),
             'indexable' => $s->searchEnginesOpen(),
             'googleReviews' => trim($s->get(SettingsProvider::GOOGLE_REVIEWS_URL)),
+            'foundedYear' => ctype_digit($s->get(SettingsProvider::FOUNDED_YEAR)) ? $s->get(SettingsProvider::FOUNDED_YEAR) : '',
+            'companyText' => trim($s->get(SettingsProvider::COMPANY_TEXT)),
         ];
     }
 }

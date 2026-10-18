@@ -53,3 +53,28 @@ liip_imagine:
             filters:
                 auto_rotate: ~
                 thumbnail: { size: [1200, 800], mode: outbound }
+        # Haut de l'accueil (story 2.9) : une photo pleine largeur 16:9, ou deux côte à côte 4:3 (srcset)
+        hero_800:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                auto_rotate: ~
+                thumbnail: { size: [800, 450], mode: outbound }
+        hero_1600:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                auto_rotate: ~
+                thumbnail: { size: [1600, 900], mode: outbound }
+        hero_half_600:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                auto_rotate: ~
+                thumbnail: { size: [600, 450], mode: outbound }
+        hero_half_1200:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                auto_rotate: ~
+                thumbnail: { size: [1200, 900], mode: outbound }

@@ -7,6 +7,7 @@ use App\Entity\EventType;
 use App\Entity\Product;
 use App\Entity\ProductColor;
 use App\Entity\Style;
+use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
@@ -26,6 +27,10 @@ use Symfony\Component\Validator\Constraints\Length;
 
 final class ProductType extends AbstractType
 {
+    public function __construct(private readonly ProductRepository $products)
+    {
+    }
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $integer = fn (string $label, string $example, array $extra = []) => $extra + [
@@ -109,7 +114,24 @@ final class ProductType extends AbstractType
             ->add('relatedProducts', CollectionType::class, self::collection(RelatedProductType::class, 'Produits associés', [
                 // Le produit lui-même n'est pas proposé
                 'exclude' => $options['data']?->getId(),
-            ]));
+            ]))
+            ->add('featured', CheckboxType::class, [
+                'label' => 'Mettre en avant sur l\'accueil',
+                'required' => false,
+            ]);
+        // Nouvellement mis en avant : place libre exigée, rangé en dernier
+        $wasFeatured = (bool) $options['data']?->isFeatured();
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) use ($wasFeatured): void {
+            $product = $event->getData();
+            if ($wasFeatured || !$product->isFeatured()) {
+                return;
+            }
+            if (\count($this->products->findFeatured(public: false)) >= ProductRepository::FEATURED_MAX) {
+                $event->getForm()->get('featured')->addError(new FormError(ProductRepository::FEATURED_MAX.' produits sont déjà mis en avant : retirez-en un dans Plus → Les incontournables.'));
+            } else {
+                $product->setFeaturedPosition($this->products->nextFeaturedPosition());
+            }
+        });
         self::addVideoFields($builder);
     }
 

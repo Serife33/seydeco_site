@@ -42,7 +42,7 @@
     <body data-controller="selection" data-selection-quote-url-value="{{ path('quote') }}">
         <a class="skip-link" href="#contenu">Aller au contenu</a>
         {% include 'layout/_announcements.html.twig' %}
-        {% set home = current_route == 'app_home' %}
+        {% set home = current_route in ['app_home', 'admin_home_hero_preview'] %}
         {% set wa_message = whatsapp_message|default('Bonjour, j\'ai une question sur Seydeco') %}
         {# Non collant sur desktop ; sur mobile, se masque en descendant et réapparaît en remontant (contrôleur menu) #}
         <header class="site-header{{ home ? ' site-header--home' }}" data-controller="menu" data-action="scroll@window->menu#scroll">

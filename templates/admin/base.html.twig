@@ -18,7 +18,7 @@
                     {% set current = app.request.attributes.get('_route')|default('') %}
                     <ul>
                         <li><a href="{{ path('admin_dashboard') }}"{% if current == 'admin_dashboard' %} aria-current="page"{% endif %}>Accueil</a></li>
-                        <li><a href="{{ path('admin_more') }}"{% if current == 'admin_more' or current starts with 'admin_category' or current starts with 'admin_product' or current starts with 'admin_pack' or current starts with 'admin_page' or current starts with 'admin_faq' or current starts with 'admin_realisation' or current starts with 'admin_venue' or current == 'admin_contact_settings' %} aria-current="page"{% endif %}>Plus</a></li>
+                        <li><a href="{{ path('admin_more') }}"{% if current == 'admin_more' or current starts with 'admin_category' or current starts with 'admin_product' or current starts with 'admin_pack' or current starts with 'admin_page' or current starts with 'admin_faq' or current starts with 'admin_realisation' or current starts with 'admin_venue' or current starts with 'admin_announcement' or current starts with 'admin_review' or current starts with 'admin_home_hero' or current starts with 'admin_featured' or current ends with '_settings' %} aria-current="page"{% endif %}>Plus</a></li>
                     </ul>
                 </nav>
                 <main id="contenu" class="admin-main" tabindex="-1">

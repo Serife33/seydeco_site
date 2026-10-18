@@ -1,0 +1,27 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Les incontournables{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <h1 class="admin-title">Les incontournables</h1>
+    {{ include('admin/_flashes.html.twig') }}
+    <p class="admin-field__help">Produits montrés sur l'accueil, dans cet ordre (8 au plus). Pour en ajouter un : ouvrir le produit et cocher « Mettre en avant sur l'accueil ».</p>
+    {% if products is empty %}
+        <p>Aucun produit mis en avant : la section n'apparaît pas sur l'accueil.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for product in products %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_product_edit', {id: product.id}) }}">
+                        <span>
+                            <span class="admin-list__name">{{ product.name }}</span>
+                            {% if not product.visible or not product.category.visible %}<span class="admin-list__meta"><strong>Masqué</strong> : n'apparaît pas sur l'accueil</span>{% endif %}
+                        </span>
+                    </a>
+                    {{ include('admin/_order_actions.html.twig', {prefix: 'admin_featured', id: product.id, token: csrf_token('featured' ~ product.id), name: product.name, first: loop.first, last: loop.last, visible: true, toggle_label: 'Retirer de l\'accueil'}, with_context = false) }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

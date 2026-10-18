@@ -44,6 +44,12 @@ final class ContactSettingsType extends AbstractType
                 'label' => 'SIRET',
                 'attr' => ['inputmode' => 'numeric'],
                 'constraints' => [new Assert\Regex(pattern: '/^(\d\s*){14}$/', message: 'Le SIRET compte 14 chiffres.')],
+            ])
+            ->add(SettingsProvider::FOUNDED_YEAR, TextType::class, $text + [
+                'label' => 'Année de création',
+                'help' => 'Affichée dans « Nos engagements » sur l\'accueil (« Depuis 2026 »).',
+                'attr' => ['inputmode' => 'numeric', 'maxlength' => 4],
+                'constraints' => [new Assert\Regex(pattern: '/^(19|20)\d\d$/', message: 'Saisir une année, par exemple 2026.')],
             ]);
         $link = fn (string $hosts, string $network) => $text + [
             'default_protocol' => 'https',

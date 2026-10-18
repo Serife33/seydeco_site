@@ -1,0 +1,62 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% block title %}Haut de l'accueil{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <h1 class="admin-title">Haut de l'accueil</h1>
+    {{ include('admin/_flashes.html.twig') }}
+
+    {% if draft.id %}
+        <section class="admin-section" aria-labelledby="s-draft">
+            <h2 class="admin-title" id="s-draft">Brouillon en cours</h2>
+            <p>Le site montre encore la version publiée. Regardez l'aperçu, puis publiez.</p>
+            <div class="admin-list__actions">
+                <a class="admin-button admin-button--secondary" href="{{ path('admin_home_hero_preview') }}" target="_blank" rel="noopener">Aperçu<span class="visually-hidden"> (nouvel onglet)</span></a>
+                <a class="admin-button admin-button--secondary" href="{{ path('admin_home_hero_preview', {largeur: 'mobile'}) }}" target="_blank" rel="noopener">Aperçu sur mobile<span class="visually-hidden"> (nouvel onglet)</span></a>
+                <form method="post" action="{{ path('admin_home_hero_publish') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('home_hero') }}">
+                    <button class="admin-button">Publier</button>
+                </form>
+                <form method="post" action="{{ path('admin_home_hero_cancel') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('home_hero') }}">
+                    <button class="admin-button admin-button--secondary">Annuler le brouillon</button>
+                </form>
+            </div>
+        </section>
+    {% else %}
+        <p class="admin-field__help">Vos modifications sont d'abord enregistrées comme brouillon : le site ne change qu'après « Publier ».</p>
+    {% endif %}
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        {{ include('admin/_error_summary.html.twig') }}
+        <section class="admin-section" aria-labelledby="s-photos">
+            <h2 class="admin-title" id="s-photos">Photos</h2>
+            <p class="admin-field__help">Une grande photo, ou deux côte à côte (l'une sous l'autre sur téléphone). Pas de texte sur les photos.</p>
+            {% if draft.photo %}
+                <img class="admin-thumb" src="{{ draft.photo|imagine_filter('admin_thumb') }}" width="48" height="48" alt="Photo actuelle">
+            {% endif %}
+            {{ form_row(form.photoUpload, {help: draft.photo ? 'Choisir une photo seulement pour remplacer l\'actuelle.' : null}) }}
+            {{ form_row(form.photoAlt) }}
+            {% if draft.photo2 %}
+                <img class="admin-thumb" src="{{ draft.photo2|imagine_filter('admin_thumb') }}" width="48" height="48" alt="Deuxième photo actuelle">
+                {{ form_row(form.removePhoto2) }}
+            {% endif %}
+            {{ form_row(form.photo2Upload, {help: draft.photo2 ? 'Choisir une photo seulement pour remplacer l\'actuelle.' : null}) }}
+            {{ form_row(form.photo2Alt) }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-texts">
+            <h2 class="admin-title" id="s-texts">Textes et bouton</h2>
+            {{ form_row(form.title) }}
+            {{ form_row(form.text) }}
+            {{ form_row(form.buttonLabel) }}
+            {{ form_row(form.buttonLink) }}
+        </section>
+        {{ form_rest(form) }}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer le brouillon</button>
+        </div>
+    {{ form_end(form) }}
+{% endblock %}
