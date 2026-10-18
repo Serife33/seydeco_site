@@ -5,6 +5,10 @@
     <span class="admin-money">{{- block('base_money_widget') -}}</span>
 {%- endblock money_widget -%}
 
+{%- block unit_widget -%}
+    <span class="admin-money">{{- block('integer_widget') -}} {{ unit }}</span>
+{%- endblock unit_widget -%}
+
 {# Registre Atelier : erreurs sous le champ ; aria-invalid / aria-describedby viennent de form_row #}
 {%- block form_row_render -%}
     {%- set row_attr = row_attr|merge({class: (row_attr.class|default('') ~ ' admin-field')|trim}) -%}
@@ -50,6 +54,7 @@
 
 {%- block _product_styles_row -%}{{ block('fieldset_row') }}{%- endblock -%}
 {%- block _product_eventTypes_row -%}{{ block('fieldset_row') }}{%- endblock -%}
+{%- block _payment_settings_payment_methods_row -%}{{ block('fieldset_row') }}{%- endblock -%}
 
 {# Liste de cases : un fieldset/legend plutôt qu'un label sans cible #}
 {%- block fieldset_row -%}

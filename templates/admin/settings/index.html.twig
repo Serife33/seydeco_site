@@ -1,0 +1,29 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Réglages{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <h1 class="admin-title">Réglages</h1>
+    {# Rubriques pas encore construites : texte sans lien (UX-DR61) #}
+    {% set sections = [
+        {name: 'Créneaux au dépôt'},
+        {name: 'Devis', route: 'admin_quote_settings'},
+        {name: 'Livraison', route: 'admin_delivery_settings'},
+        {name: 'Installation', route: 'admin_install_settings'},
+        {name: 'Conditions', route: 'admin_terms_settings'},
+        {name: 'Paiement', route: 'admin_payment_settings'},
+        {name: 'Sécurité'},
+    ] %}
+    <ul class="admin-list admin-list--menu">
+        {% for section in sections %}
+            <li class="admin-list__row">
+                {% if section.route is defined %}
+                    <a class="admin-list__main" href="{{ path(section.route) }}"><span class="admin-list__name">{{ section.name }}</span></a>
+                {% else %}
+                    <span class="admin-list__main"><span><span class="admin-list__name">{{ section.name }}</span><span class="admin-list__meta">Bientôt disponible.</span></span></span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

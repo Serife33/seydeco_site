@@ -516,6 +516,7 @@ final class CatalogTest extends WebTestCase
             self::assertNotContains('Livraison', $crawler->filter('.info-block dt')->each(fn (Crawler $dt) => $dt->text()));
         } finally {
             $db->executeStatement("UPDATE setting SET value = CASE name WHEN 'delivery_price_per_km' THEN '100' WHEN 'delivery_min_chairs' THEN '80' WHEN 'delivery_max_km' THEN '70' ELSE 'Bassens' END WHERE name IN ('delivery_price_per_km', 'delivery_min_chairs', 'delivery_max_km', 'depot_city')");
+            $db->executeStatement("UPDATE setting SET value = '' WHERE name = 'deposit_amount'");
         }
     }
 

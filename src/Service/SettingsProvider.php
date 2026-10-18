@@ -42,6 +42,27 @@ final class SettingsProvider
     public const string COMPANY_TEXT = 'company_text';
     /** « 1 » = site ouvert aux moteurs de recherche ; sinon noindex partout et robots.txt fermé (story 2.2). */
     public const string SEARCH_ENGINES_OPEN = 'search_engines_open';
+    /** Réglages → Devis (story 3.1) : délais en jours, N < V ; vide = non renseigné. */
+    public const string QUOTE_REMINDER_DAYS = 'quote_reminder_days';
+    public const string QUOTE_VALIDITY_DAYS = 'quote_validity_days';
+    /** Adresse qui reçoit les nouvelles demandes de devis. */
+    public const string NOTIFICATION_EMAIL = 'notification_email';
+    /** Supplément par chaise rendue sans nettoyage, centimes (story 3.2) ; vide = option non proposée. */
+    public const string CLEANING_FEE = 'cleaning_fee';
+    /** Réglages → Livraison (story 3.1) : chaises par camion, adresse complète du dépôt (calcul de distance). */
+    public const string TRUCK_CAPACITY = 'truck_capacity';
+    public const string DEPOT_ADDRESS = 'depot_address';
+    /** Réglages → Conditions (story 3.2) : textes repris sur l'Encadré Conditions et les devis. */
+    public const string RETURN_TERMS = 'return_terms';
+    public const string PICKUP_TERMS = 'pickup_terms';
+    public const string FUEL_TERMS = 'fuel_terms';
+    /** Réglages → Paiement (story 3.2). Coordonnées bancaires : jamais affichées avant l'Epic 4. */
+    public const string BANK_HOLDER = 'bank_holder';
+    public const string IBAN = 'iban';
+    public const string BIC = 'bic';
+    /** Moyens acceptés, séparés par des virgules (clés de PAYMENT_METHOD_LABELS). */
+    public const string PAYMENT_METHODS = 'payment_methods';
+    public const array PAYMENT_METHOD_LABELS = ['virement' => 'Virement', 'especes' => 'Espèces', 'wero' => 'Wero'];
 
     /** @var array<string, string>|null */
     private ?array $values = null;

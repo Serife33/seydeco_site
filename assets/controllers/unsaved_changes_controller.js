@@ -19,11 +19,18 @@ export default class extends Controller {
                 event.preventDefault();
             }
         };
+        // Envoi coupé (réseau) : la saisie reste à l'écran, non enregistrée (UX-DR73)
+        this.onSubmitEnd = (event) => {
+            const failed = Boolean(event.detail.error);
+            this.dirty ||= failed;
+            this.element.querySelector('[data-save-error]')?.toggleAttribute('hidden', !failed);
+        };
         this.element.addEventListener('input', this.markDirty);
         this.element.addEventListener('change', this.markDirty);
         this.element.addEventListener('submit', this.markClean);
         // « Ignorer » du brouillon remet le formulaire aux valeurs enregistrées
         this.element.addEventListener('reset', this.markClean);
+        this.element.addEventListener('turbo:submit-end', this.onSubmitEnd);
         window.addEventListener('beforeunload', this.onBeforeUnload);
         document.addEventListener('turbo:before-visit', this.onBeforeVisit);
 
@@ -37,6 +44,7 @@ export default class extends Controller {
         this.element.removeEventListener('change', this.markDirty);
         this.element.removeEventListener('submit', this.markClean);
         this.element.removeEventListener('reset', this.markClean);
+        this.element.removeEventListener('turbo:submit-end', this.onSubmitEnd);
         window.removeEventListener('beforeunload', this.onBeforeUnload);
         document.removeEventListener('turbo:before-visit', this.onBeforeVisit);
     }

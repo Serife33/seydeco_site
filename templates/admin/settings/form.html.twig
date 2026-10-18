@@ -1,0 +1,24 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path(back) }}">← {{ back == 'admin_settings' ? 'Réglages' : 'Plus' }}</a></p>
+    <h1 class="admin-title">{{ title }}</h1>
+    {% include 'admin/_flashes.html.twig' %}
+    <p class="admin-field__help">{{ intro }}</p>
+
+    {% if form.categories is defined and form.categories is empty %}
+        <p>Aucune catégorie pour l'instant : créez-en dans Plus → Catégories.</p>
+    {% else %}
+        {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+            {{ form_errors(form) }}
+            {{ form_rest(form) }}
+            <div class="admin-form__save">
+                <p class="admin-field__error" role="alert" data-save-error hidden>Non enregistré. Réessayer.</p>
+                <button type="submit" class="admin-button" data-turbo-submits-with="Envoi…">Enregistrer</button>
+            </div>
+        {{ form_end(form) }}
+    {% endif %}
+{% endblock %}
