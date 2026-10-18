@@ -1,0 +1,30 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Annonces{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <div class="admin-head">
+        <h1 class="admin-title">Annonces</h1>
+        <a class="admin-button" href="{{ path('admin_announcement_new') }}">Ajouter une annonce</a>
+    </div>
+    {{ include('admin/_flashes.html.twig') }}
+    <p class="admin-field__help">Affichées dans le bandeau défilant en haut du site, dans cet ordre, pendant leurs dates.</p>
+    {% if announcements is empty %}
+        <p>Aucune annonce.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for announcement in announcements %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_announcement_edit', {id: announcement.id}) }}">
+                        <span>
+                            <span class="admin-list__name">{{ announcement.text }}</span>
+                            <span class="admin-list__meta">{{ announcement.status(today) }} · du {{ announcement.startsOn|date('d/m/Y') }} au {{ announcement.endsOn|date('d/m/Y') }}{% if not announcement.visible %} · <strong>Masquée</strong>{% endif %}</span>
+                        </span>
+                    </a>
+                    {{ include('admin/_order_actions.html.twig', {prefix: 'admin_announcement', id: announcement.id, token: csrf_token('announcement' ~ announcement.id), name: announcement.text, first: loop.first, last: loop.last, visible: announcement.visible}, with_context = false) }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

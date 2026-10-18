@@ -1,0 +1,30 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = review.id ? 'Modifier l\'avis' : 'Ajouter un avis' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_review_index') }}">← Avis</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        {{ form_rest(form) }}
+        {% if review.id %}
+            <section class="admin-section" aria-labelledby="s-visibility">
+                <h2 class="admin-title" id="s-visibility">Visibilité</h2>
+                <p>{{ review.visible ? 'Visible sur la page À propos.' : 'Masqué : n\'apparaît plus sur le site.' }}</p>
+                <button type="submit" form="review-visibility" class="admin-button admin-button--secondary">{{ review.visible ? 'Masquer' : 'Afficher à nouveau' }}</button>
+            </section>
+        {% endif %}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+    {% if review.id %}
+        <form id="review-visibility" method="post" action="{{ path('admin_review_toggle', {id: review.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('review' ~ review.id) }}">
+        </form>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Avis{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <div class="admin-head">
+        <h1 class="admin-title">Avis</h1>
+        <a class="admin-button" href="{{ path('admin_review_new') }}">Ajouter un avis</a>
+    </div>
+    {{ include('admin/_flashes.html.twig') }}
+    <p class="admin-field__help">Avis recopiés de la fiche Google, affichés sur la page À propos dans cet ordre. Le lien vers tous les avis se règle dans <a class="admin-link" href="{{ path('admin_contact_settings') }}">Coordonnées et réseaux</a>.</p>
+    {% if reviews is empty %}
+        <p>Aucun avis.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for review in reviews %}
+                {% set name = review.author ~ ', ' ~ review.reviewedOn|date('d/m/Y') %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_review_edit', {id: review.id}) }}">
+                        <span>
+                            <span class="admin-list__name">{{ review.author }}</span>
+                            <span class="admin-list__meta">Note de {{ review.rating }} sur 5 · {{ review.reviewedOn|date('d/m/Y') }}{% if not review.visible %} · <strong>Masqué</strong>{% endif %}</span>
+                        </span>
+                    </a>
+                    {{ include('admin/_order_actions.html.twig', {prefix: 'admin_review', id: review.id, token: csrf_token('review' ~ review.id), name: 'l\'avis de ' ~ name, first: loop.first, last: loop.last, visible: review.visible}, with_context = false) }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

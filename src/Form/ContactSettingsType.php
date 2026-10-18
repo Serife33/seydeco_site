@@ -24,6 +24,8 @@ final class ContactSettingsType extends AbstractType
         'YouTube' => 'youtube\.com|youtu\.be',
         'Pinterest' => 'pinterest\.(com|fr|co\.uk|de|es|it|ca|com\.au)|pin\.it',
     ];
+    /** Fiche Google : google.fr/maps, g.page, maps.app.goo.gl… */
+    private const string GOOGLE_HOSTS = 'google\.(com|fr)|g\.page|goo\.gl';
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
@@ -43,17 +45,21 @@ final class ContactSettingsType extends AbstractType
                 'attr' => ['inputmode' => 'numeric'],
                 'constraints' => [new Assert\Regex(pattern: '/^(\d\s*){14}$/', message: 'Le SIRET compte 14 chiffres.')],
             ]);
+        $link = fn (string $hosts, string $network) => $text + [
+            'default_protocol' => 'https',
+            'constraints' => [
+                new Assert\Length(max: 500),
+                new Assert\Url(message: 'Saisir un lien complet, par exemple https://…', requireTld: true),
+                new Assert\Regex(pattern: '~^https?://([\w-]+\.)*('.$hosts.')(/|$)~i', message: 'Ce lien ne vient pas '.('Instagram' === $network ? "d'" : 'de ').$network.'.'),
+            ],
+        ];
         foreach (SettingsProvider::SOCIAL_NETWORKS as $network => $key) {
-            $builder->add($key, UrlType::class, $text + [
-                'label' => "Lien $network",
-                'default_protocol' => 'https',
-                'constraints' => [
-                    new Assert\Length(max: 500),
-                    new Assert\Url(message: 'Saisir un lien complet, par exemple https://…', requireTld: true),
-                    new Assert\Regex(pattern: '~^https?://([\w-]+\.)*('.self::NETWORK_HOSTS[$network].')(/|$)~i', message: 'Ce lien ne vient pas '.('Instagram' === $network ? "d'" : 'de ').$network.'.'),
-                ],
-            ]);
+            $builder->add($key, UrlType::class, $link(self::NETWORK_HOSTS[$network], $network) + ['label' => "Lien $network"]);
         }
+        $builder->add(SettingsProvider::GOOGLE_REVIEWS_URL, UrlType::class, $link(self::GOOGLE_HOSTS, 'Google') + [
+            'label' => 'Lien vers vos avis Google',
+            'help' => 'Ouvert par « Voir tous nos avis sur Google » sur la page À propos.',
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

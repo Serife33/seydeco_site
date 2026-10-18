@@ -1,0 +1,9 @@
+{# Review (FR-33) : un par avis affiché dans le Bloc avis, rattaché au LocalBusiness Seydeco #}
+{% for review in visible_reviews() %}
+    {% include 'seo/_json_ld.html.twig' with {data: {'@context': 'https://schema.org', '@type': 'Review',
+        itemReviewed: {'@type': 'LocalBusiness', name: 'Seydeco', url: url('app_home')},
+        author: {'@type': 'Person', name: review.author},
+        reviewRating: {'@type': 'Rating', ratingValue: review.rating, bestRating: 5, worstRating: 1},
+        reviewBody: review.text,
+        datePublished: review.reviewedOn|date('Y-m-d')}} only %}
+{% endfor %}

@@ -1,0 +1,30 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = announcement.id ? 'Modifier l\'annonce' : 'Ajouter une annonce' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_announcement_index') }}">← Annonces</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        {{ form_rest(form) }}
+        {% if announcement.id %}
+            <section class="admin-section" aria-labelledby="s-visibility">
+                <h2 class="admin-title" id="s-visibility">Visibilité</h2>
+                <p>{{ announcement.visible ? 'Visible dans le bandeau pendant ses dates.' : 'Masquée : n\'apparaît plus sur le site.' }}</p>
+                <button type="submit" form="announcement-visibility" class="admin-button admin-button--secondary">{{ announcement.visible ? 'Masquer' : 'Afficher à nouveau' }}</button>
+            </section>
+        {% endif %}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+    {% if announcement.id %}
+        <form id="announcement-visibility" method="post" action="{{ path('admin_announcement_toggle', {id: announcement.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('announcement' ~ announcement.id) }}">
+        </form>
+    {% endif %}
+{% endblock %}

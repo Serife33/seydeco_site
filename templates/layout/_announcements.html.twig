@@ -1,0 +1,42 @@
+{# Bandeau d'annonces (story 2.7, UX-DR8) : annonces du jour dans l'ordre de Serife, non rendu sans annonce.
+   Défilement continu en CSS (deux copies, la seconde cachée aux lecteurs d'écran), pause au bouton, au survol et au focus (WCAG 2.2.2) ;
+   mouvement réduit : une annonce statique avec précédent / suivant. #}
+{% set announcements = active_announcements() %}
+{% if announcements %}
+    {% set chars = announcements|reduce((total, a) => total + a.text|length, 0) %}
+    <section class="announcement-bar" aria-label="Annonces" data-controller="announcements">
+        <div class="announcement-bar__viewport">
+            <div class="announcement-bar__track" style="--announcement-duration: {{ max(20, (chars * 0.2 + announcements|length)|round) }}s">
+                {% for copy in [1, 2] %}
+                    <ul class="announcement-bar__list"{% if copy == 2 %} aria-hidden="true"{% else %} aria-live="polite"{% endif %}>
+                        {% for announcement in announcements %}
+                            <li class="announcement-bar__item{{ loop.first ? ' is-current' }}"{% if copy == 1 %} data-announcements-target="item"{% endif %}>
+                                {% if announcement.link %}
+                                    <a href="{{ announcement.link }}"{% if copy == 2 %} tabindex="-1"{% endif %}>{{ announcement.text }}</a>
+                                {% else %}
+                                    <span>{{ announcement.text }}</span>
+                                {% endif %}
+                                {% include 'layout/_icon.html.twig' with {name: 'diamond', size: 12} only %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="announcement-bar__controls">
+            {% if announcements|length > 1 %}
+                <button type="button" class="announcement-bar__button announcement-bar__step" data-action="announcements#previous">
+                    {% include 'layout/_icon.html.twig' with {name: 'previous'} only %}<span class="visually-hidden">Annonce précédente</span>
+                </button>
+                <button type="button" class="announcement-bar__button announcement-bar__step" data-action="announcements#next">
+                    {% include 'layout/_icon.html.twig' with {name: 'next'} only %}<span class="visually-hidden">Annonce suivante</span>
+                </button>
+            {% endif %}
+            <button type="button" class="announcement-bar__button announcement-bar__pause" aria-pressed="false" data-announcements-target="pause" data-action="announcements#toggle">
+                {% include 'layout/_icon.html.twig' with {name: 'pause', class: 'icon--pause'} only %}
+                {% include 'layout/_icon.html.twig' with {name: 'play', class: 'icon--play'} only %}
+                <span class="visually-hidden">Mettre en pause le défilement</span>
+            </button>
+        </div>
+    </section>
+{% endif %}

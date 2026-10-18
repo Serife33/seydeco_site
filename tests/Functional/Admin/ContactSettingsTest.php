@@ -45,6 +45,7 @@ final class ContactSettingsTest extends AdminTestCase
             'contact_settings[facebook_url]' => 'https://fr-fr.facebook.com/seydeco',
             'contact_settings[youtube_url]' => '',
             'contact_settings[pinterest_url]' => 'https://www.pinterest.fr/seydeco/',
+            'contact_settings[google_reviews_url]' => 'https://g.page/r/seydeco/review',
         ]);
 
         self::assertResponseRedirects('/admin/coordonnees');
@@ -54,6 +55,7 @@ final class ContactSettingsTest extends AdminTestCase
             'address' => "12 rue des Fleurs\n33000 Bordeaux",
             'email' => 'contact@seydeco.fr',
             'facebook_url' => 'https://fr-fr.facebook.com/seydeco',
+            'google_reviews_url' => 'https://g.page/r/seydeco/review',
             'instagram_url' => 'https://www.instagram.com/seydeco',
             'phone' => '05 56 00 00 00',
             'pinterest_url' => 'https://www.pinterest.fr/seydeco/',
@@ -80,6 +82,7 @@ final class ContactSettingsTest extends AdminTestCase
             'contact_settings[pinterest_url]' => 'https://pinterest.evil.example/x',
             'contact_settings[phone]' => '((( ... )))',
             'contact_settings[email]' => 'pas-un-email',
+            'contact_settings[google_reviews_url]' => 'https://google.evil.example/avis',
         ]);
 
         self::assertResponseStatusCodeSame(422);
@@ -89,6 +92,7 @@ final class ContactSettingsTest extends AdminTestCase
         self::assertSelectorTextSame('#contact_settings_pinterest_url ~ .admin-field__error', 'Ce lien ne vient pas de Pinterest.');
         self::assertSelectorTextSame('#contact_settings_phone ~ .admin-field__error', 'Saisir un numéro, par exemple 06 12 34 56 78.');
         self::assertSelectorTextSame('#contact_settings_email ~ .admin-field__error', 'Saisir un email, par exemple contact@seydeco.fr.');
+        self::assertSelectorTextSame('#contact_settings_google_reviews_url ~ .admin-field__error', 'Ce lien ne vient pas de Google.');
         self::assertInputValueSame('contact_settings[instagram_url]', 'https://facebook.com/x');
         self::assertSelectorTextSame('#contact_settings_address', '12 rue des Fleurs');
         self::assertSame('', $this->db->fetchOne("SELECT value FROM setting WHERE name = 'address'"), 'Rien enregistré');

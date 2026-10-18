@@ -733,3 +733,43 @@ body.has-open-panel { overflow: hidden; }
 .faq-group { margin-top: var(--space-8); }
 .faq-item { padding: var(--space-4) 0; border-bottom: 1px solid var(--hairline); }
 .faq-item__question { font-family: var(--font-body); font-size: 17px; font-weight: 500; line-height: 1.4; margin: 0 0 var(--space-2); }
+
+/* Bandeau d'annonces (UX-DR8/66) : cream-deep, texte nav en capitales, défilement continu, pause 44 px toujours visible */
+.announcement-bar { display: flex; align-items: center; background: var(--cream-deep); font-size: 13px; line-height: 1.4; letter-spacing: 0.14em; text-transform: uppercase; }
+.announcement-bar__viewport { flex: 1; min-width: 0; overflow: hidden; }
+/* Deux copies identiques : décaler de -50 % ramène exactement au début, sans à-coup */
+.announcement-bar__track { display: flex; width: max-content; animation: announcement-scroll var(--announcement-duration, 30s) linear infinite; }
+.announcement-bar.is-paused .announcement-bar__track,
+.announcement-bar__viewport:hover .announcement-bar__track,
+.announcement-bar__viewport:focus-within .announcement-bar__track { animation-play-state: paused; }
+.announcement-bar__list { display: flex; flex: none; min-width: 100vw; margin: 0; padding: 0; list-style: none; }
+.announcement-bar__item { display: flex; align-items: center; gap: var(--space-6); padding-right: var(--space-6); white-space: nowrap; }
+.announcement-bar__item a { display: inline-flex; align-items: center; min-height: var(--target-min); color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.announcement-bar__controls { display: flex; flex: none; }
+.announcement-bar__button { display: inline-flex; align-items: center; justify-content: center; width: var(--target-min); height: var(--target-min); padding: 0; border: 0; background: none; color: var(--ink); cursor: pointer; }
+.announcement-bar__step, .announcement-bar__pause[aria-pressed="true"] .icon--pause, .announcement-bar__pause[aria-pressed="false"] .icon--play { display: none; }
+@keyframes announcement-scroll { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+    /* Une annonce statique à la fois, précédent / suivant ; ni défilement ni fondu */
+    .announcement-bar__track { width: auto; }
+    .announcement-bar__list { flex: 1; min-width: 0; justify-content: center; }
+    .announcement-bar__list[aria-hidden], .announcement-bar__pause, .announcement-bar__item .icon, .announcement-bar__item:not(.is-current) { display: none; }
+    .announcement-bar__item { padding: var(--space-2) var(--space-3); white-space: normal; text-align: center; }
+    .announcement-bar__step { display: inline-flex; }
+}
+
+/* Bloc avis (UX-DR41/67) : étoiles gold sur blanc, citation accent-quote, auteur label-caps ink-muted */
+.reviews { padding: var(--space-12) 0; background: var(--surface); }
+.reviews__title { text-align: center; font-size: clamp(24px, 4vw, 32px); }
+.reviews__list { display: grid; gap: var(--space-8); margin: var(--space-8) 0 0; padding: 0; list-style: none; }
+.review { margin: 0; }
+.review__stars { display: flex; gap: var(--space-1); margin: 0 0 var(--space-3); }
+.review__star { fill: var(--gold); stroke: var(--gold); stroke-width: 1.3; stroke-linejoin: round; }
+.review__star--empty { fill: none; }
+.review__quote { margin: 0; font-family: var(--font-accent); font-style: italic; font-weight: 500; font-size: clamp(22px, 5vw, 30px); line-height: 1.4; }
+.review__quote p { margin: 0; }
+.review__author { margin: var(--space-3) 0 0; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-muted); }
+.reviews__more { margin: var(--space-8) 0 0; text-align: center; }
+@media (min-width: 1024px) {
+    .reviews__list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-12); }
+}

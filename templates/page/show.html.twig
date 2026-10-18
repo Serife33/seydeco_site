@@ -4,6 +4,11 @@
 {% set description = page.description ?: page.content|simple_markdown_text %}
 {% set og_image = page.photo ? page.photo|imagine_filter('page_photo') : null %}
 
+{% block structured_data %}
+    {{ parent() }}
+    {% if page.slug == 'a-propos' %}{% include 'seo/reviews.html.twig' %}{% endif %}
+{% endblock %}
+
 {% block body %}
     <article class="container content-page">
         <h1>{{ page.title }}</h1>
@@ -21,4 +26,5 @@
             </section>
         {% endif %}
     </article>
+    {% if page.slug == 'a-propos' %}{% include 'review/_block.html.twig' %}{% endif %}
 {% endblock %}

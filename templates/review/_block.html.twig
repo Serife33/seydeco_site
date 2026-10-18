@@ -1,0 +1,30 @@
+{# Bloc avis (story 2.8, UX-DR41/67), réutilisable (À propos, accueil en 2.10) : avis visibles recopiés de Google.
+   Sans avis, seul le lien Google reste (s'il est renseigné). Simple lien : aucun script ni widget Google (NFR-11). #}
+{% set reviews = visible_reviews() %}
+{% set google_reviews = site_contact().googleReviews %}
+{% if reviews or google_reviews %}
+    <section class="reviews"{% if reviews %} aria-labelledby="avis-titre"{% else %} aria-label="Avis Google"{% endif %}>
+        <div class="container">
+            {% if reviews %}
+                <h2 class="reviews__title" id="avis-titre">Ce que disent nos clientes</h2>
+                <ul class="reviews__list">
+                    {% for review in reviews %}
+                        <li class="review">
+                            <p class="review__stars">
+                                <span class="visually-hidden">Note de {{ review.rating }} sur 5</span>
+                                {% for star in 1..5 %}
+                                    <svg class="review__star{{ star > review.rating ? ' review__star--empty' }}" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>
+                                {% endfor %}
+                            </p>
+                            <blockquote class="review__quote"><p>{{ review.text|nl2br }}</p></blockquote>
+                            <p class="review__author">{{ review.author }} · <time datetime="{{ review.reviewedOn|date('Y-m-d') }}">{{ review.reviewedOn|date('d/m/Y') }}</time></p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% if google_reviews %}
+                <p class="reviews__more"><a href="{{ google_reviews }}" target="_blank" rel="noopener">Voir tous nos avis sur Google<span class="visually-hidden"> (nouvel onglet)</span></a></p>
+            {% endif %}
+        </div>
+    </section>
+{% endif %}

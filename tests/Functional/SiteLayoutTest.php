@@ -24,7 +24,7 @@ use Symfony\Component\DomCrawler\Crawler;
  */
 final class SiteLayoutTest extends WebTestCase
 {
-    public const array CONTACT_KEYS = ['phone', 'email', 'address', 'siret', 'instagram_url', 'tiktok_url', 'facebook_url', 'youtube_url', 'pinterest_url'];
+    public const array CONTACT_KEYS = ['phone', 'email', 'address', 'siret', 'instagram_url', 'tiktok_url', 'facebook_url', 'youtube_url', 'pinterest_url', 'google_reviews_url'];
 
     private KernelBrowser $client;
     private EntityManagerInterface $em;
