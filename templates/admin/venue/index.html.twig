@@ -1,0 +1,34 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Lieux{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <div class="admin-head">
+        <h1 class="admin-title">Lieux partenaires</h1>
+        <a class="admin-button" href="{{ path('admin_venue_new') }}">Ajouter un lieu</a>
+    </div>
+    {{ include('admin/_flashes.html.twig') }}
+
+    {% set total = venues|length %}
+    {% if total == 0 %}
+        <p>Aucun lieu.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for venue in venues %}
+                {% set rank = offset + loop.index0 %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_venue_edit', {id: venue.id}) }}">
+                        <img class="admin-thumb" src="{{ venue.photo|imagine_filter('admin_thumb') }}" width="48" height="48" alt="">
+                        <span>
+                            <span class="admin-list__name">{{ venue.name }}</span>
+                            <span class="admin-list__meta">{{ venue.city }}{% if not venue.visible %} · <strong>Masqué</strong>{% endif %}</span>
+                        </span>
+                    </a>
+                    {{ include('admin/_order_actions.html.twig', {prefix: 'admin_venue', id: venue.id, token: csrf_token('venue' ~ venue.id), name: venue.name, first: rank == 0, last: rank == total - 1, visible: venue.visible, page: page}, with_context = false) }}
+                </li>
+            {% endfor %}
+        </ul>
+        {{ include('admin/_pagination.html.twig') }}
+    {% endif %}
+{% endblock %}

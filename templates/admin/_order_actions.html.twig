@@ -1,19 +1,22 @@
-{# Monter / Descendre / Masquer d'une ligne de liste (contenus sans suppression). Attend : prefix (ex. admin_page), id, token, name, first, last, visible #}
+{# Monter / Descendre / Masquer d'une ligne de liste (contenus sans suppression). Attend : prefix (ex. admin_page), id, token, name, first, last, visible ; facultatif : page (liste paginée) #}
 <div class="admin-list__actions">
     {% if not first %}
         <form method="post" action="{{ path(prefix ~ '_move_up', {id: id}) }}">
             <input type="hidden" name="_token" value="{{ token }}">
+        {% if page|default(null) %}<input type="hidden" name="page" value="{{ page }}">{% endif %}
             <button class="admin-button admin-button--secondary admin-button--small" aria-label="Monter {{ name }}">Monter</button>
         </form>
     {% endif %}
     {% if not last %}
         <form method="post" action="{{ path(prefix ~ '_move_down', {id: id}) }}">
             <input type="hidden" name="_token" value="{{ token }}">
+        {% if page|default(null) %}<input type="hidden" name="page" value="{{ page }}">{% endif %}
             <button class="admin-button admin-button--secondary admin-button--small" aria-label="Descendre {{ name }}">Descendre</button>
         </form>
     {% endif %}
     <form method="post" action="{{ path(prefix ~ '_toggle', {id: id}) }}">
         <input type="hidden" name="_token" value="{{ token }}">
+        {% if page|default(null) %}<input type="hidden" name="page" value="{{ page }}">{% endif %}
         {% set action = visible ? 'Masquer' : 'Afficher à nouveau' %}
         <button class="admin-button admin-button--secondary admin-button--small" aria-label="{{ action }} {{ name }}">{{ action }}</button>
     </form>

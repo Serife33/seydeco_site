@@ -1,0 +1,5 @@
+{# Event sur une réalisation visible (FR-33) : nom, date, lieu, ville, photos #}
+{% set data = {'@context': 'https://schema.org', '@type': 'Event', name: realisation.title, startDate: realisation.eventDate|date('Y-m-d'), url: canonical,
+    location: {'@type': 'Place', name: realisation.venueName, address: {'@type': 'PostalAddress', addressLocality: realisation.city}}} %}
+{% if realisation.photos|length %}{% set data = data|merge({image: realisation.photos|map(p => p.filename|imagine_filter('page_photo'))|reduce((list, url) => list|merge([url]), [])}) %}{% endif %}
+{% include 'seo/_json_ld.html.twig' with {data: data} only %}

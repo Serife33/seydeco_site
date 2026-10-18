@@ -1,0 +1,72 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = realisation.id ? 'Modifier la réalisation' : 'Ajouter une réalisation' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    {% import 'admin/product/_collections.html.twig' as c %}
+    <p><a class="admin-link" href="{{ path('admin_realisation_index') }}">← Réalisations</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+    {% if realisation.slug %}<p class="admin-field__help">Adresse : /realisations/{{ realisation.slug }} (ne change pas)</p>{% endif %}
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        {{ include('admin/_error_summary.html.twig') }}
+        <section class="admin-section" aria-labelledby="s-infos">
+            <h2 class="admin-title" id="s-infos">Infos</h2>
+            {{ form_row(form.title) }}
+            {{ form_row(form.eventDate) }}
+            {{ form_row(form.eventType) }}
+            {{ form_row(form.venue) }}
+            {{ form_row(form.venueName) }}
+            {{ form_row(form.city) }}
+            {{ form_row(form.text) }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-media">
+            <h2 class="admin-title" id="s-media">Photos & vidéo</h2>
+            {{ c.list('photo', form.photos, 'Photos', 'Ajouter une photo', 'La première photo est la photo principale.') }}
+            <fieldset class="admin-fieldset admin-collection">
+                <legend>Vidéo</legend>
+                {% if realisation.videoFile %}
+                    <p class="admin-field__help">Vidéo MP4 en place.</p>
+                    {{ form_row(form.removeVideoFile) }}
+                {% else %}
+                    {% do form.removeVideoFile.setRendered() %}
+                {% endif %}
+                {{ form_row(form.videoUpload) }}
+                {{ form_row(form.videoUrl) }}
+                {% if realisation.videoThumbnail %}
+                    <img class="admin-thumb" src="{{ realisation.videoThumbnail|imagine_filter('admin_thumb') }}" width="48" height="48" alt="Miniature actuelle de la vidéo">
+                    {{ form_row(form.removeVideoThumbnail) }}
+                {% else %}
+                    {% do form.removeVideoThumbnail.setRendered() %}
+                {% endif %}
+                {{ form_row(form.videoThumbnailUpload) }}
+            </fieldset>
+        </section>
+        <section class="admin-section" aria-labelledby="s-products">
+            <h2 class="admin-title" id="s-products">Produits utilisés</h2>
+            {{ c.list('product', form.products, 'Produits utilisés', 'Ajouter un produit', 'Montrés sur la page de la réalisation ; un produit masqué n\'y apparaît pas.') }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-visibility">
+            <h2 class="admin-title" id="s-visibility">Visibilité</h2>
+            {% if realisation.id %}
+                <p>{{ realisation.visible ? 'Visible sur le site.' : 'Masquée : n\'apparaît plus sur le site.' }}</p>
+                {# Bouton du formulaire « realisation-visibility », placé hors de ce formulaire (pas d'imbrication) #}
+                <button type="submit" form="realisation-visibility" class="admin-button admin-button--secondary">{{ realisation.visible ? 'Masquer' : 'Afficher à nouveau' }}</button>
+            {% else %}
+                <p>La réalisation sera visible dès l'enregistrement. Elle pourra être masquée ensuite.</p>
+            {% endif %}
+        </section>
+        {{ form_rest(form) }}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+    {% if realisation.id %}
+        <form id="realisation-visibility" method="post" action="{{ path('admin_realisation_toggle', {id: realisation.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('realisation' ~ realisation.id) }}">
+        </form>
+    {% endif %}
+{% endblock %}

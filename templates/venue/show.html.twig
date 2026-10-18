@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ venue.name }}, {{ venue.city }} — lieu partenaire | Seydeco{% endblock %}
+{% set description = venue.text|trim ?: venue.name ~ ' à ' ~ venue.city ~ ' : les événements équipés par Seydeco dans ce lieu partenaire.' %}
+{% set og_image = venue.photo|imagine_filter('page_photo') %}
+{% set whatsapp_message = 'Bonjour, j\'organise un événement à ' ~ venue.name %}
+
+{% block body %}
+    <article class="container catalog-page venue-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Réalisations', url: path('realisation_index')}, {label: venue.name}]} only %}
+        <h1>{{ venue.name }}</h1>
+        <p class="realisation-page__meta">{{ venue.city }}{% if venue.address %} · {{ venue.address }}{% endif %}</p>
+        <img class="content-page__photo" src="{{ og_image }}" width="1200" height="800" alt="{{ venue.photoAlt }}" fetchpriority="high">
+        {% if venue.text %}<p class="realisation-page__text">{{ venue.text|nl2br }}</p>{% endif %}
+        {% if venue.website %}
+            <p><a href="{{ venue.website }}" target="_blank" rel="noopener">Site du lieu<span class="visually-hidden"> (nouvel onglet)</span></a></p>
+        {% endif %}
+
+        {% if realisations %}
+            <section class="related" aria-labelledby="realisations-lieu">
+                <h2 class="accent-sm related__title" id="realisations-lieu">Nos réalisations dans ce lieu</h2>
+                <ul class="product-grid realisation-grid">
+                    {% for realisation in realisations %}
+                        {% include 'realisation/_card.html.twig' with {lazy: true, tag: 'h3'} %}
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </article>
+{% endblock %}

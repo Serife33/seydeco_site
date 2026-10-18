@@ -12,7 +12,7 @@ final class SlugGenerator
      * Adresses déjà prises : /location/packs/… (packs, story 1.14) et les routes du site,
      * qu'une page servie sur /{slug} (story 2.3) ne doit jamais masquer.
      */
-    private const array RESERVED = ['packs', 'location', 'recherche', 'mon-devis', 'admin', 'comment-ca-marche', 'questions-frequentes', 'realisations'];
+    private const array RESERVED = ['packs', 'location', 'recherche', 'mon-devis', 'admin', 'comment-ca-marche', 'questions-frequentes', 'realisations', 'lieux'];
 
     public function __construct(private readonly SluggerInterface $slugger)
     {

@@ -14,6 +14,8 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\UniqueConstraint(name: 'uniq_product_slug', fields: ['slug'])]
 class Product
 {
+    use VideoTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -104,22 +106,6 @@ class Product
     #[ORM\OrderBy(['id' => 'ASC'])]
     #[Assert\Valid]
     private Collection $colors;
-
-    /** Fichier MP4 dans le dossier d'envoi ; exclusif avec `videoUrl`. */
-    #[ORM\Column(length: 100, nullable: true)]
-    private ?string $videoFile = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    #[Assert\Length(max: 255, maxMessage: 'Le lien ne doit pas dépasser {{ limit }} caractères.')]
-    #[Assert\Regex(
-        pattern: '~^https://(www\.|m\.|vm\.)?(youtube\.com|youtu\.be|instagram\.com|tiktok\.com)/\S+$~i',
-        message: 'Seuls les liens YouTube, Instagram ou TikTok sont acceptés (https://…).',
-    )]
-    private ?string $videoUrl = null;
-
-    /** Image facultative ; sinon la photo principale sert de miniature. */
-    #[ORM\Column(length: 100, nullable: true)]
-    private ?string $videoThumbnail = null;
 
     /** @var Collection<int, RelatedProduct> « Souvent loué avec », 4 au plus, dans l'ordre choisi */
     #[ORM\OneToMany(targetEntity: RelatedProduct::class, mappedBy: 'product', cascade: ['persist'], orphanRemoval: true)]
@@ -425,36 +411,6 @@ class Product
                 $photo->setColor(null);
             }
         }
-    }
-
-    public function getVideoFile(): ?string
-    {
-        return $this->videoFile;
-    }
-
-    public function setVideoFile(?string $videoFile): void
-    {
-        $this->videoFile = $videoFile;
-    }
-
-    public function getVideoUrl(): ?string
-    {
-        return $this->videoUrl;
-    }
-
-    public function setVideoUrl(?string $videoUrl): void
-    {
-        $this->videoUrl = $videoUrl;
-    }
-
-    public function getVideoThumbnail(): ?string
-    {
-        return $this->videoThumbnail;
-    }
-
-    public function setVideoThumbnail(?string $videoThumbnail): void
-    {
-        $this->videoThumbnail = $videoThumbnail;
     }
 
     /** @return Collection<int, RelatedProduct> */

@@ -1,4 +1,4 @@
-{# Lignes des collections du formulaire produit : même balisage pour les lignes existantes et le modèle des lignes ajoutées. #}
+{# Lignes des collections des formulaires produit, pack et réalisation : même balisage pour les lignes existantes et le modèle des lignes ajoutées. #}
 
 {% macro row(kind, row) %}
     <li class="admin-row{{ kind == 'photo' ? ' admin-row--photo' }}" data-collection-row>
@@ -19,6 +19,9 @@
             {{ form_widget(row.position) }}
             {{ form_errors(row.position) }}
             {% set what = 'ce produit associé' %}
+        {% elseif kind == 'product' %}
+            {{ form_row(row) }}
+            {% set what = 'ce produit' %}
         {% elseif kind == 'color' %}
             {{ form_row(row.name) }}
             {{ form_row(row.hex) }}
@@ -32,7 +35,7 @@
                 {{ form_row(row.file) }}
             {% endif %}
             {{ form_row(row.alt) }}
-            {{ form_row(row.color) }}
+            {% if row.color is defined %}{{ form_row(row.color) }}{% endif %}
             {{ form_widget(row.position) }}
             {{ form_errors(row.position) }}
             {% set what = 'cette photo' %}

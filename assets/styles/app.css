@@ -675,6 +675,24 @@ body.has-open-panel { overflow: hidden; }
     .product-grid--related { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
+/* Réalisations et lieux partenaires (stories 2.5, 2.6) : photos pleines sans cadre, cartes 4:5 sur mobile, 380 px de haut sur desktop */
+.realisation-page__meta { margin: 0 0 var(--space-4); color: var(--ink-muted); }
+.realisation-page__meta a { color: inherit; }
+.realisation-page__text { max-width: 720px; }
+.realisation-photos { display: grid; gap: var(--space-6); max-width: 1200px; margin: var(--space-8) 0 0; padding: 0; list-style: none; }
+.realisation-photos__link { display: block; background: var(--sand); cursor: zoom-in; }
+.realisation-photos img { display: block; width: 100%; height: auto; }
+.realisation-page__video { max-width: 960px; margin-top: var(--space-8); }
+.venues { margin-top: var(--space-12); }
+.venue-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--hairline); }
+.venue-list li { padding: var(--space-2) 0; border-bottom: 1px solid var(--hairline); overflow-wrap: anywhere; }
+.venue-list a { display: inline-flex; align-items: center; min-height: var(--target-min); }
+.venue-list__city { color: var(--ink-muted); }
+@media (min-width: 1024px) {
+    .realisation-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .realisation-card .product-card__media { aspect-ratio: auto; height: 380px; }
+}
+
 .home-hero {
     padding: var(--space-24) 0;
     background: var(--cream);

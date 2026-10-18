@@ -2,13 +2,17 @@
 
 namespace App\Service;
 
+use App\Entity\Product;
 use App\Entity\ProductPhoto;
+use App\Entity\Realisation;
+use App\Entity\RealisationPhoto;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
 use Doctrine\ORM\Events;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -18,6 +22,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  * en cas d'échec, abort() efface les fichiers envoyés pendant la requête.
  */
 #[AsEntityListener(event: Events::postRemove, method: 'onPhotoRemoved', entity: ProductPhoto::class)]
+#[AsEntityListener(event: Events::postRemove, method: 'onPhotoRemoved', entity: RealisationPhoto::class)]
 #[AsDoctrineListener(event: Events::postFlush)]
 final class MediaStorage
 {
@@ -53,9 +58,34 @@ final class MediaStorage
         }
     }
 
-    public function onPhotoRemoved(ProductPhoto $photo): void
+    public function onPhotoRemoved(ProductPhoto|RealisationPhoto $photo): void
     {
         $this->discard($photo->getFilename());
+    }
+
+    /**
+     * Photos, vidéo et miniature envoyées avec le formulaire d'un produit ou d'une réalisation ;
+     * les anciens fichiers remplacés ou retirés seront effacés après enregistrement.
+     *
+     * @throws FileException
+     */
+    public function storeForm(FormInterface $form, Product|Realisation $owner): void
+    {
+        foreach ($form->get('photos') as $row) {
+            if ($file = $row->get('file')->getData()) {
+                $row->getData()->setFilename($this->store($file));
+            }
+        }
+        $video = $form->get('videoUpload')->getData();
+        if ($video || $form->get('removeVideoFile')->getData()) {
+            $this->discard($owner->getVideoFile());
+            $owner->setVideoFile($video ? $this->store($video) : null);
+        }
+        $thumbnail = $form->get('videoThumbnailUpload')->getData();
+        if ($thumbnail || $form->get('removeVideoThumbnail')->getData()) {
+            $this->discard($owner->getVideoThumbnail());
+            $owner->setVideoThumbnail($thumbnail ? $this->store($thumbnail) : null);
+        }
     }
 
     public function postFlush(): void

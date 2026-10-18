@@ -17,7 +17,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\Range;
 
-/** Une ligne photo : fichier (nouvelle photo seulement), texte alternatif, coloris, ordre. */
+/** Une ligne photo (produit, ou réalisation avec `data_class`) : fichier (nouvelle photo seulement), texte alternatif, coloris (produits), ordre. */
 final class ProductPhotoType extends AbstractType
 {
     public const string TOO_BIG = 'Photo trop lourde (10 Mo maximum).';
@@ -43,15 +43,18 @@ final class ProductPhotoType extends AbstractType
             ->add('alt', TextType::class, [
                 'label' => 'Description de la photo (texte alternatif)',
                 'help' => 'Pour les personnes qui n\'ont pas la photo sous les yeux.',
-            ])
-            ->add('color', EntityType::class, [
+            ]);
+        if (null !== $options['colors']) {
+            $builder->add('color', EntityType::class, [
                 'label' => 'Coloris montré',
                 'class' => ProductColor::class,
                 'choices' => $options['colors'],
                 'choice_label' => 'name',
                 'placeholder' => 'Aucun en particulier',
                 'required' => false,
-            ])
+            ]);
+        }
+        $builder
             // Renuméroté par le contrôleur Stimulus « collection » (Monter / Descendre) ; nouvelle photo : en dernier
             ->add('position', IntegerType::class, [
                 'label' => 'Ordre',
@@ -69,6 +72,6 @@ final class ProductPhotoType extends AbstractType
 
     public function configureOptions(OptionsResolver $resolver): void
     {
-        $resolver->setDefaults(['data_class' => ProductPhoto::class, 'colors' => []]);
+        $resolver->setDefaults(['data_class' => ProductPhoto::class, 'colors' => null]);
     }
 }

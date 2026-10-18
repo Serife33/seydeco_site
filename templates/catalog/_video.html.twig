@@ -1,0 +1,23 @@
+{# Vidéo (produit, réalisation) : lecteur MP4, ou Façade vidéo sans iframe ni script tiers avant le clic (UX-DR23).
+   Attend : video (CatalogController::video), poster (fichier ou null), title, src (adresse du fichier MP4) #}
+<div class="product-video">
+    {% if video.type == 'file' %}
+        <video controls preload="none" playsinline width="800" height="450"{% if poster %} poster="{{ poster|imagine_filter('product_800') }}"{% endif %}
+               src="{{ src }}"
+               aria-label="Vidéo : {{ title }}"></video>
+    {% else %}
+        {# Façade : aucun iframe ni script tiers avant le clic #}
+        <a class="video-facade" target="_blank" rel="noopener"
+           {% if video.type == 'youtube' %}
+               href="https://www.youtube.com/watch?v={{ video.id }}" data-controller="video-facade"
+               data-video-facade-id-value="{{ video.id }}" data-video-facade-title-value="Vidéo : {{ title }}" data-action="video-facade#play"
+           {% else %}
+               href="{{ video.url }}"
+           {% endif %}>
+            {% if poster %}<img src="{{ poster|imagine_filter('product_800') }}" width="800" height="800" alt="" loading="lazy" decoding="async">{% endif %}
+            <span class="video-facade__play" aria-hidden="true"></span>
+            <span class="video-facade__label label-caps">Vidéo<span class="visually-hidden"> : {{ title }}{% if video.type == 'link' %} (nouvel onglet){% endif %}</span></span>
+        </a>
+        <p class="product-video__note">La vidéo est fournie par {{ video.type == 'youtube' ? 'YouTube' : video.provider }}</p>
+    {% endif %}
+</div>

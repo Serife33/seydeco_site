@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ realisation.title }} n'est plus en ligne | Seydeco{% endblock %}
+{# Ancienne URL d'une réalisation masquée : page conservée, non indexée, sans JSON-LD Event (AD-23) #}
+{% set noindex = true %}
+{% set description = 'La réalisation « ' ~ realisation.title ~ ' » n\'est plus en ligne. Découvrez les autres événements équipés par Seydeco.' %}
+
+{% block body %}
+    <div class="container catalog-page">
+        <h1>{{ realisation.title }}</h1>
+        <p>Cette réalisation n'est plus en ligne.</p>
+        <p><a href="{{ path('realisation_index') }}">Voir nos réalisations</a></p>
+    </div>
+{% endblock %}

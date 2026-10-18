@@ -1,0 +1,48 @@
+{% extends 'admin/base.html.twig' %}
+{% form_theme form 'admin/_form_theme.html.twig' %}
+
+{% set heading = venue.id ? 'Modifier le lieu' : 'Ajouter un lieu' %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_venue_index') }}">← Lieux</a></p>
+    <h1 class="admin-title">{{ heading }}</h1>
+    {% if venue.slug %}<p class="admin-field__help">Adresse : /lieux/{{ venue.slug }} (ne change pas)</p>{% endif %}
+
+    {{ form_start(form, {attr: {class: 'admin-form admin-form--sticky', novalidate: 'novalidate', 'data-controller': 'unsaved-changes'}}) }}
+        {{ form_errors(form) }}
+        {{ include('admin/_error_summary.html.twig') }}
+        <section class="admin-section" aria-labelledby="s-infos">
+            <h2 class="admin-title" id="s-infos">Infos</h2>
+            {{ form_row(form.name) }}
+            {{ form_row(form.city) }}
+            {{ form_row(form.address) }}
+            {{ form_row(form.text) }}
+            {{ form_row(form.website) }}
+            {% if venue.photo %}
+                <img class="admin-thumb" src="{{ venue.photo|imagine_filter('admin_thumb') }}" width="48" height="48" alt="Photo actuelle du lieu">
+            {% endif %}
+            {{ form_row(form.photoUpload, {help: venue.photo ? 'Choisir une photo seulement pour remplacer l\'actuelle.' : null}) }}
+            {{ form_row(form.photoAlt) }}
+        </section>
+        <section class="admin-section" aria-labelledby="s-visibility">
+            <h2 class="admin-title" id="s-visibility">Visibilité</h2>
+            {% if venue.id %}
+                <p>{{ venue.visible ? 'Visible sur le site.' : 'Masqué : n\'apparaît plus sur le site.' }}</p>
+                {# Bouton du formulaire « venue-visibility », placé hors de ce formulaire (pas d'imbrication) #}
+                <button type="submit" form="venue-visibility" class="admin-button admin-button--secondary">{{ venue.visible ? 'Masquer' : 'Afficher à nouveau' }}</button>
+            {% else %}
+                <p>Le lieu sera visible dès l'enregistrement. Il pourra être masqué ensuite.</p>
+            {% endif %}
+        </section>
+        {{ form_rest(form) }}
+        <div class="admin-form__save">
+            <button type="submit" class="admin-button">Enregistrer</button>
+        </div>
+    {{ form_end(form) }}
+    {% if venue.id %}
+        <form id="venue-visibility" method="post" action="{{ path('admin_venue_toggle', {id: venue.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('venue' ~ venue.id) }}">
+        </form>
+    {% endif %}
+{% endblock %}

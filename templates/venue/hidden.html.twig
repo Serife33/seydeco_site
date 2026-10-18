@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ venue.name }} n'est plus présenté | Seydeco{% endblock %}
+{# Ancienne URL d'un lieu masqué : page conservée, non indexée (AD-23) #}
+{% set noindex = true %}
+{% set description = 'Le lieu « ' ~ venue.name ~ ' » n\'est plus présenté sur le site Seydeco. Découvrez nos réalisations.' %}
+
+{% block body %}
+    <div class="container catalog-page">
+        <h1>{{ venue.name }}</h1>
+        <p>Ce lieu n'est plus présenté.</p>
+        <p><a href="{{ path('realisation_index') }}">Voir nos réalisations</a></p>
+    </div>
+{% endblock %}

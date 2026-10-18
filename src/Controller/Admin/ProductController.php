@@ -110,7 +110,7 @@ final class ProductController extends AbstractController
             $product->addEventType($eventTypes->findOrCreate($name));
         }
         try {
-            $this->storeMedia($form, $product);
+            $this->media->storeForm($form, $product);
             // Les anciens fichiers ne sont effacés qu'après ce flush réussi (MediaStorage::postFlush)
             $this->em->flush();
         } catch (FileException) {
@@ -127,25 +127,5 @@ final class ProductController extends AbstractController
         $this->addFlash('draft_saved', $draftKey);
 
         return $this->redirectToRoute('admin_product_index');
-    }
-
-    /** Fichiers envoyés : rangés hors de public/ ; les anciens fichiers remplacés ou retirés seront effacés après enregistrement. */
-    private function storeMedia(FormInterface $form, Product $product): void
-    {
-        foreach ($form->get('photos') as $row) {
-            if ($file = $row->get('file')->getData()) {
-                $row->getData()->setFilename($this->media->store($file));
-            }
-        }
-        $video = $form->get('videoUpload')->getData();
-        if ($video || $form->get('removeVideoFile')->getData()) {
-            $this->media->discard($product->getVideoFile());
-            $product->setVideoFile($video ? $this->media->store($video) : null);
-        }
-        $thumbnail = $form->get('videoThumbnailUpload')->getData();
-        if ($thumbnail || $form->get('removeVideoThumbnail')->getData()) {
-            $this->media->discard($product->getVideoThumbnail());
-            $product->setVideoThumbnail($thumbnail ? $this->media->store($thumbnail) : null);
-        }
     }
 }

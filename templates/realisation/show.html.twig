@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% set photos = realisation.photos %}
+{% set first = photos|first %}
+{% set venue = realisation.venue %}
+{% set products = realisation.publicProducts %}
+{% block title %}{{ realisation.title }} — {{ realisation.venueName }}, {{ realisation.city }} | Seydeco{% endblock %}
+{% set description = realisation.text|trim ?: realisation.title ~ (realisation.eventType ? ' (' ~ realisation.eventType.name|lower ~ ')' : '') ~ ' à ' ~ realisation.venueName ~ ', ' ~ realisation.city ~ ' : un événement équipé par Seydeco.' %}
+{% set og_image = first ? first.filename|imagine_filter('page_photo') : null %}
+{% set whatsapp_message = 'Bonjour, j\'ai vu votre réalisation « ' ~ realisation.title ~ ' »' %}
+{% block structured_data %}{{ parent() }}{% include 'seo/event.html.twig' %}{% endblock %}
+
+{% block body %}
+    <article class="container catalog-page realisation-page">
+        {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Réalisations', url: path('realisation_index')}, {label: realisation.title}]} only %}
+        <h1>{{ realisation.title }}</h1>
+        <p class="realisation-page__meta">
+            {%- if venue and venue.visible %}<a href="{{ path('venue_show', {slug: venue.slug}) }}">{{ realisation.venueName }}</a>{% else %}{{ realisation.venueName }}{% endif %}, {{ realisation.city }}
+            {%- if realisation.eventType %} · {{ realisation.eventType.name }}{% endif %} · {{ realisation.eventDate|date('d/m/Y') }}
+        </p>
+        {% if realisation.text %}<p class="realisation-page__text">{{ realisation.text|nl2br }}</p>{% endif %}
+
+        {% if photos|length %}
+            {# Photos pleines et sans cadre ; chacune ouvre la galerie plein écran et a son lien « Épingler » #}
+            <div data-controller="gallery">
+                <ul class="realisation-photos">
+                    {% for photo in photos %}
+                        {% set full = photo.filename|imagine_filter('product_full') %}
+                        {% set image = photo.filename|imagine_filter('page_photo') %}
+                        <li data-gallery-target="item" data-full="{{ full }}" data-alt="{{ photo.alt }}">
+                            <a class="realisation-photos__link" href="{{ full }}" data-action="gallery#open">
+                                <img src="{{ image }}" width="1200" height="800" alt="{{ photo.alt }}"{% if loop.first %} fetchpriority="high"{% else %} loading="lazy"{% endif %} decoding="async">
+                                <span class="visually-hidden">(agrandir)</span>
+                            </a>
+                            {# Lien de partage simple : aucun script Pinterest chargé (NFR-11) #}
+                            <a class="pin-link" href="https://www.pinterest.com/pin/create/button/?{{ {url: canonical, media: image, description: photo.alt}|url_encode }}" target="_blank" rel="noopener">
+                                {% include 'layout/_icon.html.twig' with {name: 'pinterest', size: 18} only %}Épingler<span class="visually-hidden"> sur Pinterest (nouvel onglet)</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% include 'catalog/_lightbox.html.twig' with {title: realisation.title} only %}
+            </div>
+        {% endif %}
+
+        {% if video %}
+            {% set poster = realisation.videoThumbnail ?? (first ? first.filename : null) %}
+            <div class="realisation-page__video">
+                {% include 'catalog/_video.html.twig' with {video: video, poster: poster, title: realisation.title, src: path('realisation_video', {slug: realisation.slug})} only %}
+            </div>
+        {% endif %}
+
+        {% if products %}
+            {# Produits masqués déjà écartés (Realisation::getPublicProducts) #}
+            <section class="related" aria-labelledby="materiel-utilise">
+                <h2 class="accent-sm related__title" id="materiel-utilise">Le matériel utilisé</h2>
+                <ul class="product-grid product-grid--related">
+                    {% for product in products %}
+                        {% include 'catalog/_product_card.html.twig' with {lazy: true, tag: 'h3', relatedLinks: {}} %}
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </article>
+{% endblock %}

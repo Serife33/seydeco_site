@@ -45,41 +45,14 @@
                             {% endfor %}
                         </ul>
                     {% endif %}
-                    <dialog class="lightbox" aria-label="Photos : {{ product.name }}" data-gallery-target="dialog"
-                            data-action="keydown->gallery#key touchstart->gallery#touchStart:passive touchend->gallery#touchEnd close->gallery#closed">
-                        <img class="lightbox__image" data-gallery-target="full" alt="">
-                        <p class="lightbox__count" data-gallery-target="count" aria-live="polite"></p>
-                        <button type="button" class="lightbox__button lightbox__prev" data-gallery-target="nav" data-action="gallery#prev" aria-label="Photo précédente">‹</button>
-                        <button type="button" class="lightbox__button lightbox__next" data-gallery-target="nav" data-action="gallery#next" aria-label="Photo suivante">›</button>
-                        <button type="button" class="lightbox__button lightbox__close" data-action="gallery#close">×<span class="visually-hidden">Fermer</span></button>
-                    </dialog>
+                    {% include 'catalog/_lightbox.html.twig' with {title: product.name} only %}
                 {% else %}
                     <div class="product-gallery__empty"></div>
                 {% endif %}
 
                 {% if video %}
                     {% set poster = product.videoThumbnail ?? (first ? first.filename : null) %}
-                    <div class="product-video">
-                        {% if video.type == 'file' %}
-                            <video controls preload="none" playsinline width="800" height="450"{% if poster %} poster="{{ poster|imagine_filter('product_800') }}"{% endif %}
-                                   src="{{ path('catalog_product_video', {categorySlug: category.slug, slug: product.slug}) }}"
-                                   aria-label="Vidéo : {{ product.name }}"></video>
-                        {% else %}
-                            {# Façade : aucun iframe ni script tiers avant le clic #}
-                            <a class="video-facade" target="_blank" rel="noopener"
-                               {% if video.type == 'youtube' %}
-                                   href="https://www.youtube.com/watch?v={{ video.id }}" data-controller="video-facade"
-                                   data-video-facade-id-value="{{ video.id }}" data-video-facade-title-value="Vidéo : {{ product.name }}" data-action="video-facade#play"
-                               {% else %}
-                                   href="{{ video.url }}"
-                               {% endif %}>
-                                {% if poster %}<img src="{{ poster|imagine_filter('product_800') }}" width="800" height="800" alt="" loading="lazy" decoding="async">{% endif %}
-                                <span class="video-facade__play" aria-hidden="true"></span>
-                                <span class="video-facade__label label-caps">Vidéo<span class="visually-hidden"> : {{ product.name }}{% if video.type == 'link' %} (nouvel onglet){% endif %}</span></span>
-                            </a>
-                            <p class="product-video__note">La vidéo est fournie par {{ video.type == 'youtube' ? 'YouTube' : video.provider }}</p>
-                        {% endif %}
-                    </div>
+                    {% include 'catalog/_video.html.twig' with {video: video, poster: poster, title: product.name, src: path('catalog_product_video', {categorySlug: category.slug, slug: product.slug})} only %}
                 {% endif %}
             </div>
 

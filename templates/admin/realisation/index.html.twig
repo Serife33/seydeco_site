@@ -1,0 +1,38 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Réalisations{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <div class="admin-head">
+        <h1 class="admin-title">Réalisations</h1>
+        <a class="admin-button" href="{{ path('admin_realisation_new') }}">Ajouter une réalisation</a>
+    </div>
+    {{ include('admin/_flashes.html.twig') }}
+
+    {% set total = realisations|length %}
+    {% if total == 0 %}
+        <p>Aucune réalisation.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for realisation in realisations %}
+                {% set rank = offset + loop.index0 %}
+                {% set photo = realisation.photos|first %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_realisation_edit', {id: realisation.id}) }}">
+                        {% if photo %}<img class="admin-thumb" src="{{ photo.filename|imagine_filter('admin_thumb') }}" width="48" height="48" alt="">{% else %}<span class="admin-thumb"></span>{% endif %}
+                        <span>
+                            <span class="admin-list__name">{{ realisation.title }}</span>
+                            <span class="admin-list__meta">
+                                {{- realisation.eventDate|date('d/m/Y') }} · {{ realisation.venueName }}, {{ realisation.city }}
+                                {%- if not realisation.visible %} · <strong>Masquée</strong>{% endif -%}
+                            </span>
+                        </span>
+                    </a>
+                    {{ include('admin/_order_actions.html.twig', {prefix: 'admin_realisation', id: realisation.id, token: csrf_token('realisation' ~ realisation.id), name: realisation.title, first: rank == 0, last: rank == total - 1, visible: realisation.visible, page: page}, with_context = false) }}
+                </li>
+            {% endfor %}
+        </ul>
+        {{ include('admin/_pagination.html.twig') }}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nos réalisations — mariages et événements équipés | Seydeco{% endblock %}
+{% set description = 'Mariages, anniversaires et réceptions équipés par Seydeco : photos de nos réalisations, lieux partenaires et matériel utilisé.' %}
+{% set og_image = realisations and (realisations|first).photos|length ? (realisations|first).photos.first.filename|imagine_filter('page_photo') : null %}
+
+{% block body %}
+    <div class="container catalog-page">
+        <h1>Nos réalisations</h1>
+        {% if realisations %}
+            <ul class="product-grid realisation-grid">
+                {% for realisation in realisations %}
+                    {% include 'realisation/_card.html.twig' with {lazy: loop.index > 3} %}
+                {% endfor %}
+            </ul>
+            {% if more %}
+                <p class="catalog__more"><a class="button-secondary" href="{{ path('realisation_index', {page: page + 1}) }}">Voir plus</a></p>
+            {% endif %}
+        {% else %}
+            <p>Nos réalisations arrivent bientôt.</p>
+        {% endif %}
+
+        {% if venues %}
+            <section class="venues" aria-labelledby="lieux-titre">
+                <h2 id="lieux-titre">Nos lieux partenaires</h2>
+                <ul class="venue-list">
+                    {% for venue in venues %}
+                        <li><a href="{{ path('venue_show', {slug: venue.slug}) }}">{{ venue.name }}</a> <span class="venue-list__city">{{ venue.city }}</span></li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}

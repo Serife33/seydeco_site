@@ -9,6 +9,8 @@ use App\Entity\PriceTier;
 use App\Entity\PricingType;
 use App\Entity\Product;
 use App\Entity\ProductPhoto;
+use App\Entity\Realisation;
+use App\Entity\Venue;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -33,7 +35,7 @@ final class SiteLayoutTest extends WebTestCase
         $this->client = static::createClient();
         $this->db = static::getContainer()->get(Connection::class);
         $this->db->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
-        foreach (['related_product', 'pack_item', 'pack', 'price_tier', 'product_photo', 'product_color', 'product', 'category'] as $table) {
+        foreach (['realisation_product', 'realisation_photo', 'realisation', 'venue', 'related_product', 'pack_item', 'pack', 'price_tier', 'product_photo', 'product_color', 'product', 'category'] as $table) {
             $this->db->executeStatement("TRUNCATE TABLE $table");
         }
         $this->db->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
@@ -65,9 +67,9 @@ final class SiteLayoutTest extends WebTestCase
 
         foreach (['header .site-nav', '#menu-mobile nav'] as $nav) {
             $links = $crawler->filter("$nav a");
-            // Ordre UX-DR11 ; Réalisations arrive avec la story 2.5
-            self::assertSame(['Catalogue', 'Comment ça marche', 'À propos', 'Contact'], $links->each(fn (Crawler $a) => $a->text()), "Aucun lien mort ($nav)");
-            self::assertSame(['/location', '/comment-ca-marche', '/a-propos', '/contact'], $links->each(fn (Crawler $a) => $a->attr('href')));
+            // Ordre UX-DR11
+            self::assertSame(['Catalogue', 'Réalisations', 'Comment ça marche', 'À propos', 'Contact'], $links->each(fn (Crawler $a) => $a->text()), "Aucun lien mort ($nav)");
+            self::assertSame(['/location', '/realisations', '/comment-ca-marche', '/a-propos', '/contact'], $links->each(fn (Crawler $a) => $a->attr('href')));
             self::assertSame('true', $links->attr('aria-current'), 'Rubrique du catalogue en cours');
             self::assertCount(1, $crawler->filter("$nav a[aria-current]"));
         }
@@ -174,10 +176,27 @@ final class SiteLayoutTest extends WebTestCase
         $this->product('Table ronde', category: $tables);
         $this->pack('Pack 100 invités', [[$napoleon, 100]]);
         $hidden = $this->product('Chaise ancienne', category: $chaises, visible: false);
+        // Stories 2.5 + 2.6 : réalisation et lieu partenaire
+        $venue = new Venue();
+        $venue->setName('Château de la Rivière');
+        $venue->initSlug('chateau-de-la-riviere');
+        $venue->setCity('Fronsac');
+        $venue->setPhoto('lieu.jpg');
+        $venue->setPhotoAlt('Le château');
+        $realisation = new Realisation();
+        $realisation->setTitle('Mariage de Léa');
+        $realisation->initSlug('mariage-de-lea');
+        $realisation->setEventDate(new \DateTimeImmutable('2026-06-13'));
+        $realisation->setVenue($venue);
+        $realisation->applyVenue();
+        $this->em->persist($venue);
+        $this->em->persist($realisation);
+        $this->em->flush();
 
         $urls = ['/', '/location', '/location/chaises', '/location/tables', $this->url($napoleon), $this->url($pliante), '/location/packs/pack-100-invites', '/recherche?q=chaise', '/recherche?q=table', $this->url($hidden), '/mon-devis',
             // Stories 2.3 + 2.4 : pages de base (contenu provisoire de la migration), Comment ça marche, FAQ
-            '/a-propos', '/contact', '/mentions-legales', '/conditions-generales-de-location', '/politique-de-confidentialite', '/gestion-des-cookies', '/comment-ca-marche', '/questions-frequentes'];
+            '/a-propos', '/contact', '/mentions-legales', '/conditions-generales-de-location', '/politique-de-confidentialite', '/gestion-des-cookies', '/comment-ca-marche', '/questions-frequentes',
+            '/realisations', '/realisations/mariage-de-lea', '/lieux/chateau-de-la-riviere'];
         $titles = $descriptions = [];
         foreach ($urls as $url) {
             $crawler = $this->client->request('GET', $url);

@@ -124,7 +124,7 @@ final class ContentPagesTest extends WebTestCase
         self::assertSame('noindex', $crawler->filter('meta[name="robots"]')->attr('content'));
         self::assertSame(['LocalBusiness'], array_column($this->jsonLd($crawler), '@type'));
         // Plus de lien vers une page masquée
-        self::assertSame(['Catalogue', 'Comment ça marche', 'Contact'], $crawler->filter('header .site-nav a')->each(fn (Crawler $a) => $a->text()));
+        self::assertSame(['Catalogue', 'Réalisations', 'Comment ça marche', 'Contact'], $crawler->filter('header .site-nav a')->each(fn (Crawler $a) => $a->text()));
         self::assertCount(0, $crawler->filter('footer a[href="/mentions-legales"]'));
     }
 

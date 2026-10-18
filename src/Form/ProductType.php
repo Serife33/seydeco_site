@@ -93,7 +93,7 @@ final class ProductType extends AbstractType
             ])
             ->add('minQty', IntegerType::class, $integer('Quantité minimale', '15', ['help' => '1 si aucun minimum.']))
             ->add('stock', IntegerType::class, $integer('Stock', '800'))
-            ->add('priceTiers', CollectionType::class, $this->collection(PriceTierType::class, 'Paliers de prix'))
+            ->add('priceTiers', CollectionType::class, self::collection(PriceTierType::class, 'Paliers de prix'))
             ->add('priceWithChairs', AdminMoneyType::class, [
                 'label' => 'Prix avec chaises (facultatif)',
                 'help' => 'Tables seulement : prix par table quand assez de chaises sont louées pour garnir toutes les tables. Laisser vide si pas de prix réduit.',
@@ -101,11 +101,22 @@ final class ProductType extends AbstractType
             ->add('breakagePrice', AdminMoneyType::class, ['label' => 'Prix de casse (par unité)'])
             ->add('lossPrice', AdminMoneyType::class, ['label' => 'Prix de perte (par unité)'])
             ->add('returnInstructions', TextareaType::class, ['label' => 'Consignes de retour', 'required' => false, 'attr' => ['rows' => 4]])
-            ->add('colors', CollectionType::class, $this->collection(ProductColorType::class, 'Coloris'))
-            ->add('photos', CollectionType::class, $this->collection(ProductPhotoType::class, 'Photos', [
+            ->add('colors', CollectionType::class, self::collection(ProductColorType::class, 'Coloris'))
+            ->add('photos', CollectionType::class, self::collection(ProductPhotoType::class, 'Photos', [
                 // Seuls les coloris déjà enregistrés peuvent être rattachés à une photo
                 'colors' => $options['data']?->getColors()->filter(fn (ProductColor $c) => null !== $c->getId())->getValues() ?? [],
             ]))
+            ->add('relatedProducts', CollectionType::class, self::collection(RelatedProductType::class, 'Produits associés', [
+                // Le produit lui-même n'est pas proposé
+                'exclude' => $options['data']?->getId(),
+            ]));
+        self::addVideoFields($builder);
+    }
+
+    /** Vidéo facultative (produit, réalisation) : fichier MP4 ou lien, miniature facultative. */
+    public static function addVideoFields(FormBuilderInterface $builder): void
+    {
+        $builder
             ->add('videoUpload', FileType::class, [
                 'label' => 'Vidéo MP4 (50 Mo maximum)',
                 'mapped' => false,
@@ -142,10 +153,6 @@ final class ProductType extends AbstractType
                     uploadErrorMessage: 'La photo n\'a pas pu être envoyée, réessayez.',
                 )],
             ])
-            ->add('relatedProducts', CollectionType::class, $this->collection(RelatedProductType::class, 'Produits associés', [
-                // Le produit lui-même n'est pas proposé
-                'exclude' => $options['data']?->getId(),
-            ]))
             ->add('removeVideoThumbnail', CheckboxType::class, ['label' => 'Retirer la miniature', 'mapped' => false, 'required' => false])
             ->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {
                 $form = $event->getForm();
@@ -164,7 +171,7 @@ final class ProductType extends AbstractType
     }
 
     /** Lignes ajoutables / retirables (contrôleur Stimulus « collection »). */
-    private function collection(string $entryType, string $label, array $entryOptions = []): array
+    public static function collection(string $entryType, string $label, array $entryOptions = []): array
     {
         return [
             'label' => $label,

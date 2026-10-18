@@ -1,0 +1,9 @@
+{# Galerie plein écran (contrôleur gallery) : <dialog> modal, focus piégé et Échap natifs. Attend : title #}
+<dialog class="lightbox" aria-label="Photos : {{ title }}" data-gallery-target="dialog"
+        data-action="keydown->gallery#key touchstart->gallery#touchStart:passive touchend->gallery#touchEnd close->gallery#closed">
+    <img class="lightbox__image" data-gallery-target="full" alt="">
+    <p class="lightbox__count" data-gallery-target="count" aria-live="polite"></p>
+    <button type="button" class="lightbox__button lightbox__prev" data-gallery-target="nav" data-action="gallery#prev" aria-label="Photo précédente">‹</button>
+    <button type="button" class="lightbox__button lightbox__next" data-gallery-target="nav" data-action="gallery#next" aria-label="Photo suivante">›</button>
+    <button type="button" class="lightbox__button lightbox__close" data-action="gallery#close">×<span class="visually-hidden">Fermer</span></button>
+</dialog>

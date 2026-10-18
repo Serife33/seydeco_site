@@ -3,6 +3,7 @@ import { Controller } from '@hotwired/stimulus';
 /*
  * Galerie de la fiche : vignettes → photo principale, plein écran dans un <dialog> modal
  * (focus piégé et Échap natifs), flèches clavier, glissement au doigt, filtre par coloris.
+ * Sans cible « main » (page réalisation) : chaque photo affichée ouvre le plein écran.
  * Sans JS : chaque photo est un simple lien vers l'image agrandie.
  */
 export default class extends Controller {
@@ -35,8 +36,8 @@ export default class extends Controller {
     // (photo principale, ou vignette de la photo vue si l'ouverture venait d'une vignette)
     closed() {
         const item = this.visible()[this.index];
-        if (item) this.setMain(item);
-        const fromThumb = item && this.opener !== this.mainTarget;
+        if (item && this.hasMainTarget) this.setMain(item);
+        const fromThumb = item && this.opener !== (this.hasMainTarget ? this.mainTarget : null);
         (fromThumb ? item.querySelector('a') : this.opener)?.focus();
     }
 
@@ -72,9 +73,8 @@ export default class extends Controller {
     show() {
         const items = this.visible();
         const item = items[this.index];
-        const img = this.mainTarget.querySelector('img');
         this.fullTarget.src = item ? item.dataset.full : this.mainTarget.href;
-        this.fullTarget.alt = item ? item.dataset.alt : img.alt;
+        this.fullTarget.alt = item ? item.dataset.alt : this.mainTarget.querySelector('img').alt;
         this.countTarget.textContent = items.length > 1 ? `${this.index + 1} / ${items.length}` : '';
         this.navTargets.forEach((button) => { button.hidden = items.length < 2; });
     }

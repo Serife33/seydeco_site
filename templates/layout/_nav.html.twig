@@ -1,10 +1,11 @@
 {# Navigation principale (UX-DR11) : Catalogue · Réalisations · Comment ça marche · À propos · Contact.
-   Réalisations arrive avec la story 2.5 ; À propos et Contact n'apparaissent que si leur page est visible (aucun lien mort). #}
+   À propos et Contact n'apparaissent que si leur page est visible (aucun lien mort). #}
 {% set route = app.request.attributes.get('_route')|default('') %}
 {% set current_slug = app.request.attributes.get('slug') %}
 {% set visible_pages = site_pages() %}
 {% set entries = [
     {label: 'Catalogue', url: path('catalog_index'), current: route == 'catalog_index' ? 'page' : (route starts with 'catalog_' ? 'true')},
+    {label: 'Réalisations', url: path('realisation_index'), current: route == 'realisation_index' ? 'page' : (route in ['realisation_show', 'venue_show'] ? 'true')},
     {label: 'Comment ça marche', url: path('how_it_works'), current: route == 'how_it_works' ? 'page'},
 ] %}
 {% for page_slug, label in {'a-propos': 'À propos', 'contact': 'Contact'} %}

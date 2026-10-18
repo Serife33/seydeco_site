@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Category;
 use App\Entity\Product;
 use App\Entity\PricingType;
+use App\Entity\Realisation;
 use App\Repository\CategoryRepository;
 use App\Repository\PackRepository;
 use App\Repository\ProductRepository;
@@ -108,7 +109,7 @@ final class CatalogController extends AbstractController
             'tiers' => $this->tierRows($product),
             'related' => $this->products->findPublicRelated([$product->getId()])[$product->getId()] ?? [],
             'chairsNote' => PricingType::Chairs === $category->getPricingType() && $this->products->hasPublicTableWithChairsPrice(),
-            'video' => $this->video($product, $uploadDir),
+            'video' => self::video($product, $uploadDir),
             'whatsapp' => $s->whatsappNumber(),
             'info' => [
                 'deposit' => $number(SettingsProvider::DEPOSIT_AMOUNT),
@@ -153,15 +154,19 @@ final class CatalogController extends AbstractController
         return new BinaryFileResponse($uploadDir.'/'.$file, headers: ['Content-Type' => 'video/mp4']);
     }
 
-    /** @return array{type: 'file'}|array{type: 'youtube', id: string}|array{type: 'link', url: string, provider: string}|null */
-    private function video(Product $product, string $uploadDir): ?array
+    /**
+     * Vidéo d'un produit ou d'une réalisation, pour le lecteur ou la Façade vidéo.
+     *
+     * @return array{type: 'file'}|array{type: 'youtube', id: string}|array{type: 'link', url: string, provider: string}|null
+     */
+    public static function video(Product|Realisation $owner, string $uploadDir): ?array
     {
-        $file = $product->getVideoFile();
+        $file = $owner->getVideoFile();
         if ($file) {
             // Fichier absent du disque : pas de lecteur cassé
             return is_file($uploadDir.'/'.$file) ? ['type' => 'file'] : null;
         }
-        $url = $product->getVideoUrl();
+        $url = $owner->getVideoUrl();
         if (null === $url) {
             return null;
         }
