@@ -1,0 +1,61 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Créneaux au dépôt{% endblock %}
+
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_settings') }}">← Réglages</a></p>
+    <h1 class="admin-title">Créneaux au dépôt</h1>
+    {{ include('admin/_flashes.html.twig') }}
+    <p class="admin-field__help">Une seule grille pour le retrait et le retour, sans limite de clientes par créneau. Les horaires de livraison se fixent dans chaque demande.</p>
+
+    <ul class="admin-list">
+        {% for weekday, slots in days %}
+            {% set day = constant('App\\Entity\\Slot::WEEKDAYS')[weekday] %}
+            <li class="admin-list__row admin-day">
+                <span class="admin-day__name">{{ day }}</span>
+                <span class="admin-day__slots">
+                    {% for slot in slots %}
+                        <span class="admin-slot">
+                            {{ slot.label }}
+                            <form method="post" action="{{ path('admin_slot_remove', {id: slot.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('slot' ~ slot.id) }}">
+                                <button class="admin-slot__remove" aria-label="Retirer la plage {{ day }} {{ slot.label }}">×</button>
+                            </form>
+                        </span>
+                    {% else %}
+                        <span class="admin-list__meta">Fermé</span>
+                    {% endfor %}
+                </span>
+                <a class="admin-link" href="{{ path('admin_slot_new', {jour: weekday}) }}" aria-label="Ajouter une plage le {{ day|lower }}">Ajouter une plage</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <section class="admin-section" aria-labelledby="s-closures">
+        <div class="admin-head">
+            <h2 class="admin-title" id="s-closures">Fermetures exceptionnelles</h2>
+            <a class="admin-button admin-button--secondary" href="{{ path('admin_closure_new') }}">Ajouter une fermeture</a>
+        </div>
+        {% if closures is empty %}
+            <p>Aucune fermeture.</p>
+        {% else %}
+            <ul class="admin-list">
+                {% for closure in closures %}
+                    {% set dates = closure.startsOn == closure.endsOn ? 'Le ' ~ closure.startsOn|date('d/m/Y') : 'Du ' ~ closure.startsOn|date('d/m/Y') ~ ' au ' ~ closure.endsOn|date('d/m/Y') %}
+                    <li class="admin-list__row">
+                        <span class="admin-list__main">
+                            <span>
+                                <span class="admin-list__name">{{ dates }}</span>
+                                {% if closure.reason %}<span class="admin-list__meta">{{ closure.reason }}</span>{% endif %}
+                            </span>
+                        </span>
+                        <form method="post" action="{{ path('admin_closure_remove', {id: closure.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('closure' ~ closure.id) }}">
+                            <button class="admin-button admin-button--secondary admin-button--small" aria-label="Retirer la fermeture {{ dates|lower }}">Retirer</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </section>
+{% endblock %}

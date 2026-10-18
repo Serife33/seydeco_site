@@ -49,15 +49,16 @@ final class QuoteSettingsTest extends CatalogTestCase
         $rows = $crawler->filter('.admin-list--menu .admin-list__row');
         self::assertSame(['Créneaux au dépôt', 'Devis', 'Livraison', 'Installation', 'Conditions', 'Paiement', 'Sécurité'], $rows->filter('.admin-list__name')->each(fn (Crawler $n) => $n->text()));
         self::assertSame(
-            ['/admin/reglages/devis', '/admin/reglages/livraison', '/admin/reglages/installation', '/admin/reglages/conditions', '/admin/reglages/paiement'],
+            ['/admin/reglages/creneaux', '/admin/reglages/devis', '/admin/reglages/livraison', '/admin/reglages/installation', '/admin/reglages/conditions', '/admin/reglages/paiement'],
             $rows->filter('a')->each(fn (Crawler $a) => $a->attr('href')),
         );
-        // Rubriques pas encore construites : sans lien
-        foreach ([0, 6] as $i) {
+        // Rubrique pas encore construite : sans lien
+        foreach ([6] as $i) {
             self::assertCount(0, $rows->eq($i)->filter('a'));
             self::assertSame('Bientôt disponible.', $rows->eq($i)->filter('.admin-list__meta')->text());
         }
-        foreach ($rows->filter('a')->each(fn (Crawler $a) => $a->attr('href')) as $href) {
+        // Créneaux au dépôt est une liste (SlotAdminTest) ; les autres rubriques, un formulaire
+        foreach (array_diff($rows->filter('a')->each(fn (Crawler $a) => $a->attr('href')), ['/admin/reglages/creneaux']) as $href) {
             $this->client->request('GET', $href);
             self::assertResponseIsSuccessful($href);
             self::assertSelectorCount(1, 'form button[type="submit"]');

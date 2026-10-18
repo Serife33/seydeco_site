@@ -4,7 +4,7 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block body %}
-    <p><a class="admin-link" href="{{ path(back) }}">← {{ back == 'admin_settings' ? 'Réglages' : 'Plus' }}</a></p>
+    <p><a class="admin-link" href="{{ path(back) }}">← {{ back_label|default(back == 'admin_settings' ? 'Réglages' : 'Plus') }}</a></p>
     <h1 class="admin-title">{{ title }}</h1>
     {% include 'admin/_flashes.html.twig' %}
     <p class="admin-field__help">{{ intro }}</p>
