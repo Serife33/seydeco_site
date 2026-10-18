@@ -49,6 +49,10 @@ final class SettingsProvider
     public const string NOTIFICATION_EMAIL = 'notification_email';
     /** Supplément par chaise rendue sans nettoyage, centimes (story 3.2) ; vide = option non proposée. */
     public const string CLEANING_FEE = 'cleaning_fee';
+    /** Fenêtre de créneaux autour de l'événement (story 3.10) : jours avant pour le retrait, après pour le retour ; moins de jours sous un seuil de chaises. */
+    public const string SLOT_WINDOW_DAYS = 'slot_window_days';
+    public const string SLOT_WINDOW_SMALL_DAYS = 'slot_window_small_days';
+    public const string SLOT_WINDOW_SMALL_CHAIRS = 'slot_window_small_chairs';
     /** Réglages → Livraison (story 3.1) : chaises par camion, adresse complète du dépôt (calcul de distance). */
     public const string TRUCK_CAPACITY = 'truck_capacity';
     public const string DEPOT_ADDRESS = 'depot_address';

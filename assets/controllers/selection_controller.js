@@ -50,7 +50,7 @@ function decodeShare(value) {
 }
 
 /*
- * Sélection « Mon devis » (story 1.13), seul contrôleur à toucher localStorage.
+ * Sélection « Mon devis » (story 1.13), seul contrôleur à toucher sa clé (Finaliser a la sienne, contrôleur finalize).
  * Schéma : {v:1, lines:[{productId, colorId?, qty}]} ; aucun prix calculé ici.
  * Posé sur <body> : compteur de l'en-tête, formulaires d'ajout (fiche, cartes, pack), page /mon-devis.
  * Mon devis (story 3.6) : montants repris tels quels du JSON de POST /estimation (PricingCalculator).

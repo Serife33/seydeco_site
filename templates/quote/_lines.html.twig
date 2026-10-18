@@ -65,6 +65,7 @@
             <p class="visually-hidden" aria-live="polite" data-role="announce"></p>
         </section>
         {% include 'quote/_conditions.html.twig' with {products: products} only %}
+        <p class="quote-finalize"><a class="button-primary" href="{{ path('quote_finalize') }}">Finaliser ma demande</a></p>
         {# Partage (story 3.8) : lien /mon-devis?s=… fabriqué par le navigateur, rien n'est gardé au serveur #}
         <div class="quote-share">
             <button type="button" class="button-secondary" data-action="selection#share">Partager ma sélection</button>

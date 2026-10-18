@@ -83,7 +83,8 @@ class Slot
         return self::hour($this->startsAt).' – '.self::hour($this->endsAt);
     }
 
-    private static function hour(?\DateTimeImmutable $time): string
+    /** « 9 h 30 », « 14 h » (aussi pour les créneaux de Finaliser). */
+    public static function hour(?\DateTimeImmutable $time): string
     {
         return $time?->format('00' === $time->format('i') ? 'G \h' : 'G \h i') ?? '';
     }

@@ -2,10 +2,12 @@
 
 namespace App\Controller;
 
+use App\Entity\Slot;
 use App\Repository\ProductRepository;
 use App\Service\DistanceCalculatorInterface;
 use App\Service\PricingCalculator;
 use App\Service\PricingContextFactory;
+use App\Service\RentalPeriod;
 use App\Service\SettingsProvider;
 use App\Twig\MoneyExtension;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,7 +19,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Estimation de la sélection (story 3.6, AD-27) : seul PricingCalculator chiffre, le navigateur affiche.
- * JSON in : {lines: [{productId, quantity}], date, mode: pickup|delivery, address, options: {pickup, installation, cleaning}}.
+ * JSON in : {lines: [{productId, quantity}], date, mode: pickup|delivery, address, options: {pickup, installation, cleaning}, period}.
+ * `options.pickup` = récupération après une livraison ; `period` = choix de l'étape Créneaux de Finaliser (RentalPeriod::resolve()).
  * Sans session ni cookie ; ~120 appels/min par IP.
  */
 final class EstimateController extends AbstractController
@@ -34,6 +37,7 @@ final class EstimateController extends AbstractController
         private readonly DistanceCalculatorInterface $distance,
         private readonly MoneyExtension $money,
         private readonly RateLimiterFactoryInterface $estimateLimiter,
+        private readonly RentalPeriod $period,
     ) {
     }
 
@@ -81,13 +85,14 @@ final class EstimateController extends AbstractController
             $priced[] = ['product' => $product, 'quantity' => $line['quantity']];
         }
 
-        // `date` est reçue mais servira au parcours Finaliser (story 3.9) : elle ne change pas le prix
         $delivery = 'delivery' === ($data['mode'] ?? null);
         $options = \is_array($data['options'] ?? null) ? $data['options'] : [];
         $address = \is_string($data['address'] ?? null) ? mb_substr(trim($data['address']), 0, 255) : '';
         $meters = $delivery && '' !== $address ? $this->distance->metersFromDepot($address) : null;
-        $context = $this->contexts->create($meters, $delivery, true === ($options['pickup'] ?? null), true === ($options['installation'] ?? null), true === ($options['cleaning'] ?? null));
+        $collect = true === ($options['pickup'] ?? null);
+        $context = $this->contexts->create($meters, $delivery, $collect, true === ($options['installation'] ?? null), true === ($options['cleaning'] ?? null));
         $quote = $this->calculator->quote($priced, $context);
+        $chairs = $this->calculator->chairCount($priced);
 
         // Positions dans la liste reçue (les produits ignorés n'y sont plus)
         $lines = array_map(fn (array $l) => (isset($l['line']) ? ['line' => $positions[$l['line']]] + $l : $l) + [
@@ -110,6 +115,32 @@ final class EstimateController extends AbstractController
             ];
         }
 
+        // Finaliser (stories 3.9, 3.10) : la date ne change pas le prix ; elle donne les créneaux et la période revérifiée
+        $date = $dateError = $slots = $period = null;
+        if (null !== ($data['date'] ?? null) && '' !== $data['date']) {
+            $date = $this->period->eventDate($data['date']);
+            $dateError = null === $date ? 'Saisissez une date valide, par exemple 14/06/2027.' : ($this->period->tooSoon($date) ? RentalPeriod::DATE_TOO_SOON : null);
+        }
+        if ($date && null === $dateError) {
+            $slots = array_map($this->days(...), $this->period->choices($date, $chairs));
+            if (\is_array($data['period'] ?? null)) {
+                $period = $this->period->resolve($date, $chairs, $delivery, $delivery && $collect, $data['period']);
+                $period = isset($period['error']) ? $period : ['startAt' => $period['startAt']->format(\DATE_ATOM), 'endAt' => $period['endAt']->format(\DATE_ATOM)];
+            }
+        }
+        // Livraison possible ? Raisons chiffrées même en retrait, pour rendre l'option inactive (story 3.9)
+        $deliveryReasons = array_values(array_filter(
+            $delivery ? $reasons : $this->calculator->quote($priced, $this->contexts->create(null, true))['reasons'],
+            fn (array $r) => \in_array($r['type'], ['delivery_min_chairs', 'delivery_max_km'], true),
+        ));
+        // Tarif d'installation de chaque catégorie de la sélection (« tarif sur demande » si vide)
+        $installation = [];
+        foreach ($priced as ['product' => $product]) {
+            $category = $product->getCategory();
+            $price = $context->installPrices[$category->getId()] ?? null;
+            $installation[$category->getId()] = ['label' => $category->getName(), 'text' => null === $price ? 'tarif sur demande' : $this->money->money($price).' l\'unité'];
+        }
+
         return new JsonResponse([
             'lines' => $lines,
             'total' => $quote['total'],
@@ -123,7 +154,33 @@ final class EstimateController extends AbstractController
             'reasons' => $reasons,
             'ignored' => $ignored,
             'tables' => $tables,
+            'chairs' => $chairs,
+            'deliveryReasons' => $deliveryReasons,
+            'installation' => array_values($installation),
+            'dateError' => $dateError,
+            'slots' => $slots,
+            'period' => $period,
         ]);
+    }
+
+    /**
+     * Plages groupées par jour pour la grille de Finaliser : valeur = début « AAAA-MM-JJTHH:MM », heure de Paris.
+     *
+     * @param list<array{start: \DateTimeImmutable, end: \DateTimeImmutable}> $slots
+     *
+     * @return list<array{date: string, label: string, slots: list<array{value: string, label: string}>}>
+     */
+    private function days(array $slots): array
+    {
+        $format = new \IntlDateFormatter('fr_FR', \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, 'Europe/Paris', null, 'EEEE d MMMM');
+        $days = [];
+        foreach ($slots as ['start' => $start, 'end' => $end]) {
+            $date = $start->format('Y-m-d');
+            $days[$date] ??= ['date' => $date, 'label' => mb_ucfirst((string) $format->format($start)), 'slots' => []];
+            $days[$date]['slots'][] = ['value' => $start->format('Y-m-d\TH:i'), 'label' => Slot::hour($start).' – '.Slot::hour($end)];
+        }
+
+        return array_values($days);
     }
 
     private function error(string $message, int $status): JsonResponse

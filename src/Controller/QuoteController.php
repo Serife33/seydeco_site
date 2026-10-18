@@ -29,6 +29,26 @@ final class QuoteController extends AbstractController
         ]);
     }
 
+    /**
+     * Finaliser ma demande (stories 3.9, 3.10) : coquille sans sélection ni montant, une étape visible à la fois.
+     * Saisies gardées dans le navigateur par le contrôleur `finalize` ; prix, créneaux et période viennent de POST /estimation.
+     */
+    #[Route('/mon-devis/finaliser', name: 'quote_finalize', methods: ['GET'])]
+    public function finalize(): Response
+    {
+        $fee = $this->settings->get(SettingsProvider::CLEANING_FEE);
+
+        return $this->render('quote/finalize.html.twig', [
+            'quoteOnline' => $this->settings->quoteOnline(),
+            'whatsapp' => $this->settings->whatsappNumber(),
+            'depotCity' => trim($this->settings->get(SettingsProvider::DEPOT_CITY)),
+            'pickupTerms' => trim($this->settings->get(SettingsProvider::PICKUP_TERMS)),
+            'fuelTerms' => trim($this->settings->get(SettingsProvider::FUEL_TERMS)),
+            // Supplément vide : option « sans nettoyage » non proposée
+            'cleaningFee' => ctype_digit($fee) ? (int) $fee : null,
+        ]);
+    }
+
     /** Lignes `l[]=produit:coloris:quantité` (coloris facultatif) → produits retrouvés au serveur. */
     #[Route('/mon-devis/lignes', name: 'quote_lines', methods: ['GET'])]
     public function lines(Request $request): Response

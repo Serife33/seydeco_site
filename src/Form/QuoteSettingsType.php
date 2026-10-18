@@ -43,6 +43,24 @@ final class QuoteSettingsType extends AbstractType
                 'help' => 'Supplément proposé aux clientes. Vide : l\'option n\'est pas proposée.',
                 'constraints' => $money,
             ])
+            ->add(SettingsProvider::SLOT_WINDOW_DAYS, UnitType::class, [
+                'label' => 'Créneaux autour de l\'événement',
+                'unit' => 'jours',
+                'help' => 'Retrait au plus tôt ce nombre de jours avant l\'événement, retour au plus tard ce nombre de jours après.',
+                'constraints' => [new Assert\Range(min: 0, max: 30, notInRangeMessage: 'Saisir un nombre de jours entre 0 et 30.')],
+            ])
+            ->add(SettingsProvider::SLOT_WINDOW_SMALL_CHAIRS, UnitType::class, [
+                'label' => 'Petite commande',
+                'unit' => 'chaises',
+                'help' => 'En dessous de ce nombre de chaises, la fenêtre ci-dessous s\'applique.',
+                'constraints' => [new Assert\Range(min: 0, max: 100000, notInRangeMessage: 'Saisir un nombre entre 0 et 100 000.')],
+            ])
+            ->add(SettingsProvider::SLOT_WINDOW_SMALL_DAYS, UnitType::class, [
+                'label' => 'Créneaux pour une petite commande',
+                'unit' => 'jours',
+                'help' => 'Avant et après l\'événement, pour une commande sous le seuil de chaises.',
+                'constraints' => [new Assert\Range(min: 0, max: 30, notInRangeMessage: 'Saisir un nombre de jours entre 0 et 30.')],
+            ])
             ->add(SettingsProvider::NOTIFICATION_EMAIL, EmailType::class, [
                 'label' => 'Email des nouvelles demandes',
                 'required' => false,

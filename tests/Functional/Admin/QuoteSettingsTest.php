@@ -71,12 +71,17 @@ final class QuoteSettingsTest extends CatalogTestCase
     public function testQuoteSettingsAreSavedInCentsAndReadBySite(): void
     {
         $crawler = $this->client->request('GET', '/admin/reglages/devis');
-        self::assertSame(['%', 'jours', 'jours', '€', '€ / chaise'], $crawler->filter('.admin-money')->each(fn (Crawler $n) => $n->text()));
+        self::assertSame(['%', 'jours', 'jours', '€', '€ / chaise', 'jours', 'chaises', 'jours'], $crawler->filter('.admin-money')->each(fn (Crawler $n) => $n->text()));
         // Valeurs de départ : acompte 50 %, supplément nettoyage 0,50 €
         self::assertInputValueSame('quote_settings[deposit_percent]', '50');
         self::assertInputValueSame('quote_settings[cleaning_fee]', '0,50');
+        // Fenêtre de créneaux (story 3.10) : 2 jours, 1 jour sous 50 chaises
+        self::assertSame(['2', '50', '1'], [$crawler->filter('#quote_settings_slot_window_days')->attr('value'), $crawler->filter('#quote_settings_slot_window_small_chairs')->attr('value'), $crawler->filter('#quote_settings_slot_window_small_days')->attr('value')]);
 
         $this->client->submitForm('Enregistrer', [
+            'quote_settings[slot_window_days]' => '3',
+            'quote_settings[slot_window_small_chairs]' => '40',
+            'quote_settings[slot_window_small_days]' => '0',
             'quote_settings[deposit_percent]' => '30',
             'quote_settings[quote_reminder_days]' => '7',
             'quote_settings[quote_validity_days]' => '30',
@@ -96,6 +101,7 @@ final class QuoteSettingsTest extends CatalogTestCase
             'quote_reminder_days' => '7',
             'quote_validity_days' => '30',
         ], $this->settings(['deposit_percent', 'quote_reminder_days', 'quote_validity_days', 'deposit_amount', 'cleaning_fee', 'notification_email']));
+        self::assertSame(['slot_window_days' => '3', 'slot_window_small_chairs' => '40', 'slot_window_small_days' => '0'], $this->settings(['slot_window_days', 'slot_window_small_chairs', 'slot_window_small_days']));
 
         $crawler = $this->client->request('GET', '/comment-ca-marche');
         $rules = array_combine($crawler->filter('.info-block dt')->each(fn (Crawler $n) => $n->text()), $crawler->filter('.info-block dd')->each(fn (Crawler $n) => $n->text()));

@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Finaliser ma demande | Seydeco{% endblock %}
+{% set description = 'Indiquez la date de votre événement, le retrait ou la livraison, puis vos créneaux, pour obtenir votre devis Seydeco.' %}
+
+{% block body %}
+    <div class="container catalog-page finalize"{% if quoteOnline %} data-controller="finalize" data-finalize-selection-outlet="body"
+         data-finalize-quote-url-value="{{ path('quote') }}" data-finalize-estimate-url-value="{{ path('estimate') }}"{% endif %}>
+        <h1 tabindex="-1">Finaliser ma demande</h1>
+        {% if not quoteOnline %}
+            <p>Le devis en ligne est momentanément fermé.</p>
+            {% if whatsapp %}<p><a class="button-primary" href="https://wa.me/{{ whatsapp }}?text={{ 'Bonjour, je souhaite un devis.'|url_encode }}" target="_blank" rel="noopener">Demander sur WhatsApp</a></p>{% endif %}
+        {% else %}
+            <noscript><p>Activez JavaScript pour finaliser votre demande, ou écrivez-nous sur WhatsApp.</p></noscript>
+            {# Indicateur d'étapes (UX-DR34) : texte et barre tenus à jour par le contrôleur finalize #}
+            <div class="stepper">
+                <p class="label-caps" data-finalize-target="stepLabel" aria-live="polite">Étape 1 sur 4 · Date et mode</p>
+                <div class="stepper__bar" aria-hidden="true"><span data-finalize-target="progress" style="width: 25%"></span></div>
+            </div>
+            <div class="error-summary" data-finalize-target="errors" role="alert" tabindex="-1" hidden>
+                <p>Vérifiez ces informations :</p>
+                <ul data-action="click->finalize#focusField"></ul>
+            </div>
+
+            <form class="finalize__form" novalidate data-action="submit->finalize#next input->finalize#change change->finalize#change" data-finalize-target="form">
+                <section class="finalize-step" data-finalize-target="step" data-title="Date et mode" aria-labelledby="etape-date-titre">
+                    <h2 class="finalize-step__title" id="etape-date-titre" tabindex="-1">Date et mode</h2>
+                    <div class="field">
+                        <label class="field-label" for="f-date">Date de l'événement</label>
+                        <input type="date" id="f-date" name="date" required aria-describedby="f-date-erreur">
+                        <p class="field-error" id="f-date-erreur" data-error-for="date" hidden></p>
+                    </div>
+
+                    {# Deux options carrées (UX-DR35) : cadre 1 px, sélection = cadre 2 px + coche #}
+                    <fieldset class="field mode-options" aria-describedby="f-mode-erreur">
+                        <legend class="field-label">Retrait ou livraison</legend>
+                        <label class="mode-option" for="f-mode-pickup">
+                            <input type="radio" id="f-mode-pickup" name="mode" value="pickup">
+                            <span class="mode-option__title">Retrait au dépôt</span>
+                            <span class="mode-option__text">Vous venez chercher et rapporter le matériel{% if depotCity %} à {{ depotCity }}{% endif %}.</span>
+                        </label>
+                        <label class="mode-option" for="f-mode-delivery">
+                            <input type="radio" id="f-mode-delivery" name="mode" value="delivery" aria-describedby="f-delivery-raison">
+                            <span class="mode-option__title">Livraison en bas de porte</span>
+                            <span class="mode-option__text">Serife livre le matériel au lieu de l'événement.</span>
+                            <span class="mode-option__reason" id="f-delivery-raison" data-finalize-target="deliveryReason" hidden></span>
+                        </label>
+                        <p class="field-error" id="f-mode-erreur" data-error-for="mode" hidden></p>
+                    </fieldset>
+
+                    <p class="finalize-note" data-finalize-target="pickupNote" hidden>{{ pickupTerms ?: 'Prévoyez un véhicule adapté, des sangles et quelqu\'un sur place pour charger.' }}</p>
+
+                    <div class="finalize-delivery" data-finalize-target="delivery" hidden>
+                        <div class="field">
+                            <label class="field-label" for="f-address">Adresse du lieu</label>
+                            <input type="text" id="f-address" name="address" autocomplete="street-address" maxlength="255" aria-describedby="f-address-aide f-address-erreur">
+                            <p class="field-help" id="f-address-aide">Numéro, rue, code postal et ville.</p>
+                            <p class="field-error" id="f-address-erreur" data-error-for="address" hidden></p>
+                            <p class="finalize-status" data-finalize-target="distance" role="status"></p>
+                        </div>
+                        <label class="check" for="f-collect">
+                            <input type="checkbox" id="f-collect" name="collect">
+                            <span>Récupération : Serife reprend le matériel après l'événement</span>
+                        </label>
+                        <label class="check" for="f-installation">
+                            <input type="checkbox" id="f-installation" name="installation" aria-describedby="f-installation-tarifs">
+                            <span>Installation du matériel sur place</span>
+                        </label>
+                        <ul class="finalize-prices" id="f-installation-tarifs" data-finalize-target="installPrices"></ul>
+                        <p class="finalize-note">{% if fuelTerms %}{{ fuelTerms }} {% endif %}Péages éventuels ajoutés par Serife.</p>
+                    </div>
+
+                    {% if cleaningFee is not null %}
+                        {# Proposée dès qu'il y a des chaises, en retrait comme en livraison #}
+                        <div class="finalize-cleaning" data-finalize-target="cleaningBox" hidden>
+                            <label class="check" for="f-cleaning">
+                                <input type="checkbox" id="f-cleaning" name="cleaning">
+                                <span>Je rends les chaises sans les nettoyer (+{{ cleaningFee|money }} par chaise)</span>
+                            </label>
+                            <p class="finalize-note" data-finalize-target="cleaningNote">Les chaises sont à rendre propres.</p>
+                        </div>
+                    {% endif %}
+
+                    <div class="finalize-actions">
+                        <a class="button-secondary" href="{{ path('quote') }}">Retour</a>
+                        <button type="submit" class="button-primary">Continuer</button>
+                    </div>
+                </section>
+
+                <section class="finalize-step" data-finalize-target="step" data-title="Créneaux" aria-labelledby="etape-creneaux-titre" hidden>
+                    <h2 class="finalize-step__title" id="etape-creneaux-titre" tabindex="-1">Créneaux</h2>
+                    <p class="finalize-note">Le choix d'un créneau ne garantit pas la disponibilité : Serife vérifie et vous recontacte.</p>
+                    <p class="finalize-status" data-finalize-target="slotsStatus" role="status"></p>
+                    <p class="finalize-empty" data-finalize-target="noSlot" hidden>Aucun créneau d'ouverture autour de cette date. Écrivez-nous sur WhatsApp.
+                        {% if whatsapp %}<a href="https://wa.me/{{ whatsapp }}?text={{ 'Bonjour, je cherche un créneau autour de la date de mon événement.'|url_encode }}" target="_blank" rel="noopener">Écrire sur WhatsApp</a>{% endif %}</p>
+                    {# Grilles remplies par le contrôleur finalize : `list` = créneaux de retrait (avant) ou de retour (après), `days` = dates seules #}
+                    {% for group in [
+                        {name: 'pickupSlot', list: 'pickup', title: 'Créneau de retrait au dépôt'},
+                        {name: 'deliveryDate', list: 'pickup', title: 'Date de livraison souhaitée', days: true},
+                        {name: 'collectDate', list: 'return', title: 'Date de récupération souhaitée', days: true},
+                        {name: 'returnSlot', list: 'return', title: 'Créneau de retour au dépôt'},
+                    ] %}
+                        <div class="slot-group" data-finalize-target="slotGroup" data-name="{{ group.name }}" data-list="{{ group.list }}"{% if group.days ?? false %} data-days{% endif %} hidden>
+                            <h3 class="field-label" id="g-{{ group.name }}">{{ group.title }}</h3>
+                            {% if group.days ?? false %}<p class="field-help">L'horaire se fixe avec Serife.</p>{% endif %}
+                            <div class="slot-grid" role="group" id="f-{{ group.name }}" tabindex="-1" aria-labelledby="g-{{ group.name }}" aria-describedby="f-{{ group.name }}-erreur"></div>
+                            <p class="field-error" id="f-{{ group.name }}-erreur" data-error-for="{{ group.name }}" hidden></p>
+                        </div>
+                    {% endfor %}
+                    <div class="finalize-actions">
+                        <button type="button" class="button-secondary" data-action="finalize#back">Retour</button>
+                        <button type="submit" class="button-primary">Continuer</button>
+                    </div>
+                    <p class="finalize-status" data-finalize-target="done" role="status"></p>
+                </section>
+                {# Étapes 3 « Coordonnées » et 4 « Récapitulatif et conditions » (story 3.11) : sections data-finalize-target="step" à ajouter ici #}
+            </form>
+
+            {# Total à jour dans la page (pas de Barre d'estimation ici) : montants du JSON de POST /estimation #}
+            <section class="quote-summary finalize-summary" data-finalize-target="summary" aria-labelledby="finalize-estimation-titre" aria-busy="true">
+                <h2 class="label-caps" id="finalize-estimation-titre">Estimation</h2>
+                <dl class="quote-summary__rows">
+                    <div class="quote-summary__row quote-summary__row--total"><dt>Total</dt><dd class="price-total" data-role="total"></dd></div>
+                    <div class="quote-summary__row"><dt data-role="deposit-label">Acompte</dt><dd class="price-total" data-role="deposit"></dd></div>
+                    <div class="quote-summary__row"><dt>Reste à payer</dt><dd class="price-total" data-role="balance"></dd></div>
+                </dl>
+                <p class="quote-summary__status" role="status" data-role="status" hidden></p>
+                <ul class="quote-summary__reasons" data-role="reasons" hidden></ul>
+                <p class="quote-summary__note" data-role="note" hidden>Total hors livraison : les frais de livraison seront confirmés par Serife.</p>
+                <p class="quote-summary__note"><a href="{{ path('quote') }}">Modifier ma sélection</a></p>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}

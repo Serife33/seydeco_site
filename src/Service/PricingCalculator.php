@@ -133,7 +133,7 @@ final class PricingCalculator
         }
 
         if ($context->cleaning && null !== $context->cleaningFee && $chairs > 0) {
-            $out[] = ['type' => 'cleaning', 'label' => 'Chaises rendues sans nettoyage', 'quantity' => $chairs, 'unitPrice' => $context->cleaningFee, 'amount' => $chairs * $context->cleaningFee];
+            $out[] = ['type' => 'cleaning', 'label' => 'Nettoyage des chaises', 'quantity' => $chairs, 'unitPrice' => $context->cleaningFee, 'amount' => $chairs * $context->cleaningFee];
         }
 
         $total = array_sum(array_column($out, 'amount'));
@@ -172,7 +172,7 @@ final class PricingCalculator
     }
 
     /** Chaises de la demande : quantités des produits de catégorie Chaises (même règle que la remise, story 1.12). */
-    private function chairCount(array $lines): int
+    public function chairCount(array $lines): int
     {
         $chairs = 0;
         foreach ($lines as ['product' => $product, 'quantity' => $quantity]) {
