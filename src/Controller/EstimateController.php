@@ -3,10 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Slot;
-use App\Repository\ProductRepository;
-use App\Service\DistanceCalculatorInterface;
 use App\Service\PricingCalculator;
 use App\Service\PricingContextFactory;
+use App\Service\QuoteEstimator;
 use App\Service\RentalPeriod;
 use App\Service\SettingsProvider;
 use App\Twig\MoneyExtension;
@@ -25,16 +24,13 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 final class EstimateController extends AbstractController
 {
-    private const int MAX_LINES = 100;
-    private const int MAX_QTY = 100_000;
     public const string DISTANCE_UNKNOWN = 'Adresse introuvable : les frais de livraison seront confirmés par Serife.';
 
     public function __construct(
-        private readonly ProductRepository $products,
+        private readonly QuoteEstimator $estimator,
         private readonly SettingsProvider $settings,
         private readonly PricingCalculator $calculator,
         private readonly PricingContextFactory $contexts,
-        private readonly DistanceCalculatorInterface $distance,
         private readonly MoneyExtension $money,
         private readonly RateLimiterFactoryInterface $estimateLimiter,
         private readonly RentalPeriod $period,
@@ -52,47 +48,13 @@ final class EstimateController extends AbstractController
         }
         try {
             $data = $request->toArray();
+            ['priced' => $priced, 'positions' => $positions, 'ignored' => $ignored, 'delivery' => $delivery, 'collect' => $collect,
+                'meters' => $meters, 'context' => $context, 'quote' => $quote, 'chairs' => $chairs] = $this->estimator->estimate($data);
         } catch (JsonException) {
             return $this->error('Demande illisible.', 400);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), 400);
         }
-        $raw = $data['lines'] ?? [];
-        if (!\is_array($raw) || !array_is_list($raw) || \count($raw) > self::MAX_LINES) {
-            return $this->error('Demande illisible.', 400);
-        }
-        foreach ($raw as $line) {
-            if (!\is_array($line) || !\is_int($line['productId'] ?? null) || $line['productId'] < 1) {
-                return $this->error('Un produit de la demande est illisible.', 400);
-            }
-            $quantity = $line['quantity'] ?? null;
-            if (!\is_int($quantity) || $quantity < 1 || $quantity > self::MAX_QTY) {
-                return $this->error('Chaque quantité doit être un nombre entier, sans virgule, d\'au moins 1.', 400);
-            }
-        }
-
-        $products = [];
-        foreach ($raw ? $this->products->findBy(['id' => array_unique(array_column($raw, 'productId'))]) : [] as $product) {
-            $products[$product->getId()] = $product;
-        }
-        $priced = $positions = $ignored = [];
-        foreach ($raw as $i => $line) {
-            $product = $products[$line['productId']] ?? null;
-            // Masqué depuis l'ajout, inconnu ou sans palier de prix : ignoré et signalé
-            if (!$product || !$product->isVisible() || !$product->getCategory()?->isVisible() || null === $this->calculator->fromPrice($product)) {
-                $ignored[] = ['line' => $i, 'productId' => $line['productId']];
-                continue;
-            }
-            $positions[] = $i;
-            $priced[] = ['product' => $product, 'quantity' => $line['quantity']];
-        }
-
-        $delivery = 'delivery' === ($data['mode'] ?? null);
-        $options = \is_array($data['options'] ?? null) ? $data['options'] : [];
-        $address = \is_string($data['address'] ?? null) ? mb_substr(trim($data['address']), 0, 255) : '';
-        $meters = $delivery && '' !== $address ? $this->distance->metersFromDepot($address) : null;
-        $collect = true === ($options['pickup'] ?? null);
-        $context = $this->contexts->create($meters, $delivery, $collect, true === ($options['installation'] ?? null), true === ($options['cleaning'] ?? null));
-        $quote = $this->calculator->quote($priced, $context);
-        $chairs = $this->calculator->chairCount($priced);
 
         // Positions dans la liste reçue (les produits ignorés n'y sont plus)
         $lines = array_map(fn (array $l) => (isset($l['line']) ? ['line' => $positions[$l['line']]] + $l : $l) + [
@@ -124,7 +86,7 @@ final class EstimateController extends AbstractController
         if ($date && null === $dateError) {
             $slots = array_map($this->days(...), $this->period->choices($date, $chairs));
             if (\is_array($data['period'] ?? null)) {
-                $period = $this->period->resolve($date, $chairs, $delivery, $delivery && $collect, $data['period']);
+                $period = $this->period->resolve($date, $chairs, $delivery, $collect, $data['period']);
                 $period = isset($period['error']) ? $period : ['startAt' => $period['startAt']->format(\DATE_ATOM), 'endAt' => $period['endAt']->format(\DATE_ATOM)];
             }
         }

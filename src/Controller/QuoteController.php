@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Entity\Product;
+use App\Form\QuoteRequestType;
 use App\Repository\ProductRepository;
 use App\Service\SettingsProvider;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -32,6 +34,7 @@ final class QuoteController extends AbstractController
     /**
      * Finaliser ma demande (stories 3.9, 3.10) : coquille sans sélection ni montant, une étape visible à la fois.
      * Saisies gardées dans le navigateur par le contrôleur `finalize` ; prix, créneaux et période viennent de POST /estimation.
+     * Étapes 3 et 4 (story 3.11) : formulaire de coordonnées et consentements, envoyé à POST /mon-devis/envoyer (story 3.12).
      */
     #[Route('/mon-devis/finaliser', name: 'quote_finalize', methods: ['GET'])]
     public function finalize(): Response
@@ -46,6 +49,12 @@ final class QuoteController extends AbstractController
             'fuelTerms' => trim($this->settings->get(SettingsProvider::FUEL_TERMS)),
             // Supplément vide : option « sans nettoyage » non proposée
             'cleaningFee' => ctype_digit($fee) ? (int) $fee : null,
+            'form' => $this->createForm(QuoteRequestType::class, null, ['action' => $this->generateUrl('quote_submit')]),
+            // Encadré Conditions de l'étape 4 : casse et perte des produits proposés, filtrées sur la sélection par le navigateur
+            'products' => array_values(array_filter(
+                $this->products->findBy(['visible' => true], ['name' => 'ASC']),
+                fn (Product $p) => $p->getCategory()?->isVisible() && (null !== $p->getBreakagePrice() || null !== $p->getLossPrice()),
+            )),
         ]);
     }
 

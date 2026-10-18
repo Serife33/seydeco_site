@@ -4,8 +4,10 @@
 {% set description = 'Indiquez la date de votre événement, le retrait ou la livraison, puis vos créneaux, pour obtenir votre devis Seydeco.' %}
 
 {% block body %}
+    {% from _self import field %}
     <div class="container catalog-page finalize"{% if quoteOnline %} data-controller="finalize" data-finalize-selection-outlet="body"
-         data-finalize-quote-url-value="{{ path('quote') }}" data-finalize-estimate-url-value="{{ path('estimate') }}"{% endif %}>
+         data-finalize-quote-url-value="{{ path('quote') }}" data-finalize-estimate-url-value="{{ path('estimate') }}"
+         data-finalize-whatsapp-value="{{ whatsapp ? 'https://wa.me/' ~ whatsapp ~ '?text=' ~ ('Bonjour, je n\'arrive pas à envoyer ma demande de devis.'|url_encode) }}"{% endif %}>
         <h1 tabindex="-1">Finaliser ma demande</h1>
         {% if not quoteOnline %}
             <p>Le devis en ligne est momentanément fermé.</p>
@@ -22,7 +24,7 @@
                 <ul data-action="click->finalize#focusField"></ul>
             </div>
 
-            <form class="finalize__form" novalidate data-action="submit->finalize#next input->finalize#change change->finalize#change" data-finalize-target="form">
+            {{ form_start(form, {attr: {class: 'finalize__form', novalidate: 'novalidate', 'data-action': 'submit->finalize#next input->finalize#change change->finalize#change', 'data-finalize-target': 'form'}}) }}
                 <section class="finalize-step" data-finalize-target="step" data-title="Date et mode" aria-labelledby="etape-date-titre">
                     <h2 class="finalize-step__title" id="etape-date-titre" tabindex="-1">Date et mode</h2>
                     <div class="field">
@@ -111,10 +113,90 @@
                         <button type="button" class="button-secondary" data-action="finalize#back">Retour</button>
                         <button type="submit" class="button-primary">Continuer</button>
                     </div>
-                    <p class="finalize-status" data-finalize-target="done" role="status"></p>
                 </section>
-                {# Étapes 3 « Coordonnées » et 4 « Récapitulatif et conditions » (story 3.11) : sections data-finalize-target="step" à ajouter ici #}
-            </form>
+                <section class="finalize-step" data-finalize-target="step" data-title="Coordonnées" aria-labelledby="etape-coordonnees-titre" hidden>
+                    <h2 class="finalize-step__title" id="etape-coordonnees-titre" tabindex="-1">Coordonnées</h2>
+                    <p class="finalize-note">Vos coordonnées restent sur ce téléphone jusqu'à l'envoi de la demande et ne sont transmises à aucun autre service.</p>
+                    {% for name in ['firstName', 'lastName', 'phone', 'email'] %}{{ field(form[name]) }}{% endfor %}
+                    <div class="field" data-finalize-target="addressRecap" hidden>
+                        <p class="field-label">Adresse du lieu</p>
+                        <p class="finalize-recap-line"><span data-role="address"></span>
+                            <button type="button" class="link-button" data-action="finalize#goTo" data-finalize-step-param="0">Modifier<span class="visually-hidden"> l'adresse du lieu</span></button></p>
+                    </div>
+                    {# Facultatifs, repliés #}
+                    <details class="finalize-more">
+                        <summary>Je suis un professionnel</summary>
+                        {{ field(form.companyName) }}
+                        {{ field(form.siret, '14 chiffres.') }}
+                        {{ field(form.billingAddress) }}
+                    </details>
+                    <details class="finalize-more">
+                        <summary>Accès particulier</summary>
+                        {{ field(form.access, 'Étage, escalier, stationnement, horaires du lieu…') }}
+                    </details>
+                    <details class="finalize-more">
+                        <summary>Comment nous avez-vous connus ?</summary>
+                        {{ field(form.source) }}
+                    </details>
+                    <div class="finalize-actions">
+                        <button type="button" class="button-secondary" data-action="finalize#back">Retour</button>
+                        <button type="submit" class="button-primary">Continuer</button>
+                    </div>
+                </section>
+
+                <section class="finalize-step" data-finalize-target="step" data-title="Récapitulatif et conditions" aria-labelledby="etape-recap-titre" hidden>
+                    <h2 class="finalize-step__title" id="etape-recap-titre" tabindex="-1">Récapitulatif et conditions</h2>
+                    {# Rempli par le contrôleur finalize : montants de POST /estimation, saisies des étapes #}
+                    <div class="recap" data-finalize-target="recap">
+                        <section class="recap__block" aria-labelledby="recap-selection">
+                            <div class="recap__head"><h3 id="recap-selection">Votre sélection</h3><a href="{{ path('quote') }}">Modifier<span class="visually-hidden"> ma sélection</span></a></div>
+                            <dl class="quote-summary__rows" data-role="lines"></dl>
+                        </section>
+                        <section class="recap__block" aria-labelledby="recap-date">
+                            <div class="recap__head"><h3 id="recap-date">Date et mode</h3><button type="button" class="link-button" data-action="finalize#goTo" data-finalize-step-param="0">Modifier<span class="visually-hidden"> la date et le mode</span></button></div>
+                            <ul class="recap__list" data-role="when"></ul>
+                        </section>
+                        <section class="recap__block" aria-labelledby="recap-creneaux">
+                            <div class="recap__head"><h3 id="recap-creneaux">Créneaux</h3><button type="button" class="link-button" data-action="finalize#goTo" data-finalize-step-param="1">Modifier<span class="visually-hidden"> les créneaux</span></button></div>
+                            <ul class="recap__list" data-role="slots"></ul>
+                        </section>
+                        <section class="recap__block" aria-labelledby="recap-coordonnees">
+                            <div class="recap__head"><h3 id="recap-coordonnees">Coordonnées</h3><button type="button" class="link-button" data-action="finalize#goTo" data-finalize-step-param="2">Modifier<span class="visually-hidden"> les coordonnées</span></button></div>
+                            <ul class="recap__list" data-role="contact"></ul>
+                        </section>
+                    </div>
+
+                    {% include 'quote/_conditions.html.twig' with {products: products} only %}
+                    {# Deux cases distinctes, non cochées, juste après l'Encadré (UX-DR38). Texte du consentement provisoire : à valider par un juriste. #}
+                    <div class="finalize-consents">
+                        {% for name, text in {
+                            acceptTerms: 'J\'ai lu et j\'accepte les <a href="' ~ path('page_show', {slug: 'conditions-generales-de-location'}) ~ '" target="_blank" rel="noopener">conditions de location<span class="visually-hidden"> (nouvel onglet)</span></a>',
+                            acceptPrivacy: 'J\'accepte que Seydeco utilise mes coordonnées pour établir mon devis et me recontacter à son sujet, comme expliqué dans la <a href="' ~ path('page_show', {slug: 'politique-de-confidentialite'}) ~ '" target="_blank" rel="noopener">politique de confidentialité<span class="visually-hidden"> (nouvel onglet)</span></a>',
+                        } %}
+                            {% set f = form[name] %}
+                            <div class="field">
+                                <label class="check" for="{{ f.vars.id }}">
+                                    {{ form_widget(f, {attr: f.vars.attr|merge({'aria-describedby': f.vars.id ~ '-erreur'})}) }}
+                                    <span>{{ text|raw }}</span>
+                                </label>
+                                <p class="field-error" id="{{ f.vars.id }}-erreur" data-error-for="{{ name }}" hidden></p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {# Champ piège : hors écran et hors tabulation, ignoré des lecteurs d'écran #}
+                    <div class="trap" aria-hidden="true">
+                        <label for="{{ form.website.vars.id }}">Site web</label>
+                        {{ form_widget(form.website) }}
+                    </div>
+                    {{ form_widget(form.draft, {attr: {'data-finalize-target': 'draft'}}) }}
+                    {{ form_widget(form._token) }}
+                    <div class="finalize-actions">
+                        <button type="button" class="button-secondary" data-action="finalize#back">Retour</button>
+                        <button type="submit" class="button-primary" data-finalize-target="send">Obtenir mon devis</button>
+                    </div>
+                    <p class="finalize-status finalize-status--error" data-finalize-target="sendStatus" role="alert"></p>
+                </section>
+            {{ form_end(form, {render_rest: false}) }}
 
             {# Total à jour dans la page (pas de Barre d'estimation ici) : montants du JSON de POST /estimation #}
             <section class="quote-summary finalize-summary" data-finalize-target="summary" aria-labelledby="finalize-estimation-titre" aria-busy="true">
@@ -132,3 +214,14 @@
         {% endif %}
     </div>
 {% endblock %}
+
+{# Champ souligné : libellé au-dessus, message sous le champ relié par aria-describedby #}
+{% macro field(f, help = null) %}
+    {% set id = f.vars.id %}
+    <div class="field">
+        {{ form_label(f, null, {label_attr: {class: 'field-label'}}) }}
+        {{ form_widget(f, {attr: f.vars.attr|merge({'aria-describedby': (help ? id ~ '-aide ' : '') ~ id ~ '-erreur'})}) }}
+        {% if help %}<p class="field-help" id="{{ id }}-aide">{{ help }}</p>{% endif %}
+        <p class="field-error" id="{{ id }}-erreur" data-error-for="{{ f.vars.name }}" hidden></p>
+    </div>
+{% endmacro %}

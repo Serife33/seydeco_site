@@ -1,0 +1,21 @@
+# Cycle de vie d'une demande de devis (AD-6) : seul le workflow change le statut. Transitions utilisées à partir de l'Epic 4.
+framework:
+    workflows:
+        quote_request:
+            type: state_machine
+            marking_store:
+                service: App\Workflow\StatusMarkingStore
+            supports:
+                - App\Entity\QuoteRequest
+            initial_marking: nouvelle
+            places: [nouvelle, validee, relancee, reservee, confirmee, terminee, expiree, annulee]
+            transitions:
+                valider: { from: nouvelle, to: validee }
+                relancer: { from: [validee, relancee], to: relancee }
+                acompte_recu: { from: [validee, relancee], to: reservee }
+                confirmer: { from: reservee, to: confirmee }
+                resigner: { from: confirmee, to: reservee }
+                terminer: { from: confirmee, to: terminee }
+                expirer: { from: [validee, relancee], to: expiree }
+                reactiver: { from: expiree, to: validee }
+                annuler: { from: [nouvelle, validee, relancee, reservee, confirmee], to: annulee }

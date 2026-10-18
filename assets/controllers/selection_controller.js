@@ -116,6 +116,13 @@ export default class extends Controller {
         return [];
     }
 
+    // Demande envoyée (story 3.12) : sélection vidée du navigateur
+    clear() {
+        try {
+            localStorage.removeItem(KEY);
+        } catch (e) { /* stockage indisponible : rien à vider */ }
+    }
+
     write(lines) {
         try {
             localStorage.setItem(KEY, JSON.stringify({ v: 1, lines }));

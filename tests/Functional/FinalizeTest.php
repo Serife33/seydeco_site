@@ -89,7 +89,7 @@ final class FinalizeTest extends WebTestCase
         self::assertSelectorTextSame('[data-finalize-target="stepLabel"]', 'Étape 1 sur 4 · Date et mode');
         self::assertSame('width: 25%', $crawler->filter('.stepper__bar span')->attr('style'));
         $steps = $crawler->filter('[data-finalize-target="step"]');
-        self::assertSame([['Date et mode', null], ['Créneaux', '']], $steps->each(fn (Crawler $s) => [$s->attr('data-title'), $s->attr('hidden')]));
+        self::assertSame([['Date et mode', null], ['Créneaux', ''], ['Coordonnées', ''], ['Récapitulatif et conditions', '']], $steps->each(fn (Crawler $s) => [$s->attr('data-title'), $s->attr('hidden')]));
         // Pas de Barre d'estimation ; la sélection est lue par le contrôleur selection
         self::assertCount(0, $crawler->filter('.estimate-bar'));
         $root = $crawler->filter('[data-controller="finalize"]');
