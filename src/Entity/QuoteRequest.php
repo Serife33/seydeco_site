@@ -33,6 +33,18 @@ class QuoteRequest
         'autre' => 'Autre',
     ];
 
+    /** Places du workflow `quote_request` → Badge statut du back-office. */
+    public const array STATUS_LABELS = [
+        'nouvelle' => 'Nouvelle',
+        'validee' => 'Validée',
+        'relancee' => 'Relancée',
+        'reservee' => 'Réservée',
+        'confirmee' => 'Confirmée',
+        'terminee' => 'Terminée',
+        'expiree' => 'Expirée',
+        'annulee' => 'Annulée',
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

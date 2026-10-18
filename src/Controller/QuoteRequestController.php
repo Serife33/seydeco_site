@@ -5,12 +5,15 @@ namespace App\Controller;
 use App\Entity\QuoteRequest;
 use App\Form\QuoteRequestType;
 use App\Repository\QuoteRequestRepository;
+use App\Service\PdfRenderer;
 use App\Service\QuoteEstimator;
 use App\Service\QuoteRequestCreator;
+use App\Service\QuoteRequestNotifier;
 use App\Service\RentalPeriod;
 use App\Service\SettingsProvider;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,6 +37,7 @@ final class QuoteRequestController extends AbstractController
         private readonly QuoteEstimator $estimator,
         private readonly RentalPeriod $period,
         private readonly QuoteRequestCreator $creator,
+        private readonly QuoteRequestNotifier $notifier,
         private readonly RateLimiterFactoryInterface $quoteRequestLimiter,
         private readonly LoggerInterface $logger,
     ) {
@@ -83,6 +87,8 @@ final class QuoteRequestController extends AbstractController
 
             return $this->json(['error' => self::FAILED], 500);
         }
+        // Après l'enregistrement : un échec d'envoi n'annule pas la demande (AD-15)
+        $this->notifier->notify($quoteRequest);
         $request->getSession()->set(self::SESSION_KEY, $quoteRequest->getToken());
 
         return $this->json(['redirect' => $this->generateUrl('quote_confirmation')]);
@@ -99,6 +105,23 @@ final class QuoteRequestController extends AbstractController
         }
         $response = $this->render('quote/confirmation.html.twig', ['quote' => $quote]);
         $response->headers->set('Cache-Control', 'private, no-store');
+
+        return $response;
+    }
+
+    /** Devis PDF de la version en cours (story 3.13), retrouvé par le jeton secret seulement (AD-18). */
+    #[Route('/devis/{token}/pdf', name: 'quote_pdf', requirements: ['token' => '[0-9a-f]{32}'], methods: ['GET'])]
+    public function pdf(string $token, QuoteRequestRepository $requests, PdfRenderer $renderer): Response
+    {
+        $quote = $requests->findOneBy(['token' => $token]);
+        if (!$quote?->getCurrentVersion()) {
+            throw $this->createNotFoundException('Ce devis n\'est plus disponible.');
+        }
+        $response = new Response($renderer->render('pdf/quote.html.twig', ['quote' => $quote, 'version' => $quote->getCurrentVersion()]));
+        $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $quote->getNumber().'.pdf'));
+        $response->headers->set('Cache-Control', 'private, no-store');
+        $response->headers->set('X-Robots-Tag', 'noindex');
 
         return $response;
     }

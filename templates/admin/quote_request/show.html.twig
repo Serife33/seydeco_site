@@ -1,0 +1,66 @@
+{% extends 'admin/base.html.twig' %}
+{% import 'quote/_period.html.twig' as period %}
+
+{% block title %}{{ quote ? quote.number : 'Demande introuvable' }}{% endblock %}
+
+{# Fiche de demande en lecture (story 3.14, UX-DR51) : les actions (valider, relancer…) arrivent en Epic 4. #}
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_quote_request_index') }}">← Demandes</a></p>
+    {% if not quote %}
+        <h1 class="admin-title">Cette demande n'existe plus.</h1>
+        <p><a class="admin-link" href="{{ path('admin_quote_request_index') }}">Voir la liste des demandes</a></p>
+    {% else %}
+        {% set version = quote.currentVersion %}
+        <div class="admin-head">
+            <h1 class="admin-title">{{ quote.firstName }} {{ quote.lastName }}</h1>
+            <span class="admin-badge">{{ constant('App\\Entity\\QuoteRequest::STATUS_LABELS')[quote.status] ?? quote.status }}</span>
+        </div>
+        <p>Devis {{ quote.number }}, demandé le {{ quote.createdAt|date('d/m/Y à G \\h i') }}.</p>
+
+        <section class="admin-section">
+            <h2 class="admin-title">Coordonnées</h2>
+            <dl class="admin-details">
+                <dt>Téléphone</dt><dd><a class="admin-link" href="tel:{{ quote.phone|replace({' ': '', '.': '', '-': ''}) }}">{{ quote.phone }}</a></dd>
+                <dt>Email</dt><dd><a class="admin-link" href="mailto:{{ quote.email }}">{{ quote.email }}</a></dd>
+                {% if quote.pro %}
+                    <dt>Raison sociale</dt><dd>{{ quote.companyName ?? '—' }}</dd>
+                    <dt>SIRET</dt><dd>{{ quote.siret ?? '—' }}</dd>
+                    <dt>Adresse de facturation</dt><dd>{{ quote.billingAddress ?? '—' }}</dd>
+                {% endif %}
+                <dt>Accès particulier</dt><dd>{{ quote.access ?? '—' }}</dd>
+                <dt>Nous a connus par</dt><dd>{{ quote.source ? constant('App\\Entity\\QuoteRequest::SOURCES')[quote.source] ?? quote.source : '—' }}</dd>
+            </dl>
+        </section>
+
+        {% if version %}
+            <section class="admin-section">
+                <h2 class="admin-title">Événement</h2>
+                <dl class="admin-details">
+                    <dt>Date</dt><dd>{{ version.eventDate|date('d/m/Y') }}</dd>
+                    {{ period.rows(version) }}
+                </dl>
+            </section>
+
+            <section class="admin-section">
+                <h2 class="admin-title">Devis</h2>
+                <table class="admin-lines">
+                    <thead><tr><th scope="col">Ligne</th><th scope="col">Montant</th></tr></thead>
+                    <tbody>
+                        {% for line in version.lines %}
+                            <tr>
+                                <td>{{ line.label }}{% if line.colorName %}, {{ line.colorName }}{% endif %}{% if line.quantity %} × {{ line.quantity }}{% endif %}{% if line.unitPrice is not null %} <span class="admin-list__meta">{{ line.unitPrice|money }} l'unité</span>{% endif %}</td>
+                                <td>{{ line.type.value == 'product' or line.amount ? line.amount|money }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr><th scope="row">Total{{ version.excludesDelivery ? ' hors livraison' }}</th><td class="admin-figure">{{ version.total|money }}</td></tr>
+                        <tr><th scope="row">Acompte</th><td>{{ version.deposit|money }}</td></tr>
+                        <tr><th scope="row">Reste à payer</th><td>{{ (version.total - version.deposit)|money }}</td></tr>
+                    </tfoot>
+                </table>
+                <p><a class="admin-button admin-button--secondary" href="{{ path('quote_pdf', {token: quote.token}) }}">Télécharger le devis (PDF)</a></p>
+            </section>
+        {% endif %}
+    {% endif %}
+{% endblock %}

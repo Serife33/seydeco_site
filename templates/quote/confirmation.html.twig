@@ -3,12 +3,13 @@
 {% block title %}Votre devis est prêt | Seydeco{% endblock %}
 {% set noindex = true %}
 
-{# Confirmation (story 3.12, UX-DR39) : numéro, sans emoji ni « Félicitations ». Aucun email n'est envoyé à la cliente (FR-7). #}
+{# Confirmation (stories 3.12, 3.13, UX-DR39) : numéro, PDF par le jeton secret, sans emoji ni « Félicitations ». Aucun email n'est envoyé à la cliente (FR-7). #}
 {% block body %}
     <div class="container catalog-page quote-confirmation">
         <h1 class="headline-xl">Votre devis <span class="nowrap">{{ quote.number }}</span> est prêt.</h1>
         <p class="label-caps">Sous réserve de disponibilité</p>
         <p>Serife vérifie la date et vous envoie le lien de votre devis à jour.</p>
+        <p><a class="button-primary" href="{{ path('quote_pdf', {token: quote.token}) }}" download="{{ quote.number }}.pdf">Télécharger mon devis (PDF)</a></p>
         <p><a class="button-secondary" href="{{ path('app_home') }}">Retour à l'accueil</a></p>
     </div>
 {% endblock %}

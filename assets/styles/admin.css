@@ -274,3 +274,38 @@
     border: 0;
     cursor: pointer;
 }
+
+/* Demandes (story 3.14) : pastille carrée du nombre de nouvelles demandes, Badge statut, fiche en lecture */
+.admin-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    margin-left: var(--space-2);
+    padding: 0 6px;
+    background: var(--ink);
+    color: var(--surface);
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+}
+.admin-badge {
+    display: inline-block;
+    padding: 2px var(--space-2);
+    border: 1px solid var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+}
+.admin-details { display: grid; grid-template-columns: minmax(0, 1fr); align-items: baseline; gap: var(--space-1) var(--space-6); margin: 0 0 var(--space-6); }
+.admin-details dt { color: var(--ink-muted); }
+.admin-details dd { margin: 0 0 var(--space-3); overflow-wrap: anywhere; white-space: pre-line; }
+@media (min-width: 640px) {
+    .admin-details { grid-template-columns: 200px minmax(0, 1fr); }
+    .admin-details dd { margin: 0; }
+}
+.admin-lines { width: 100%; border-collapse: collapse; margin: 0 0 var(--space-6); }
+.admin-lines th, .admin-lines td { padding: var(--space-2) 0; border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: top; }
+.admin-lines th { font-weight: 500; }
+.admin-lines td:last-child, .admin-lines th:last-child { text-align: right; white-space: nowrap; padding-left: var(--space-3); }
+.admin-lines tfoot td, .admin-lines tfoot th { border-bottom: 0; vertical-align: baseline; }

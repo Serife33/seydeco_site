@@ -1,0 +1,21 @@
+{% import 'quote/_period.html.twig' as period %}
+{% set chairs = version.pricingContext.chairs ?? null %}
+<!DOCTYPE html>
+<html lang="fr">
+<body style="font-family: Jost, Arial, sans-serif; font-size: 16px; color: #1F1D1A;">
+    <p>Nouvelle demande de devis <strong>{{ quote.number }}</strong> de {{ quote.firstName }} {{ quote.lastName }}.</p>
+    <dl>
+        <dt>Date de l'événement</dt>
+        <dd>{{ version.eventDate|date('d/m/Y') }}</dd>
+        {{ period.rows(version) }}
+        {% if chairs is not null %}
+            <dt>Chaises</dt>
+            <dd>{{ chairs }}</dd>
+        {% endif %}
+        <dt>Total estimé</dt>
+        <dd>{{ version.total|money }}{{ version.excludesDelivery ? ' hors livraison' }}</dd>
+    </dl>
+    {% if version.excludesDelivery %}<p><strong>Livraison à confirmer</strong> : l'adresse du lieu n'a pas été trouvée.</p>{% endif %}
+    <p><a href="{{ url('admin_quote_request_show', {id: quote.id}) }}" style="color: #1F1D1A;">Ouvrir la demande dans le back-office</a></p>
+</body>
+</html>

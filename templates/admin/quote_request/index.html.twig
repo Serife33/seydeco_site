@@ -1,0 +1,30 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Demandes{% endblock %}
+
+{# Plus → Demandes (story 3.14, UX-DR49) : les plus récentes en premier ; filtres et recherche en Epic 4. #}
+{% block body %}
+    <p><a class="admin-link" href="{{ path('admin_more') }}">← Plus</a></p>
+    <h1 class="admin-title">Demandes</h1>
+    {% if requests|length == 0 %}
+        <p>Aucune demande.</p>
+    {% else %}
+        <ul class="admin-list">
+            {% for quote in requests %}
+                {% set version = quote.currentVersion %}
+                <li class="admin-list__row">
+                    <a class="admin-list__main" href="{{ path('admin_quote_request_show', {id: quote.id}) }}">
+                        <span>
+                            <span class="admin-list__name">{{ quote.firstName }} {{ quote.lastName }}</span>
+                            <span class="admin-list__meta">
+                                {{- version ? 'Le ' ~ version.eventDate|date('d/m/Y') ~ ' · ' }}{{ quote.number }}{{ version ? ' · ' ~ version.total|money }}
+                            </span>
+                        </span>
+                    </a>
+                    <span class="admin-badge">{{ constant('App\\Entity\\QuoteRequest::STATUS_LABELS')[quote.status] ?? quote.status }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+        {{ include('admin/_pagination.html.twig') }}
+    {% endif %}
+{% endblock %}

@@ -26,6 +26,8 @@ final class QuoteRequestTest extends WebTestCase
 {
     private const array SETTINGS = [
         'quote_online' => '1',
+        // Email à Serife couvert par QuotePdfNotificationTest
+        'notification_email' => '',
         'depot_address' => '12 rue du Dépôt, 33530 Bassens',
         'delivery_price_per_km' => '100',
         'delivery_min_chairs' => '80',

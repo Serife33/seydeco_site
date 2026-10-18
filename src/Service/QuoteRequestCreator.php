@@ -56,12 +56,15 @@ final class QuoteRequestCreator
                 $context->installation,
                 $context->cleaning,
                 $estimate['delivery'] ? $estimate['address'] : null,
-                // Contexte figé (AD-8) : réglages du calcul, distance et voyages, remise, conditions et moyens de paiement du jour
+                // Contexte figé (AD-8) : réglages du calcul, distance et voyages, remise, chaises, conditions et moyens de paiement du jour
                 get_object_vars($context) + [
                     'km' => $delivery['km'] ?? null,
                     'trips' => $delivery['trips'] ?? null,
                     'tablesWithChairsDiscount' => $discount,
                     'conditions' => $this->settings->quoteConditions(),
+                    'chairs' => $estimate['chairs'],
+                    // Coordonnées de Seydeco imprimées sur le PDF (story 3.13)
+                    'seller' => array_intersect_key($this->settings->siteContact(), array_flip(['address', 'phone', 'email', 'siret'])),
                 ],
                 $quote['total'],
                 $quote['deposit'],

@@ -1,0 +1,12 @@
+{% set chairs = version.pricingContext.chairs ?? null -%}
+Nouvelle demande de devis {{ quote.number }} de {{ quote.firstName }} {{ quote.lastName }}.
+
+Date de l'événement : {{ version.eventDate|date('d/m/Y') }}
+Mode : {{ version.delivery ? (version.collect ? 'Livraison et récupération par Serife' : 'Livraison, retour au dépôt') : 'Retrait et retour au dépôt' }}
+{% if chairs is not null %}Chaises : {{ chairs }}
+{% endif %}
+Total estimé : {{ version.total|money }}{{ version.excludesDelivery ? ' hors livraison' }}
+{% if version.excludesDelivery %}Livraison à confirmer : l'adresse du lieu n'a pas été trouvée.
+{% endif %}
+
+Ouvrir la demande dans le back-office : {{ url('admin_quote_request_show', {id: quote.id}) }}

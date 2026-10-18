@@ -1,0 +1,27 @@
+{# Période d'une version de devis (stories 3.13, 3.14), en couples <dt>/<dd> : PDF, email à Serife et fiche du back-office.
+   Retrait : début du créneau de retrait, fin du créneau de retour. Livraison : journées entières, sauf retour au dépôt. #}
+{% macro rows(version) %}
+    {% set day = 'd/m/Y' %}
+    <dt>Mode</dt>
+    <dd>{{ version.delivery ? (version.collect ? 'Livraison et récupération par Serife' : 'Livraison, retour au dépôt') : 'Retrait et retour au dépôt' }}</dd>
+    {% if version.delivery %}
+        <dt>Livraison</dt>
+        <dd>Le {{ version.startAt|date(day) }}, l'horaire se fixe avec Serife</dd>
+        {% if version.collect %}
+            <dt>Récupération</dt>
+            <dd>Le {{ version.endAt|date(day) }}, l'horaire se fixe avec Serife</dd>
+        {% else %}
+            <dt>Retour au dépôt</dt>
+            <dd>Le {{ version.endAt|date(day) }}, avant {{ version.endAt|date('G \\h i') }}</dd>
+        {% endif %}
+        {% if version.address %}
+            <dt>Adresse du lieu</dt>
+            <dd>{{ version.address }}</dd>
+        {% endif %}
+    {% else %}
+        <dt>Retrait au dépôt</dt>
+        <dd>Le {{ version.startAt|date(day) }}, à partir de {{ version.startAt|date('G \\h i') }}</dd>
+        <dt>Retour au dépôt</dt>
+        <dd>Le {{ version.endAt|date(day) }}, avant {{ version.endAt|date('G \\h i') }}</dd>
+    {% endif %}
+{% endmacro %}

@@ -168,7 +168,8 @@ final class LoginTest extends AdminTestCase
         $this->loginFully();
         $crawler = $this->client->request('GET', '/admin');
 
-        self::assertSame(['Accueil', 'Plus'], $crawler->filter('nav.admin-nav a')->each(fn ($a) => $a->text()));
+        // Pastille des nouvelles demandes (story 3.14) laissée de côté : la base de test peut en contenir
+        self::assertSame(['Accueil', 'Plus'], $crawler->filter('nav.admin-nav a')->each(fn ($a) => preg_replace('/ \d+ nouvelles? demandes?$/', '', $a->text())));
         self::assertSame('page', $crawler->filter('nav.admin-nav a')->first()->attr('aria-current'));
     }
 
