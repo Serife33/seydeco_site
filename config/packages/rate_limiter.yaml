@@ -50,6 +50,12 @@ framework:
             limit: 5
             interval: '1 hour'
             cache_pool: cache.rate_limiter_dbal
+        # lien secret /devis/{jeton} (page, PDF, signature), par IP : freine les essais de jetons
+        quote_link:
+            policy: sliding_window
+            limit: 30
+            interval: '1 minute'
+            cache_pool: cache.rate_limiter_dbal
 
 services:
     # Secret fixe (kernel.secret) : le secret par défaut change à chaque build et remettrait les compteurs à zéro.

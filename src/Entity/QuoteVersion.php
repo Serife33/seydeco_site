@@ -80,6 +80,10 @@ class QuoteVersion
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $lines;
 
+    /** @var Collection<int, Signature> */
+    #[ORM\OneToMany(targetEntity: Signature::class, mappedBy: 'version')]
+    private Collection $signatures;
+
     /** @param array<string, mixed> $pricingContext */
     public function __construct(
         QuoteRequest $request,
@@ -113,6 +117,7 @@ class QuoteVersion
         $this->excludesDelivery = $excludesDelivery;
         $this->createdAt = new \DateTimeImmutable();
         $this->lines = new ArrayCollection();
+        $this->signatures = new ArrayCollection();
     }
 
     public function addLine(QuoteLine $line): void
@@ -210,5 +215,16 @@ class QuoteVersion
     public function getLines(): Collection
     {
         return $this->lines;
+    }
+
+    /** Signature en ligne de cette version ; « signé » s'en déduit (AD-29). */
+    public function getSignature(): ?Signature
+    {
+        return $this->signatures->findFirst(fn (int $i, Signature $s) => Signature::TYPE_ONLINE === $s->getType());
+    }
+
+    public function addSignature(Signature $signature): void
+    {
+        $this->signatures->add($signature);
     }
 }

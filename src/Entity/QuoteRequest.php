@@ -45,6 +45,21 @@ class QuoteRequest
         'annulee' => 'Annulée',
     ];
 
+    /** Statut en mots pour la cliente, page `/devis/{jeton}` (story 3.15). */
+    public const array CLIENT_STATUS_LABELS = [
+        'nouvelle' => 'En cours de vérification par Serife',
+        'validee' => 'Validé par Serife',
+        'relancee' => 'Validé par Serife',
+        'reservee' => 'Réservé',
+        'confirmee' => 'Confirmé',
+        'terminee' => 'Terminé',
+        'expiree' => 'Expiré',
+        'annulee' => 'Annulé',
+    ];
+
+    /** États où la cliente peut signer en ligne (story 3.16) : validé par Serife, jamais à l'état `nouvelle`. */
+    private const array SIGNABLE = ['validee', 'relancee', 'reservee'];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -296,6 +311,12 @@ class QuoteRequest
     public function getCurrentVersion(): ?QuoteVersion
     {
         return $this->currentVersion;
+    }
+
+    /** Version en cours pas encore signée, dans un état validé par Serife. */
+    public function canBeSignedOnline(): bool
+    {
+        return \in_array($this->status, self::SIGNABLE, true) && $this->currentVersion && !$this->currentVersion->getSignature();
     }
 
     /** @return Collection<int, QuoteVersion> */

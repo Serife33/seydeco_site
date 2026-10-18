@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Devis indisponible | Seydeco{% endblock %}
+{% set noindex = true %}
+
+{# Lien de devis refusé (story 3.15, AD-18) : même page pour un jeton inconnu, mal formé ou supprimé, sans dire s'il a existé ; aussi pour le limiteur. #}
+{% block body %}
+    <div class="container content-page">
+        <h1>{{ message }}</h1>
+        {% if contact.whatsapp or contact.phoneNumber %}
+            <p>Écrivez-nous ou appelez-nous : Serife retrouve votre devis.</p>
+            {% include 'layout/_contact_buttons.html.twig' with {message: 'Bonjour, je n\'arrive pas à ouvrir mon devis Seydeco.'} %}
+        {% endif %}
+        <p><a class="button-secondary" href="{{ path('app_home') }}">Retour à l'accueil</a></p>
+    </div>
+{% endblock %}

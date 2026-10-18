@@ -129,6 +129,11 @@ final class QuotePdfNotificationTest extends AdminTestCase
         $button = $crawler->filter('.quote-confirmation a.button-primary');
         self::assertSame('Télécharger mon devis (PDF)', $button->text());
         self::assertSame('/devis/'.$quote->getToken().'/pdf', $button->attr('href'));
+        // Lien secret à garder (story 3.15), avec un bouton copier ; jamais le numéro dans l'URL
+        self::assertSame('Gardez ce lien pour retrouver votre devis.', $crawler->filter('label[for="lien-devis"]')->text());
+        self::assertSame('http://localhost/devis/'.$quote->getToken(), $crawler->filter('#lien-devis')->attr('value'));
+        self::assertSame('copy#copy', $crawler->filter('.quote-confirmation__link button')->attr('data-action'));
+        self::assertStringNotContainsString((string) $quote->getNumber(), $crawler->filter('#lien-devis')->attr('value'));
 
         $this->client->request('GET', '/devis/'.$quote->getToken().'/pdf');
         self::assertResponseIsSuccessful();

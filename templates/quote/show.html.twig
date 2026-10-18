@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+{% import 'quote/_period.html.twig' as period %}
+
+{% block title %}Votre devis {{ quote.number }} | Seydeco{% endblock %}
+{% set noindex = true %}
+{% set whatsapp_message = 'Bonjour, j\'ai une question sur mon devis ' ~ quote.number %}
+
+{# Page du lien secret (stories 3.15, 3.16, UX-DR40) : statut en mots, récapitulatif de la version en cours, PDF,
+   renvoi papier présenté en premier, « Signer en ligne » en bouton secondaire. Aucune coordonnée bancaire dans l'epic 3. #}
+{% block body %}
+    {% set signature = version.signature %}
+    {% set bp = version.pricingContext.depositBasisPoints ?? 0 %}
+    <div class="container catalog-page quote-link">
+        <h1 class="headline-xl">Devis <span class="nowrap">{{ quote.number }}</span></h1>
+        {% if quote.status == 'nouvelle' %}<p class="label-caps">Sous réserve de disponibilité</p>{% endif %}
+        <p class="quote-link__status">Statut : {{ constant('App\\Entity\\QuoteRequest::CLIENT_STATUS_LABELS')[quote.status] ?? quote.status }}</p>
+        {% for message in app.flashes('quote_notice') %}
+            <p class="quote-link__notice" role="alert">{{ message }}</p>
+        {% endfor %}
+        {% if signature %}
+            <p class="quote-link__signed">Devis signé le {{ signature.signedAt|date('d/m/Y à G \\h i') }}</p>
+        {% endif %}
+        <p><a class="button-primary" href="{{ path('quote_pdf', {token: quote.token}) }}" download>{{ signature ? 'Télécharger mon devis signé (PDF)' : 'Télécharger mon devis (PDF)' }}</a></p>
+
+        {% if not signature and quote.status not in ['terminee', 'expiree', 'annulee'] %}
+            <section class="quote-link__section" aria-labelledby="devis-renvoi">
+                <h2 id="devis-renvoi">Renvoyer votre devis signé</h2>
+                <p>Imprimez le devis, signez-le, puis envoyez-en une photo à Serife sur WhatsApp, avec votre acompte une fois le devis validé.</p>
+                <div class="quote-link__actions">
+                    {% if contact.whatsapp %}
+                        <a class="button-secondary" href="https://wa.me/{{ contact.whatsapp }}?text={{ ('Bonjour, voici mon devis ' ~ quote.number ~ ' signé.')|url_encode }}" target="_blank" rel="noopener">Envoyer sur WhatsApp<span class="visually-hidden"> (nouvel onglet)</span></a>
+                    {% endif %}
+                    {% if quote.canBeSignedOnline %}
+                        <a class="button-secondary" href="{{ path('quote_sign', {token: quote.token}) }}">Signer en ligne</a>
+                    {% endif %}
+                </div>
+            </section>
+        {% endif %}
+
+        <section class="quote-link__section" aria-labelledby="devis-evenement">
+            <h2 id="devis-evenement">Votre événement</h2>
+            <dl class="quote-link__details">
+                <dt>Date</dt><dd>{{ version.eventDate|date('d/m/Y') }}</dd>
+                {{ period.rows(version) }}
+            </dl>
+        </section>
+
+        <section class="quote-link__section" aria-labelledby="devis-detail">
+            <h2 id="devis-detail">Détail</h2>
+            <dl class="quote-summary__rows">
+                {% for line in version.lines %}
+                    <div class="quote-summary__row">
+                        <dt>{{ line.label }}{% if line.colorName %}, {{ line.colorName }}{% endif %}{% if line.quantity %} × {{ line.quantity }}{% endif %}</dt>
+                        <dd>{{ line.type.value == 'product' or line.amount ? line.amount|money }}</dd>
+                    </div>
+                {% endfor %}
+                <div class="quote-summary__row quote-summary__row--total"><dt>Total{{ version.excludesDelivery ? ' hors livraison' }}</dt><dd class="price-total">{{ version.total|money }}</dd></div>
+                <div class="quote-summary__row"><dt>Acompte {{ (bp / 100)|number_format(bp % 100 ? 2 : 0, ',', ' ') }} %</dt><dd class="price-total">{{ version.deposit|money }}</dd></div>
+                <div class="quote-summary__row"><dt>Reste à payer</dt><dd class="price-total">{{ (version.total - version.deposit)|money }}</dd></div>
+            </dl>
+            {% if version.delivery %}<p class="quote-link__note">Péages éventuels ajoutés par Serife.</p>{% endif %}
+        </section>
+    </div>
+{% endblock %}

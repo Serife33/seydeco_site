@@ -39,7 +39,9 @@
         .totals .total td { font-size: 11pt; font-weight: bold; border-top: 1px solid #1F1D1A; }
         ul { margin: 0; padding-left: 4mm; }
         li { margin-bottom: 1mm; }
-        .sign { margin-top: 6mm; border: 1px solid #1F1D1A; height: 28mm; padding: 2mm; width: 80mm; }
+        .sign { margin-top: 6mm; border: 1px solid #1F1D1A; height: 28mm; padding: 2mm; width: 80mm; page-break-inside: avoid; }
+        .signed { height: auto; width: 100mm; }
+        .signed img { height: 30mm; }
     </style>
 </head>
 <body>
@@ -140,6 +142,14 @@
     <h2>Paiement</h2>
     <p>Moyens acceptés : {{ (c.paymentMethods ?? [])|join(', ') ?: 'à voir avec Serife' }}. Pas de paiement en ligne.</p>
 
-    <div class="sign">Bon pour accord, date et signature</div>
+    {% if signature is defined %}
+        {# PDF signé (story 3.16, AD-29) : rendu une seule fois, avec le tracé, la date, l'heure et l'IP #}
+        <div class="sign signed">
+            <p>Bon pour accord : signé en ligne le {{ signature.signedAt|date('d/m/Y à G \\h i') }} (heure de Paris), version {{ version.number }}, adresse IP {{ signature.ip }}.</p>
+            <img src="data:image/png;base64,{{ signature.image }}" alt="Signature">
+        </div>
+    {% else %}
+        <div class="sign">Bon pour accord, date et signature</div>
+    {% endif %}
 </body>
 </html>

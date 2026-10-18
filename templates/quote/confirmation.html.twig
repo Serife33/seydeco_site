@@ -3,13 +3,23 @@
 {% block title %}Votre devis est prêt | Seydeco{% endblock %}
 {% set noindex = true %}
 
-{# Confirmation (stories 3.12, 3.13, UX-DR39) : numéro, PDF par le jeton secret, sans emoji ni « Félicitations ». Aucun email n'est envoyé à la cliente (FR-7). #}
+{# Confirmation (stories 3.12, 3.13, 3.15, UX-DR39) : numéro, PDF et lien secret à garder, sans emoji ni « Félicitations ». Aucun email n'est envoyé à la cliente (FR-7). #}
 {% block body %}
+    {% set link = url('quote_show', {token: quote.token}) %}
     <div class="container catalog-page quote-confirmation">
         <h1 class="headline-xl">Votre devis <span class="nowrap">{{ quote.number }}</span> est prêt.</h1>
         <p class="label-caps">Sous réserve de disponibilité</p>
         <p>Serife vérifie la date et vous envoie le lien de votre devis à jour.</p>
         <p><a class="button-primary" href="{{ path('quote_pdf', {token: quote.token}) }}" download="{{ quote.number }}.pdf">Télécharger mon devis (PDF)</a></p>
+        <div class="quote-confirmation__link" data-controller="copy">
+            <label class="field-label" for="lien-devis">Gardez ce lien pour retrouver votre devis.</label>
+            <div class="quote-confirmation__copy">
+                <input type="text" id="lien-devis" value="{{ link }}" readonly data-copy-target="source">
+                <button type="button" class="button-secondary" data-action="copy#copy">Copier<span class="visually-hidden"> le lien</span></button>
+            </div>
+            <p class="quote-confirmation__status" role="status" data-copy-target="status"></p>
+            <p><a href="{{ link }}">Ouvrir mon devis</a></p>
+        </div>
         <p><a class="button-secondary" href="{{ path('app_home') }}">Retour à l'accueil</a></p>
     </div>
 {% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Signer mon devis {{ quote.number }} | Seydeco{% endblock %}
+{% set noindex = true %}
+
+{# Signature en ligne (story 3.16, AD-29) : tracé au doigt ou à la souris sur un canvas natif (contrôleur `signature`),
+   case des conditions, version affichée envoyée pour refuser une version périmée. Erreurs sous le champ, focus sur la première. #}
+{% block body %}
+    {% set bp = version.pricingContext.depositBasisPoints ?? 0 %}
+    <div class="container catalog-page quote-link">
+        <h1 class="headline-xl">Signer le devis <span class="nowrap">{{ quote.number }}</span></h1>
+        <p>Version {{ version.number }} · Total{{ version.excludesDelivery ? ' hors livraison' }} {{ version.total|money }} · Acompte {{ version.deposit|money }}</p>
+        <p><a href="{{ path('quote_show', {token: quote.token}) }}">Relire le devis</a></p>
+
+        {{ form_start(form, {attr: {class: 'quote-sign', novalidate: 'novalidate', 'data-controller': 'signature', 'data-action': 'resize@window->signature#resize'}}) }}
+            {% set image = form.image %}
+            {% set image_error = image.vars.errors|length ? image.vars.errors|first.message : '' %}
+            <div class="field">
+                <p class="field-label" id="signature-label">Votre signature</p>
+                <p class="field-help" id="signature-aide">Tracez votre signature au doigt ou à la souris dans le cadre.</p>
+                <canvas class="signature-pad" data-signature-target="canvas" tabindex="0" role="img"
+                        aria-labelledby="signature-label" aria-describedby="signature-aide signature-erreur"{% if image_error %} aria-invalid="true"{% endif %}></canvas>
+                <noscript><p>La signature en ligne a besoin de JavaScript. Vous pouvez aussi imprimer le devis et le signer.</p></noscript>
+                <p class="field-error" id="signature-erreur"{% if not image_error %} hidden{% endif %}>{{ image_error }}</p>
+                <p><button type="button" class="link-button" data-action="signature#clear">Effacer la signature</button></p>
+                {{ form_widget(image, {value: '', attr: {'data-signature-target': 'input'}}) }}
+            </div>
+
+            {% set terms = form.acceptTerms %}
+            {% set terms_error = terms.vars.errors|length ? terms.vars.errors|first.message : '' %}
+            <div class="field">
+                <label class="check" for="{{ terms.vars.id }}">
+                    {{ form_widget(terms, {attr: {'aria-describedby': terms.vars.id ~ '-erreur'}|merge(terms_error ? {'aria-invalid': 'true'} : {})}) }}
+                    <span>J'ai lu et j'accepte les <a href="{{ path('page_show', {slug: 'conditions-generales-de-location'}) }}" target="_blank" rel="noopener">conditions de location<span class="visually-hidden"> (nouvel onglet)</span></a></span>
+                </label>
+                <p class="field-error" id="{{ terms.vars.id }}-erreur"{% if not terms_error %} hidden{% endif %}>{{ terms_error }}</p>
+            </div>
+
+            {% for error in form.vars.errors %}
+                <p class="field-error" role="alert">{{ error.message }}</p>
+            {% endfor %}
+            {{ form_widget(form.versionId) }}
+            {{ form_widget(form._token) }}
+            <p><button type="submit" class="button-primary">Signer mon devis</button></p>
+        {{ form_end(form, {render_rest: false}) }}
+    </div>
+{% endblock %}
