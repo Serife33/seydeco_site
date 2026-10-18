@@ -11,10 +11,13 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /** Pack prêt à l'emploi (story 1.14) : éclaté en lignes produit à l'ajout au devis. Se masque, ne s'efface jamais. */
+#[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: PackRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_pack_slug', fields: ['slug'])]
 class Pack
 {
+    use UpdatedAtTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

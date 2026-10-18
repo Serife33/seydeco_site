@@ -39,7 +39,7 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body data-controller="selection" data-selection-quote-url-value="{{ path('quote') }}">
+    <body data-controller="selection consent" data-selection-quote-url-value="{{ path('quote') }}">
         <a class="skip-link" href="#contenu">Aller au contenu</a>
         {% include 'layout/_announcements.html.twig' %}
         {% set home = current_route in ['app_home', 'admin_home_hero_preview'] %}
@@ -109,11 +109,25 @@
                 <ul class="site-footer__links" aria-label="Informations">
                     <li><a href="{{ path('faq') }}">Questions fréquentes</a></li>
                     {% for page_slug, page_title in site_pages() %}
-                        {% if page_slug not in ['a-propos', 'contact'] %}<li><a href="{{ path('page_show', {slug: page_slug}) }}">{{ page_title }}</a></li>{% endif %}
+                        {% if page_slug not in ['a-propos', 'contact'] %}<li><a href="{{ path('page_show', {slug: page_slug}) }}">{{ page_slug == 'gestion-des-cookies' ? 'Gérer mes cookies' : page_title }}</a></li>{% endif %}
                     {% endfor %}
                 </ul>
                 <p class="site-footer__meta">© {{ 'now'|date('Y') }} Seydeco{% if contact.siret %} · SIRET {{ contact.siret }}{% endif %}</p>
             </div>
         </footer>
+        {# Barres du bas, collées en bas de l'écran : la Barre d'estimation (Epic 3) se placera ici, sous le bandeau cookies #}
+        <div class="bottom-bars">
+            {# Bandeau cookies (story 2.11) : non bloquant, montré par le contrôleur consent tant qu'aucun choix n'est enregistré #}
+            <section class="cookie-banner" aria-label="Cookies" data-consent-target="banner" hidden>
+                <div class="container cookie-banner__inner">
+                    <p class="cookie-banner__text">Avec votre accord, nous utilisons des cookies pour mesurer la fréquentation du site et lire les vidéos.</p>
+                    <div class="cookie-banner__actions">
+                        <button type="button" class="button-secondary" data-action="consent#accept">Accepter</button>
+                        <button type="button" class="button-secondary" data-action="consent#refuse">Refuser</button>
+                        {% if site_pages()['gestion-des-cookies'] is defined %}<a href="{{ path('page_show', {slug: 'gestion-des-cookies'}) }}">Personnaliser</a>{% endif %}
+                    </div>
+                </div>
+            </section>
+        </div>
     </body>
 </html>

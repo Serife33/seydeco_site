@@ -10,10 +10,13 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
+#[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_product_slug', fields: ['slug'])]
 class Product
 {
+    use UpdatedAtTrait;
+
     use VideoTrait;
 
     #[ORM\Id]

@@ -799,3 +799,22 @@ body.has-open-panel { overflow: hidden; }
 @media (min-width: 1024px) {
     .reviews__list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-12); }
 }
+
+/* Bandeau cookies (UX-DR43) : en bas, fond blanc, filet ink, non bloquant ; « Accepter » et « Refuser » de même poids */
+.bottom-bars { position: sticky; bottom: 0; z-index: 30; }
+.cookie-banner { padding: var(--space-4) 0; background: var(--surface); border-top: 1px solid var(--ink); }
+.cookie-banner__inner { display: grid; gap: var(--space-3); }
+.cookie-banner__text { margin: 0; font-size: 15px; }
+.cookie-banner__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); }
+.cookie-banner__actions .button-secondary { flex: 1 1 0; }
+.cookie-banner__actions a { display: inline-flex; align-items: center; min-height: var(--target-min); }
+/* Un élément qui reçoit le focus n'est jamais caché sous le bandeau */
+html:has(.cookie-banner:not([hidden])) { scroll-padding-bottom: 200px; }
+@media (min-width: 768px) {
+    .cookie-banner__inner { grid-template-columns: 1fr auto; align-items: center; gap: var(--space-6); }
+    .cookie-banner__actions .button-secondary { flex: none; min-width: 140px; }
+    html:has(.cookie-banner:not([hidden])) { scroll-padding-bottom: 120px; }
+}
+.cookie-settings { margin-top: var(--space-8); }
+.cookie-settings .button-primary { margin-top: var(--space-4); }
+.cookie-settings__status { margin: var(--space-3) 0 0; }

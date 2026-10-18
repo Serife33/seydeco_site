@@ -29,7 +29,7 @@
                         {% set image = photo.filename|imagine_filter('page_photo') %}
                         <li data-gallery-target="item" data-full="{{ full }}" data-alt="{{ photo.alt }}">
                             <a class="realisation-photos__link" href="{{ full }}" data-action="gallery#open">
-                                <img src="{{ image }}" width="1200" height="800" alt="{{ photo.alt }}"{% if loop.first %} fetchpriority="high"{% else %} loading="lazy"{% endif %} decoding="async">
+                                <img src="{{ image }}" srcset="{{ photo.filename|imagine_filter('page_photo_600') }} 600w, {{ image }} 1200w" sizes="(min-width: 1240px) 1200px, 100vw" width="1200" height="800" alt="{{ photo.alt }}"{% if loop.first %} fetchpriority="high"{% else %} loading="lazy"{% endif %} decoding="async">
                                 <span class="visually-hidden">(agrandir)</span>
                             </a>
                             {# Lien de partage simple : aucun script Pinterest chargé (NFR-11) #}

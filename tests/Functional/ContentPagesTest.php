@@ -98,7 +98,7 @@ final class ContentPagesTest extends WebTestCase
         $crawler = $this->client->request('GET', '/location');
 
         $links = $crawler->filter('footer .site-footer__links a');
-        self::assertSame(['Questions fréquentes', 'Mentions légales', 'Conditions générales de location', 'Politique de confidentialité', 'Gestion des cookies', 'Nos engagements'], $links->each(fn (Crawler $a) => $a->text()));
+        self::assertSame(['Questions fréquentes', 'Mentions légales', 'Conditions générales de location', 'Politique de confidentialité', 'Gérer mes cookies', 'Nos engagements'], $links->each(fn (Crawler $a) => $a->text()));
         self::assertSame(['/questions-frequentes', '/mentions-legales', '/conditions-generales-de-location', '/politique-de-confidentialite', '/gestion-des-cookies', '/nos-engagements'], $links->each(fn (Crawler $a) => $a->attr('href')));
         // Chaque page de base existe et répond
         foreach ($links->each(fn (Crawler $a) => $a->attr('href')) as $url) {

@@ -14,7 +14,7 @@
            {% else %}
                href="{{ video.url }}"
            {% endif %}>
-            {% if poster %}<img src="{{ poster|imagine_filter('product_800') }}" width="800" height="800" alt="" loading="lazy" decoding="async">{% endif %}
+            {% if poster %}<img src="{{ poster|imagine_filter('product_800') }}" srcset="{{ poster|imagine_filter('product_400') }} 400w, {{ poster|imagine_filter('product_800') }} 800w" sizes="(min-width: 1024px) 600px, 100vw" width="800" height="800" alt="" loading="lazy" decoding="async">{% endif %}
             <span class="video-facade__play" aria-hidden="true"></span>
             <span class="video-facade__label label-caps">Vidéo<span class="visually-hidden"> : {{ title }}{% if video.type == 'link' %} (nouvel onglet){% endif %}</span></span>
         </a>

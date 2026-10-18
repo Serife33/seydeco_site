@@ -10,7 +10,7 @@
         {% include 'catalog/_breadcrumb.html.twig' with {items: [{label: 'Réalisations', url: path('realisation_index')}, {label: venue.name}]} only %}
         <h1>{{ venue.name }}</h1>
         <p class="realisation-page__meta">{{ venue.city }}{% if venue.address %} · {{ venue.address }}{% endif %}</p>
-        <img class="content-page__photo" src="{{ og_image }}" width="1200" height="800" alt="{{ venue.photoAlt }}" fetchpriority="high">
+        <img class="content-page__photo" src="{{ og_image }}" srcset="{{ venue.photo|imagine_filter('page_photo_600') }} 600w, {{ og_image }} 1200w" sizes="(min-width: 1024px) 960px, 100vw" width="1200" height="800" alt="{{ venue.photoAlt }}" fetchpriority="high">
         {% if venue.text %}<p class="realisation-page__text">{{ venue.text|nl2br }}</p>{% endif %}
         {% if venue.website %}
             <p><a href="{{ venue.website }}" target="_blank" rel="noopener">Site du lieu<span class="visually-hidden"> (nouvel onglet)</span></a></p>

@@ -89,7 +89,7 @@ final class QuoteTest extends WebTestCase
             $counter = $crawler->filter('header a[data-selection-target="counter"]');
             self::assertSame(['/mon-devis', '', ''], [$counter->attr('href'), $counter->attr('hidden'), $counter->text()], $url);
             self::assertStringNotContainsString('Mon devis (', (string) $this->client->getResponse()->getContent());
-            self::assertSame('selection', $crawler->filter('body')->attr('data-controller'));
+            self::assertSame('selection consent', $crawler->filter('body')->attr('data-controller'));
         }
     }
 

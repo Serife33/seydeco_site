@@ -8,12 +8,15 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Validator\Constraints as Assert;
 
+#[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: CategoryRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_category_name', fields: ['name'])]
 #[ORM\UniqueConstraint(name: 'uniq_category_slug', fields: ['slug'])]
 #[UniqueEntity(fields: ['name'], message: 'Une catégorie porte déjà ce nom.')]
 class Category
 {
+    use UpdatedAtTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

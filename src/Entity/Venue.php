@@ -8,10 +8,13 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /** Lieu partenaire (story 2.6), page /lieux/{slug} avec ses réalisations. Se masque, ne s'efface jamais. */
+#[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: VenueRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_venue_slug', fields: ['slug'])]
 class Venue
 {
+    use UpdatedAtTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

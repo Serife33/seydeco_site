@@ -8,9 +8,12 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /** Question fréquente (story 2.4), affichée dépliée sur /questions-frequentes. Se masque, ne s'efface jamais. */
+#[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: FaqItemRepository::class)]
 class FaqItem
 {
+    use UpdatedAtTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

@@ -11,10 +11,13 @@ use Symfony\Component\Validator\Constraints as Assert;
  * Page de contenu (story 2.3) servie sur /{slug} : À propos, Contact, pages légales (créées par migration) et pages de Serife.
  * Se masque, ne s'efface jamais.
  */
+#[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: PageRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_page_slug', fields: ['slug'])]
 class Page
 {
+    use UpdatedAtTrait;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

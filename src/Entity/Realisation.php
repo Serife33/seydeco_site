@@ -10,10 +10,13 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /** Événement équipé par Seydeco (story 2.5), photos et vidéo comme les produits. Se masque, ne s'efface jamais. */
+#[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: RealisationRepository::class)]
 #[ORM\UniqueConstraint(name: 'uniq_realisation_slug', fields: ['slug'])]
 class Realisation
 {
+    use UpdatedAtTrait;
+
     use VideoTrait;
 
     #[ORM\Id]

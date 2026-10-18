@@ -11,3 +11,10 @@ DirectoryIndex index.php
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Fichiers statiques à nom versionné (empreinte AssetMapper : CSS, JS, polices ; photos LiipImagine à nom aléatoire, hors redirection « resolve ») : cache d'un an
+<IfModule mod_headers.c>
+    <If "%{REQUEST_URI} =~ m#^/(assets/|media/cache/(?!resolve/))#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+</IfModule>

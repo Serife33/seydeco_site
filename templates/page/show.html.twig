@@ -13,7 +13,7 @@
     <article class="container content-page">
         <h1>{{ page.title }}</h1>
         {% if page.photo %}
-            <img class="content-page__photo" src="{{ page.photo|imagine_filter('page_photo') }}" width="1200" height="800" alt="{{ page.photoAlt }}">
+            <img class="content-page__photo" src="{{ page.photo|imagine_filter('page_photo') }}" srcset="{{ page.photo|imagine_filter('page_photo_600') }} 600w, {{ page.photo|imagine_filter('page_photo') }} 1200w" sizes="(min-width: 1024px) 960px, 100vw" width="1200" height="800" alt="{{ page.photoAlt }}" fetchpriority="high">
         {% endif %}
         <div class="rich-text">{{ page.content|simple_markdown }}</div>
         {% if page.slug == 'contact' %}
@@ -24,6 +24,24 @@
                 {% include 'layout/_contact_buttons.html.twig' with {message: wa_message} %}
                 {% if contact.email %}<p><a href="mailto:{{ contact.email }}">{{ contact.email }}</a></p>{% endif %}
             </section>
+        {% endif %}
+        {% if page.slug == 'gestion-des-cookies' %}
+            {# Choix par catégorie (story 2.11), gardé dans le navigateur par le contrôleur consent : rien n'est envoyé au serveur #}
+            <form class="cookie-settings" data-consent-target="form" data-action="consent#submit" hidden>
+                <fieldset class="catalog-filters__group">
+                    <legend class="label-caps">Vos choix</legend>
+                    <div class="catalog-filters__option">
+                        <input type="checkbox" id="consent-audience" name="audience">
+                        <label for="consent-audience">Mesure d'audience</label>
+                    </div>
+                    <div class="catalog-filters__option">
+                        <input type="checkbox" id="consent-youtube" name="youtube">
+                        <label for="consent-youtube">Vidéos YouTube</label>
+                    </div>
+                </fieldset>
+                <button type="submit" class="button-primary">Enregistrer</button>
+                <p class="cookie-settings__status" role="status" data-consent-target="status"></p>
+            </form>
         {% endif %}
     </article>
     {% if page.slug == 'a-propos' %}{% include 'review/_block.html.twig' %}{% endif %}

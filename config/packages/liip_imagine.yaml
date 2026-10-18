@@ -53,6 +53,13 @@ liip_imagine:
             filters:
                 auto_rotate: ~
                 thumbnail: { size: [1200, 800], mode: outbound }
+        # Version téléphone des photos 3:2 (srcset)
+        page_photo_600:
+            format: '%app.image_format%'
+            quality: 80
+            filters:
+                auto_rotate: ~
+                thumbnail: { size: [600, 400], mode: outbound }
         # Haut de l'accueil (story 2.9) : une photo pleine largeur 16:9, ou deux côte à côte 4:3 (srcset)
         hero_800:
             format: '%app.image_format%'
