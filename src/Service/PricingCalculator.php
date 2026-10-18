@@ -68,6 +68,7 @@ final class PricingCalculator
     /**
      * Chiffrage complet d'une demande (story 3.4) : lignes typées, total, acompte et reste, en centimes.
      * Une ligne sous son minimum n'est pas chiffrée : elle donne une raison `min_qty`. Aucun péage (ligne `toll` saisie en Epic 4).
+     * Lignes produit et raisons `min_qty` portent `line`, la position de la ligne reçue.
      *
      * @param list<array{product: Product, quantity: int}> $lines
      *
@@ -76,16 +77,16 @@ final class PricingCalculator
     public function quote(array $lines, PricingContext $context): array
     {
         $out = $reasons = $priced = [];
-        foreach ($lines as $line) {
+        foreach ($lines as $index => $line) {
             ['product' => $product, 'quantity' => $quantity] = $line;
             try {
                 $unit = $this->unitPrice($product, $quantity);
             } catch (QuantityBelowMinimumException $e) {
-                $reasons[] = ['type' => 'min_qty', 'productId' => $product->getId(), 'message' => \sprintf('Minimum %d pour « %s » : vous en avez %d.', $e->minQty, $product->getName(), $quantity)];
+                $reasons[] = ['type' => 'min_qty', 'productId' => $product->getId(), 'line' => $index, 'message' => \sprintf('Minimum %d pour « %s » : vous en avez %d.', $e->minQty, $product->getName(), $quantity)];
                 continue;
             }
             $priced[] = $line;
-            $out[] = ['type' => 'product', 'label' => (string) $product->getName(), 'productId' => $product->getId(), 'quantity' => $quantity, 'unitPrice' => $unit, 'amount' => $unit * $quantity];
+            $out[] = ['type' => 'product', 'label' => (string) $product->getName(), 'productId' => $product->getId(), 'line' => $index, 'quantity' => $quantity, 'unitPrice' => $unit, 'amount' => $unit * $quantity];
         }
         if ($discount = $this->tablesWithChairsDiscount($priced)) {
             $out[] = $discount;

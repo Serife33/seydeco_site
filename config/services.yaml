@@ -26,6 +26,13 @@ services:
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
 
+    # Distance par la route : Google en dev et prod (décorée par CachedDistanceCalculator)
+    App\Service\DistanceCalculatorInterface: '@App\Service\GoogleDistanceCalculator'
+
 when@test:
     parameters:
         app.upload_dir: '%kernel.project_dir%/var/test-uploads'
+    services:
+        # Aucun appel réel à Google en test et en CI
+        App\Tests\Double\FakeDistanceCalculator: ~
+        App\Service\DistanceCalculatorInterface: '@App\Tests\Double\FakeDistanceCalculator'

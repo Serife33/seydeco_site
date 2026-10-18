@@ -1,29 +1,69 @@
-{# Lignes de « Mon devis », chargées dans le cadre Turbo de la page (story 1.13 ; quantités modifiables et estimation : Epic 3) #}
+{# Lignes de « Mon devis », chargées dans le cadre Turbo de la page (stories 1.13 et 3.6).
+   Aucun montant ici : prix au palier, sous-totaux et totaux viennent du JSON de POST /estimation (contrôleur selection). #}
 <turbo-frame id="mon-devis-lignes" target="_top">
     {% if rows %}
         <ul class="quote-lines">
             {% for row in rows %}
                 {% set product = row.product %}
-                <li class="quote-line">
-                    <div class="quote-line__media">
-                        {% set photo = row.available ? product.photos|first : null %}
-                        {% if photo %}<img src="{{ photo.filename|imagine_filter('product_thumb') }}" width="64" height="64" alt="" loading="lazy" decoding="async">{% endif %}
-                    </div>
-                    <div class="quote-line__body">
-                        {% if row.available %}
-                            <a class="quote-line__name" href="{{ path('catalog_product', {categorySlug: product.category.slug, slug: product.slug}) }}">{{ product.name }}</a>
-                            {% if row.color %}<p>Coloris : {{ row.color.name }}</p>{% endif %}
-                            <p>Quantité : {{ row.qty }}</p>
-                        {% else %}
+                {% if row.available %}
+                    {% set minQty = product.minQty ?: 1 %}
+                    {% set type = product.category.pricingType.value %}
+                    {% set units = {chairs: ['chaise', 'chaises'], tables: ['table', 'tables']}[type] ?? ['unité', 'unités'] %}
+                    {% set id = 'quantite-' ~ loop.index %}
+                    <li class="quote-line" data-quote-line data-product-id="{{ row.productId }}" data-color-id="{{ row.colorId }}"
+                        data-min="{{ minQty }}" data-one="{{ units[0] }}" data-many="{{ units[1] }}"
+                        data-removed="{{ {chairs: 'Chaise retirée', tables: 'Table retirée'}[type] ?? 'Produit retiré' }}">
+                        <div class="quote-line__media">
+                            {% set photo = product.photos|first %}
+                            {% if photo %}<img src="{{ photo.filename|imagine_filter('product_thumb') }}" width="64" height="64" alt="" loading="lazy" decoding="async">{% endif %}
+                        </div>
+                        <div class="quote-line__body">
+                            <div class="quote-line__info">
+                                <a class="quote-line__name" href="{{ path('catalog_product', {categorySlug: product.category.slug, slug: product.slug}) }}">{{ product.name }}</a>
+                                {% if row.color %}<p>Coloris : {{ row.color.name }}</p>{% endif %}
+                                <p class="quote-line__unit" data-role="unit"></p>
+                            </div>
+                            <div class="quantity">
+                                <label class="label-caps" for="{{ id }}">Quantité<span class="visually-hidden"> : {{ product.name }}</span></label>
+                                <div class="quantity__control">
+                                    <button type="button" class="quantity__step" data-action="selection#step" data-selection-step-param="-1" aria-label="Diminuer la quantité : {{ product.name }}">−</button>
+                                    <input type="number" id="{{ id }}" name="qty" value="{{ row.qty }}" min="{{ minQty }}" step="1" inputmode="numeric" required
+                                           aria-describedby="{{ id }}-erreur" data-action="input->selection#quantity">
+                                    <button type="button" class="quantity__step" data-action="selection#step" data-selection-step-param="1" aria-label="Augmenter la quantité : {{ product.name }}">+</button>
+                                </div>
+                                <p class="field-error" id="{{ id }}-erreur" data-role="error" hidden></p>
+                            </div>
+                            <div class="quote-line__end">
+                                <p class="quote-line__amount price-total" data-role="amount"></p>
+                                <button type="button" class="link-button" data-action="selection#removeLine">Retirer<span class="visually-hidden"> {{ product.name }}</span></button>
+                            </div>
+                        </div>
+                    </li>
+                {% else %}
+                    <li class="quote-line">
+                        <div class="quote-line__media"></div>
+                        <div class="quote-line__body">
                             {% if product %}<p class="quote-line__name">{{ product.name }}</p>{% endif %}
                             <p>Ce produit n'est plus proposé</p>
                             <button type="button" class="button-secondary button-sm" data-action="selection#remove"
                                     data-selection-product-id-param="{{ row.productId }}" data-selection-color-id-param="{{ row.colorId }}">Retirer<span class="visually-hidden"> {{ product ? product.name : 'ce produit' }}</span></button>
-                        {% endif %}
-                    </div>
-                </li>
+                        </div>
+                    </li>
+                {% endif %}
             {% endfor %}
         </ul>
+        <section class="quote-summary" data-selection-target="summary" data-url="{{ path('estimate') }}" aria-labelledby="estimation-titre" aria-busy="true">
+            <h2 class="label-caps" id="estimation-titre" tabindex="-1">Estimation</h2>
+            <dl class="quote-summary__rows">
+                <div class="quote-summary__row quote-summary__row--total"><dt>Total</dt><dd class="price-total" data-role="total"></dd></div>
+                <div class="quote-summary__row"><dt data-role="deposit-label">Acompte</dt><dd class="price-total" data-role="deposit"></dd></div>
+                <div class="quote-summary__row"><dt>Reste à payer</dt><dd class="price-total" data-role="balance"></dd></div>
+            </dl>
+            <p class="quote-summary__status" role="status" data-role="status" hidden></p>
+            <ul class="quote-summary__reasons" data-role="reasons" hidden></ul>
+            <p class="quote-summary__note">Les frais de livraison s'ajoutent à l'étape suivante.</p>
+            <p class="visually-hidden" aria-live="polite" data-role="announce"></p>
+        </section>
     {% else %}
         <div class="quote-empty">
             <p>Votre devis est vide.</p>

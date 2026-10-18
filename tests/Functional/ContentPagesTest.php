@@ -105,9 +105,9 @@ final class ContentPagesTest extends WebTestCase
             $this->client->request('GET', $url);
             self::assertResponseIsSuccessful($url);
         }
-        // La politique de confidentialité mentionne la transmission de l'adresse au calcul de distance
+        // La politique de confidentialité mentionne la transmission de l'adresse à Google pour la distance (story 3.5)
         $crawler = $this->client->request('GET', '/politique-de-confidentialite');
-        self::assertStringContainsString('service de calcul de distance', $crawler->filter('main')->text());
+        self::assertStringContainsString('transmise à Google (Google Maps, service de calcul d\'itinéraire), uniquement pour calculer la distance', $crawler->filter('main')->text());
         self::assertStringContainsString('À compléter', $crawler->filter('main')->text());
     }
 

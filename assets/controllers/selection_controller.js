@@ -1,14 +1,18 @@
 import { Controller } from '@hotwired/stimulus';
 
 const KEY = 'seydeco.selection.v1';
+const role = (element, name) => element.querySelector(`[data-role="${name}"]`);
+// Ligne de la page Mon devis ↔ ligne stockée : même produit, même coloris
+const sameLine = (item, line) => Number(item.dataset.productId) === line.productId && (Number(item.dataset.colorId) || null) === (line.colorId ?? null);
 
 /*
  * Sélection « Mon devis » (story 1.13), seul contrôleur à toucher localStorage.
  * Schéma : {v:1, lines:[{productId, colorId?, qty}]} ; aucun prix calculé ici.
  * Posé sur <body> : compteur de l'en-tête, formulaires d'ajout (fiche, cartes, pack), page /mon-devis.
+ * Mon devis (story 3.6) : montants repris tels quels du JSON de POST /estimation (PricingCalculator).
  */
 export default class extends Controller {
-    static targets = ['counter', 'lines', 'storageError'];
+    static targets = ['counter', 'lines', 'storageError', 'summary'];
     static values = { quoteUrl: String };
 
     connect() {
@@ -24,6 +28,8 @@ export default class extends Controller {
     // Cibles présentes au chargement ou arrivées avec Turbo : on les remplit
     counterTargetConnected() { this.render(); }
     linesTargetConnected() { this.render(); }
+    // Lignes arrivées dans le cadre : première estimation, sans annonce
+    summaryTargetConnected() { this.estimate(false); }
 
     read() {
         try {
@@ -45,13 +51,7 @@ export default class extends Controller {
     }
 
     render() {
-        const lines = this.read();
-        if (this.hasCounterTarget) {
-            const n = lines.length;
-            this.counterTarget.hidden = n === 0;
-            this.counterTarget.textContent = n ? `Mon devis (${n})` : '';
-            this.counterTarget.setAttribute('aria-label', `Mon devis, ${n} produit${n > 1 ? 's' : ''}`);
-        }
+        const lines = this.renderCounter();
         if (this.hasLinesTarget) {
             // Probe d'écriture : en navigation privée stricte, l'écriture échoue
             const writable = this.write(lines);
@@ -64,6 +64,17 @@ export default class extends Controller {
         }
     }
 
+    renderCounter() {
+        const lines = this.read();
+        if (this.hasCounterTarget) {
+            const n = lines.length;
+            this.counterTarget.hidden = n === 0;
+            this.counterTarget.textContent = n ? `Mon devis (${n})` : '';
+            this.counterTarget.setAttribute('aria-label', `Mon devis, ${n} produit${n > 1 ? 's' : ''}`);
+        }
+        return lines;
+    }
+
     // Le sélecteur de quantité appartient au formulaire de la fiche ou à une ligne de pack : l'élément portant data-min
     step({ currentTarget, params }) {
         const scope = currentTarget.closest('[data-min]');
@@ -71,11 +82,145 @@ export default class extends Controller {
         const min = Number(scope.dataset.min);
         const value = /^\d+$/.test(input.value) ? Number(input.value) : min;
         input.value = Math.max(min, value + params.step);
-        this.validate(scope);
+        this.changeLine(scope, this.validate(scope));
     }
 
     quantity({ currentTarget }) {
-        this.validate(currentTarget.closest('[data-min]'));
+        const scope = currentTarget.closest('[data-min]');
+        this.changeLine(scope, this.validate(scope));
+    }
+
+    // Ligne de Mon devis : quantité gardée tout de suite, total après 300 ms ; quantité refusée : rien n'est gardé
+    changeLine(scope, qty) {
+        if (!('quoteLine' in scope.dataset) || qty === null) return;
+        const lines = this.read();
+        const line = lines.find((l) => sameLine(scope, l));
+        if (line) {
+            line.qty = qty;
+            this.write(lines);
+        }
+        this.scheduleEstimate();
+    }
+
+    // « Retirer » sur Mon devis : « Chaise retirée — Annuler » à la place de la ligne pendant 10 s (jamais de popup)
+    removeLine({ currentTarget }) {
+        const item = currentTarget.closest('[data-quote-line]');
+        const lines = this.read();
+        const index = lines.findIndex((l) => sameLine(item, l));
+        const removed = index >= 0 ? lines.splice(index, 1)[0] : null;
+        this.write(lines);
+        this.renderCounter();
+        item.hidden = true;
+        const undo = document.createElement('li');
+        undo.className = 'quote-line quote-line--removed';
+        const text = document.createElement('p');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'link-button';
+        button.textContent = 'Annuler';
+        text.append(`${item.dataset.removed} — `, button);
+        undo.append(text);
+        item.after(undo);
+        button.focus();
+        const timer = setTimeout(() => {
+            const hadFocus = undo.contains(document.activeElement);
+            undo.remove();
+            item.remove();
+            // Plus aucune ligne : le cadre affiche « Votre devis est vide. »
+            if (!this.linesTarget.querySelector('.quote-line')) {
+                this.render();
+            } else if (hadFocus && this.hasSummaryTarget) {
+                this.summaryTarget.querySelector('h2').focus();
+            }
+        }, 10000);
+        button.addEventListener('click', () => {
+            clearTimeout(timer);
+            const current = this.read();
+            if (removed && !current.some((l) => sameLine(item, l))) {
+                current.splice(Math.min(index, current.length), 0, removed);
+                this.write(current);
+                item.querySelector('input[name="qty"]').value = removed.qty;
+            }
+            undo.remove();
+            item.hidden = false;
+            item.querySelector('[data-action="selection#removeLine"]').focus();
+            this.renderCounter();
+            this.scheduleEstimate();
+        });
+        this.scheduleEstimate();
+    }
+
+    scheduleEstimate() {
+        clearTimeout(this.estimateTimer);
+        this.estimateTimer = setTimeout(() => this.estimate(true), 300);
+    }
+
+    // Seul le serveur chiffre ; une réponse dépassée par une plus récente est abandonnée
+    async estimate(announce) {
+        if (!this.hasSummaryTarget) return;
+        const summary = this.summaryTarget;
+        const lines = this.read();
+        this.estimateRequest?.abort();
+        const request = this.estimateRequest = new AbortController();
+        let data = null;
+        try {
+            const response = await fetch(summary.dataset.url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ lines: lines.map((l) => ({ productId: l.productId, quantity: l.qty })) }),
+                signal: request.signal,
+            });
+            if (response.ok) data = await response.json();
+        } catch (e) {
+            if (e.name === 'AbortError') return;
+        }
+        if (request !== this.estimateRequest || !summary.isConnected) return;
+        summary.removeAttribute('aria-busy');
+        const status = role(summary, 'status');
+        // Échec : la sélection reste, le dernier total est barré ; nouvel essai à la prochaine modification
+        summary.classList.toggle('is-stale', !data);
+        status.hidden = !!data;
+        if (!data) {
+            status.textContent = navigator.onLine === false ? 'Pas de connexion. Votre demande est gardée sur ce téléphone.' : 'Estimation momentanément indisponible';
+            return;
+        }
+        const items = [...this.linesTarget.querySelectorAll('[data-quote-line]')];
+        items.forEach((item) => { role(item, 'unit').textContent = ''; role(item, 'amount').textContent = ''; });
+        summary.querySelectorAll('[data-role="extra"]').forEach((row) => row.remove());
+        const totalRow = role(summary, 'total').parentElement;
+        data.lines.forEach((l) => {
+            if (l.type === 'product') {
+                const item = items.find((i) => lines[l.line] && sameLine(i, lines[l.line]));
+                if (item) {
+                    role(item, 'unit').textContent = `${l.unitPriceText} l'unité`;
+                    role(item, 'amount').textContent = l.amountText;
+                }
+                return;
+            }
+            // Remise (et plus tard livraison, installation…) : une ligne à part avant le total
+            const row = document.createElement('div');
+            row.className = 'quote-summary__row';
+            row.dataset.role = 'extra';
+            const dt = document.createElement('dt');
+            dt.textContent = l.label;
+            const dd = document.createElement('dd');
+            dd.textContent = l.amountText;
+            row.append(dt, dd);
+            totalRow.before(row);
+        });
+        role(summary, 'total').textContent = data.totalText;
+        role(summary, 'deposit-label').textContent = `Acompte ${data.depositPercent} %`;
+        role(summary, 'deposit').textContent = data.depositText;
+        role(summary, 'balance').textContent = data.balanceText;
+        const reasons = role(summary, 'reasons');
+        reasons.replaceChildren(...data.reasons.map((r) => Object.assign(document.createElement('li'), { textContent: r.message })));
+        reasons.hidden = !data.reasons.length;
+        if (announce) {
+            clearTimeout(this.announceTimer);
+            this.announceTimer = setTimeout(() => {
+                role(summary, 'announce').textContent = `Total estimé ${data.totalText}, acompte ${data.depositText}.`;
+            }, 1000);
+        }
     }
 
     // Quantité saisie (fiche, ligne de pack) ou minimum (carte) ; null si refusée, avec le message sous le champ

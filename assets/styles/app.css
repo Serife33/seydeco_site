@@ -645,6 +645,30 @@ body.has-open-panel { overflow: hidden; }
 .quote-line__name { display: inline-block; margin-bottom: var(--space-1); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; }
 .quote-line .button-sm { margin-top: var(--space-2); }
 .quote-page__storage-error { color: var(--error); }
+/* Mon devis, estimation (story 3.6) : montants venus du serveur ; mobile empilé, grille dès 768 px */
+.quote-line__body { flex: 1; }
+.quote-line .quantity { margin: var(--space-3) 0 0; }
+.quote-line__unit { color: var(--ink-muted); }
+.quote-line__end { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); margin-top: var(--space-2); }
+.quote-line__amount:empty { display: none; }
+.quote-line[hidden] { display: none; }
+.quote-line--removed { align-items: center; min-height: 64px; }
+.quote-summary { margin-top: var(--space-8); max-width: 480px; margin-left: auto; }
+.quote-summary h2 { margin: 0 0 var(--space-3); }
+.quote-summary__rows { margin: 0; }
+.quote-summary__row { display: flex; justify-content: space-between; gap: var(--space-4); padding: var(--space-2) 0; border-bottom: 1px solid var(--hairline); }
+.quote-summary__row dt, .quote-summary__row dd { margin: 0; }
+.quote-summary__row dd { text-align: right; white-space: nowrap; }
+.quote-summary__row--total { font-size: 20px; }
+.quote-summary.is-stale [data-role="total"] { text-decoration: line-through; }
+.quote-summary__status { margin: var(--space-3) 0 0; color: var(--error); }
+.quote-summary__reasons { margin: var(--space-3) 0 0; padding-left: var(--space-4); }
+.quote-summary__note { margin: var(--space-3) 0 0; }
+@media (min-width: 768px) {
+    [data-quote-line] .quote-line__body { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(120px, auto); gap: var(--space-6); align-items: start; }
+    .quote-line .quantity { margin: 0; }
+    .quote-line__end { flex-direction: column; align-items: flex-end; margin: 0; }
+}
 
 /* Packs (story 1.14) : cartes du catalogue, page d'un pack */
 .packs { margin-top: var(--space-12); }

@@ -116,11 +116,25 @@ final class QuoteTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $lines = $crawler->filter('turbo-frame#mon-devis-lignes .quote-line');
         self::assertSame([
-            ['Chaise Napoléon', 'Coloris : Or', 'Quantité : 150'],
-            ['Nappe ronde', 'Quantité : 3'],
-        ], $lines->each(fn (Crawler $l) => array_merge([$l->filter('a.quote-line__name')->text()], $l->filter('p')->each(fn (Crawler $p) => $p->text()))));
+            ['Chaise Napoléon', 'Coloris : Or', '150', '15'],
+            ['Nappe ronde', '', '3', '1'],
+        ], $lines->each(fn (Crawler $l) => [$l->filter('a.quote-line__name')->text(), $l->filter('.quote-line__info p')->first()->text(''), $l->filter('input[name="qty"]')->attr('value'), $l->filter('input[name="qty"]')->attr('min')]));
         $img = $lines->first()->filter('img');
         self::assertSame(['64', '64'], [$img->attr('width'), $img->attr('height')]);
+        // Sélecteur − / + et « Retirer » (story 3.6) ; minimum et unités pour « Minimum 15 chaises. »
+        $first = $lines->first();
+        self::assertSame([(string) $chaise->getId(), (string) $gold, '15', 'chaise', 'chaises', 'Chaise retirée'], [$first->attr('data-product-id'), $first->attr('data-color-id'), $first->attr('data-min'), $first->attr('data-one'), $first->attr('data-many'), $first->attr('data-removed')]);
+        self::assertSame(['−', '+'], $first->filter('.quantity__step')->each(fn (Crawler $b) => $b->text()));
+        self::assertSame('quantite-1-erreur', $first->filter('input')->attr('aria-describedby'));
+        self::assertStringStartsWith('Retirer', $first->filter('button[data-action="selection#removeLine"]')->text());
+        self::assertSame('Produit retiré', $lines->last()->attr('data-removed'));
+        // Estimation : structure seulement, les montants viennent du JSON de POST /estimation
+        $summary = $crawler->filter('.quote-summary');
+        self::assertSame(['summary', '/estimation'], [$summary->attr('data-selection-target'), $summary->attr('data-url')]);
+        self::assertSame(['Total', 'Acompte', 'Reste à payer'], $summary->filter('dt')->each(fn (Crawler $dt) => $dt->text()));
+        self::assertSame("Les frais de livraison s'ajoutent à l'étape suivante.", $summary->filter('.quote-summary__note')->text());
+        self::assertSame('polite', $summary->filter('[data-role="announce"]')->attr('aria-live'));
+        self::assertSame('status', $summary->filter('[data-role="status"]')->attr('role'));
         self::assertStringNotContainsString('€', $crawler->text());
     }
 
