@@ -115,7 +115,7 @@
                 <p class="site-footer__meta">© {{ 'now'|date('Y') }} Seydeco{% if contact.siret %} · SIRET {{ contact.siret }}{% endif %}</p>
             </div>
         </footer>
-        {# Barres du bas, collées en bas de l'écran : la Barre d'estimation (Epic 3) se placera ici, sous le bandeau cookies #}
+        {# Barres du bas, collées en bas de l'écran (sticky : leur hauteur reste réservée en fin de page) ; bandeau cookies au-dessus de la Barre d'estimation #}
         <div class="bottom-bars">
             {# Bandeau cookies (story 2.11) : non bloquant, montré par le contrôleur consent tant qu'aucun choix n'est enregistré #}
             <section class="cookie-banner" aria-label="Cookies" data-consent-target="banner" hidden>
@@ -128,6 +128,16 @@
                     </div>
                 </div>
             </section>
+            {% if quote_online() and not (current_route starts with 'quote') %}
+                {# Barre d'estimation (story 3.7) : vide et masquée dans le HTML servi (cacheable) ; remplie par le contrôleur selection depuis POST /estimation.
+                   Absente sur Mon devis et Finaliser (routes quote*), et tant que la sélection est vide. #}
+                <section class="estimate-bar" aria-label="Estimation de mon devis" data-selection-target="bar" data-url="{{ path('estimate') }}" hidden>
+                    <div class="container estimate-bar__inner">
+                        <p class="estimate-bar__text"><span data-role="count"></span> <span class="estimate-bar__total price-total" data-role="total"></span></p>
+                        <a class="button-inverse" href="{{ path('quote') }}">Voir mon devis</a>
+                    </div>
+                </section>
+            {% endif %}
         </div>
     </body>
 </html>

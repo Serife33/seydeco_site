@@ -26,6 +26,28 @@ final class SettingsExtension
     }
 
     /**
+     * Encadré Conditions et pénalités (story 3.7) : réglages vides = ligne non affichée. Jamais de coordonnées bancaires ici.
+     *
+     * @return array{depositPercent: ?int, deposit: ?int, returnTerms: string, pickupTerms: string, fuelTerms: string, paymentMethods: list<string>}
+     */
+    #[AsTwigFunction('quote_conditions')]
+    public function quoteConditions(): array
+    {
+        $s = $this->settings;
+        $number = fn (string $name) => ctype_digit($s->get($name)) ? (int) $s->get($name) : null;
+        $methods = array_intersect_key(SettingsProvider::PAYMENT_METHOD_LABELS, array_flip(explode(',', $s->get(SettingsProvider::PAYMENT_METHODS))));
+
+        return [
+            'depositPercent' => $number(SettingsProvider::DEPOSIT_PERCENT),
+            'deposit' => $number(SettingsProvider::DEPOSIT_AMOUNT),
+            'returnTerms' => trim($s->get(SettingsProvider::RETURN_TERMS)),
+            'pickupTerms' => trim($s->get(SettingsProvider::PICKUP_TERMS)),
+            'fuelTerms' => trim($s->get(SettingsProvider::FUEL_TERMS)),
+            'paymentMethods' => array_values($methods),
+        ];
+    }
+
+    /**
      * Coordonnées, réseaux et réglages SEO du layout public (en-tête, pied, JSON-LD LocalBusiness, robots, accueil), lus en une fois.
      *
      * @return array{whatsapp: string, phone: string, phoneNumber: string, address: string, siret: string, email: string, social: array<string, string>, maxKm: string, depotCity: string, indexable: bool, googleReviews: string, foundedYear: string, companyText: string}

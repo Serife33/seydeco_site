@@ -4,30 +4,105 @@ const KEY = 'seydeco.selection.v1';
 const role = (element, name) => element.querySelector(`[data-role="${name}"]`);
 // Ligne de la page Mon devis ↔ ligne stockée : même produit, même coloris
 const sameLine = (item, line) => Number(item.dataset.productId) === line.productId && (Number(item.dataset.colorId) || null) === (line.colorId ?? null);
+// Mêmes bornes que le serveur (QuoteController, EstimateController)
+const MAX_LINES = 100;
+const MAX_QTY = 100000;
+const MAX_SHARE = 4000;
+
+// Lien de partage (story 3.8) : « produit.coloris.quantité » séparés par des virgules, en base64url ; aucune donnée personnelle
+const encodeShare = (lines) => btoa(lines.map((l) => `${l.productId}.${l.colorId ?? ''}.${l.qty}`).join(','))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+// Parties illisibles (lien tronqué, modifié, trop long, quantité invalide) ignorées et signalées par `damaged`
+function decodeShare(value) {
+    let b64 = value.replace(/-/g, '+').replace(/_/g, '/');
+    let damaged = false;
+    if (value.length > MAX_SHARE) return { lines: [], damaged: true };
+    if (b64.length % 4 === 1) {
+        b64 = b64.slice(0, -1);
+        damaged = true;
+    }
+    let text;
+    try {
+        text = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
+    } catch (e) {
+        return { lines: [], damaged: true };
+    }
+    const lines = [];
+    text.split(',').forEach((part) => {
+        const m = /^([1-9]\d{0,9})\.([1-9]\d{0,9})?\.([1-9]\d{0,5})$/.exec(part);
+        if (!m || Number(m[3]) > MAX_QTY) {
+            damaged = true;
+            return;
+        }
+        const line = { productId: Number(m[1]), qty: Number(m[3]) };
+        if (m[2]) line.colorId = Number(m[2]);
+        const same = lines.find((l) => l.productId === line.productId && (l.colorId ?? null) === (line.colorId ?? null));
+        if (same) {
+            same.qty = Math.min(MAX_QTY, same.qty + line.qty);
+        } else if (lines.length < MAX_LINES) {
+            lines.push(line);
+        } else {
+            damaged = true;
+        }
+    });
+    return { lines, damaged };
+}
 
 /*
  * Sélection « Mon devis » (story 1.13), seul contrôleur à toucher localStorage.
  * Schéma : {v:1, lines:[{productId, colorId?, qty}]} ; aucun prix calculé ici.
  * Posé sur <body> : compteur de l'en-tête, formulaires d'ajout (fiche, cartes, pack), page /mon-devis.
  * Mon devis (story 3.6) : montants repris tels quels du JSON de POST /estimation (PricingCalculator).
+ * Barre d'estimation, tables suggérées (story 3.7) et lien de partage (story 3.8) : mêmes règles, aucun prix calculé ici.
  */
 export default class extends Controller {
-    static targets = ['counter', 'lines', 'storageError', 'summary'];
+    static targets = ['counter', 'lines', 'storageError', 'summary', 'bar', 'shareChoice', 'shareError'];
     static values = { quoteUrl: String };
 
     connect() {
         // Autre onglet : compteur et page tenus à jour
         this.onStorage = (event) => { if (event.key === KEY) this.render(); };
         window.addEventListener('storage', this.onStorage);
+        // Clavier virtuel ouvert (champ actif et écran visible réduit) : la Barre d'estimation se masque
+        this.onViewport = () => requestAnimationFrame(() => {
+            const field = document.activeElement?.matches('input:not([type="checkbox"]):not([type="radio"]), textarea, select');
+            const viewport = window.visualViewport;
+            if (!viewport) return;
+            // Hauteur de référence = la plus grande vue pour cette largeur (Android réduit aussi innerHeight)
+            if (viewport.width !== this.viewportWidth) {
+                this.viewportWidth = viewport.width;
+                this.fullHeight = 0;
+            }
+            this.fullHeight = Math.max(this.fullHeight, viewport.height);
+            this.element.classList.toggle('keyboard-open', !!field && viewport.height < this.fullHeight * 0.75);
+        });
+        window.visualViewport?.addEventListener('resize', this.onViewport);
+        this.element.addEventListener('focusin', this.onViewport);
+        this.element.addEventListener('focusout', this.onViewport);
+        // Hauteur des barres du bas (bandeau cookies + Barre) en scroll-padding : un élément focalisé n'est jamais caché dessous
+        const bars = this.element.querySelector('.bottom-bars');
+        if (bars && window.ResizeObserver) {
+            this.barsObserver = new ResizeObserver(() => document.documentElement.style.setProperty('--bottom-bars-height', `${bars.offsetHeight}px`));
+            this.barsObserver.observe(bars);
+        }
     }
 
     disconnect() {
         window.removeEventListener('storage', this.onStorage);
+        window.visualViewport?.removeEventListener('resize', this.onViewport);
+        this.element.removeEventListener('focusin', this.onViewport);
+        this.element.removeEventListener('focusout', this.onViewport);
+        this.barsObserver?.disconnect();
     }
 
     // Cibles présentes au chargement ou arrivées avec Turbo : on les remplit
     counterTargetConnected() { this.render(); }
-    linesTargetConnected() { this.render(); }
+    barTargetConnected() { this.scheduleBar(); }
+    linesTargetConnected() {
+        this.openShared();
+        this.render();
+    }
     // Lignes arrivées dans le cadre : première estimation, sans annonce
     summaryTargetConnected() { this.estimate(false); }
 
@@ -52,6 +127,7 @@ export default class extends Controller {
 
     render() {
         const lines = this.renderCounter();
+        this.scheduleBar();
         if (this.hasLinesTarget) {
             // Probe d'écriture : en navigation privée stricte, l'écriture échoue
             const writable = this.write(lines);
@@ -73,6 +149,129 @@ export default class extends Controller {
             this.counterTarget.setAttribute('aria-label', `Mon devis, ${n} produit${n > 1 ? 's' : ''}`);
         }
         return lines;
+    }
+
+    // Compteur et Barre demandés ensemble au chargement : une seule estimation
+    scheduleBar() {
+        if (!this.hasBarTarget) return;
+        clearTimeout(this.barTimer);
+        this.barTimer = setTimeout(() => this.renderBar(), 50);
+    }
+
+    // Barre d'estimation : absente si la sélection est vide (ou le stockage indisponible) ; total du serveur, sinon le seul compteur
+    async renderBar() {
+        if (!this.hasBarTarget) return;
+        const bar = this.barTarget;
+        const lines = this.read();
+        const n = lines.length;
+        bar.hidden = n === 0;
+        if (!n) return;
+        role(bar, 'count').textContent = `Mon devis · ${n} produit${n > 1 ? 's' : ''}`;
+        this.barRequest?.abort();
+        const request = this.barRequest = new AbortController();
+        let data = null;
+        try {
+            data = await this.requestEstimate(bar.dataset.url, lines, request.signal);
+        } catch (e) {
+            if (e.name === 'AbortError') return;
+        }
+        if (request !== this.barRequest || !bar.isConnected) return;
+        role(bar, 'total').textContent = data ? `Estimation ${data.totalText}` : '';
+    }
+
+    async requestEstimate(url, lines, signal) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({ lines: lines.map((l) => ({ productId: l.productId, quantity: l.qty })) }),
+            signal,
+        });
+        return response.ok ? response.json() : null;
+    }
+
+    // Lien /mon-devis?s=… : sans sélection, chargé directement ; sinon choix inline ; un lien abîmé n'efface jamais la sélection
+    openShared() {
+        const value = new URL(window.location.href).searchParams.get('s');
+        if (value === null) return;
+        const { lines, damaged } = decodeShare(value);
+        if (this.hasShareErrorTarget) this.shareErrorTarget.hidden = !damaged;
+        const current = this.read();
+        if (lines.length && current.length && encodeShare(current) !== encodeShare(lines) && this.hasShareChoiceTarget) {
+            // Paramètre gardé jusqu'au choix : un rechargement repropose le choix
+            this.shared = lines;
+            this.shareChoiceTarget.hidden = false;
+            return;
+        }
+        if (lines.length && !current.length) this.write(lines);
+        this.clearShareParam();
+    }
+
+    replaceShared() {
+        this.write(this.shared ?? this.read());
+        this.sharedDone();
+    }
+
+    // Quantités additionnées (même produit, même coloris)
+    addShared() {
+        const lines = this.read();
+        (this.shared ?? []).forEach((l) => this.merge(lines, l.productId, l.colorId, l.qty));
+        this.write(lines);
+        this.sharedDone();
+    }
+
+    sharedDone() {
+        this.shared = null;
+        this.shareChoiceTarget.hidden = true;
+        this.clearShareParam();
+        this.render();
+        this.element.querySelector('h1')?.focus();
+    }
+
+    clearShareParam() {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('s');
+        history.replaceState(history.state, '', url.pathname + url.search + url.hash);
+    }
+
+    // « Partager ma sélection » : partage natif s'il existe, sinon copie ; « Lien copié. » inline
+    async share({ currentTarget }) {
+        const status = currentTarget.parentElement.querySelector('[data-role="share-status"]');
+        const url = new URL(this.quoteUrlValue, window.location.origin);
+        url.searchParams.set('s', encodeShare(this.read()));
+        status.textContent = '';
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: 'Ma sélection Seydeco', url: url.href });
+                return;
+            } catch (e) {
+                // Partage annulé : rien à dire ; partage refusé : on copie
+                if (e.name === 'AbortError') return;
+            }
+        }
+        try {
+            await navigator.clipboard.writeText(url.href);
+            status.textContent = 'Lien copié.';
+        } catch (e) {
+            status.textContent = `Copiez ce lien : ${url.href}`;
+        }
+    }
+
+    // « Ajouter 19 tables » : tables qui manquent ajoutées à la ligne de table, total recalculé par le serveur
+    addTables() {
+        const t = this.suggestedTables;
+        if (!t) return;
+        const lines = this.read();
+        this.merge(lines, t.productId, t.colorId, t.missing);
+        this.write(lines);
+        const line = lines.find((l) => l.productId === t.productId && (l.colorId ?? null) === (t.colorId ?? null));
+        const item = [...this.linesTarget.querySelectorAll('[data-quote-line]')].find((i) => sameLine(i, line));
+        if (item) {
+            const input = item.querySelector('input[name="qty"]');
+            input.value = line.qty;
+            input.focus();
+        }
+        this.renderCounter();
+        this.scheduleEstimate();
     }
 
     // Le sélecteur de quantité appartient au formulaire de la fiche ou à une ligne de pack : l'élément portant data-min
@@ -126,6 +325,13 @@ export default class extends Controller {
             const hadFocus = undo.contains(document.activeElement);
             undo.remove();
             item.remove();
+            // Produit sorti de la sélection : sa casse et sa perte quittent l'Encadré Conditions
+            if (!this.read().some((l) => l.productId === Number(item.dataset.productId))) {
+                const damage = this.linesTarget.querySelector(`[data-damage-product="${Number(item.dataset.productId)}"]`);
+                const list = damage?.parentElement;
+                damage?.remove();
+                if (list && !list.children.length) list.closest('li').remove();
+            }
             // Plus aucune ligne : le cadre affiche « Votre devis est vide. »
             if (!this.linesTarget.querySelector('.quote-line')) {
                 this.render();
@@ -164,13 +370,7 @@ export default class extends Controller {
         const request = this.estimateRequest = new AbortController();
         let data = null;
         try {
-            const response = await fetch(summary.dataset.url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({ lines: lines.map((l) => ({ productId: l.productId, quantity: l.qty })) }),
-                signal: request.signal,
-            });
-            if (response.ok) data = await response.json();
+            data = await this.requestEstimate(summary.dataset.url, lines, request.signal);
         } catch (e) {
             if (e.name === 'AbortError') return;
         }
@@ -215,12 +415,27 @@ export default class extends Controller {
         const reasons = role(summary, 'reasons');
         reasons.replaceChildren(...data.reasons.map((r) => Object.assign(document.createElement('li'), { textContent: r.message })));
         reasons.hidden = !data.reasons.length;
+        this.showTables(data.tables && lines[data.tables.line] ? data.tables : null, lines);
         if (announce) {
             clearTimeout(this.announceTimer);
             this.announceTimer = setTimeout(() => {
                 role(summary, 'announce').textContent = `Total estimé ${data.totalText}, acompte ${data.depositText}.`;
             }, 1000);
         }
+    }
+
+    // Souvent loué avec : ligne des tables suggérées ; section masquée sans suggestion ni associé
+    showTables(tables, lines) {
+        const related = this.linesTarget.querySelector('[data-role="related"]');
+        if (!related) return;
+        const box = role(related, 'tables');
+        box.hidden = !tables;
+        related.hidden = !tables && !related.querySelector('.product-grid');
+        this.suggestedTables = tables && { productId: lines[tables.line].productId, colorId: lines[tables.line].colorId, missing: tables.missing };
+        if (!tables) return;
+        role(box, 'tables-text').textContent = tables.text;
+        const name = Object.assign(document.createElement('span'), { className: 'visually-hidden', textContent: ` : ${tables.productName}` });
+        box.querySelector('button').replaceChildren(tables.buttonText, name);
     }
 
     // Quantité saisie (fiche, ligne de pack) ou minimum (carte) ; null si refusée, avec le message sous le champ

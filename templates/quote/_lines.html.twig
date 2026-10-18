@@ -64,6 +64,27 @@
             <p class="quote-summary__note">Les frais de livraison s'ajoutent à l'étape suivante.</p>
             <p class="visually-hidden" aria-live="polite" data-role="announce"></p>
         </section>
+        {% include 'quote/_conditions.html.twig' with {products: products} only %}
+        {# Partage (story 3.8) : lien /mon-devis?s=… fabriqué par le navigateur, rien n'est gardé au serveur #}
+        <div class="quote-share">
+            <button type="button" class="button-secondary" data-action="selection#share">Partager ma sélection</button>
+            <p class="quote-share__status" role="status" data-role="share-status"></p>
+        </div>
+        {# Souvent loué avec (UX-DR29) : tables suggérées (nombre venu de POST /estimation) et associés des produits choisis #}
+        <section class="related" aria-labelledby="quote-related-titre" data-role="related"{% if not related %} hidden{% endif %}>
+            <h2 class="accent-sm related__title" id="quote-related-titre">Souvent loué avec</h2>
+            <div class="quote-tables" data-role="tables" hidden>
+                <p data-role="tables-text"></p>
+                <button type="button" class="button-secondary" data-action="selection#addTables"></button>
+            </div>
+            {% if related %}
+                <ul class="product-grid product-grid--related">
+                    {% for product in related %}
+                        {% include 'catalog/_product_card.html.twig' with {lazy: true, tag: 'h3'} %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </section>
     {% else %}
         <div class="quote-empty">
             <p>Votre devis est vide.</p>

@@ -98,6 +98,17 @@ final class EstimateController extends AbstractController
         if ($delivery && null === $meters) {
             $reasons[] = ['type' => 'distance_unknown', 'message' => self::DISTANCE_UNKNOWN];
         }
+        // Tables suggérées (story 3.7), affichées dans Souvent loué avec ; `line` = position de la table dans la liste reçue
+        $tables = $this->calculator->suggestedTables($priced);
+        if ($tables) {
+            $tables = [
+                'line' => $positions[$tables['line']],
+                'productName' => $priced[$tables['line']]['product']->getName(),
+                'missing' => $tables['missing'],
+                'text' => \sprintf('Pour %d chaises, il faut environ %d tables de %d places.', $tables['chairs'], $tables['needed'], $tables['seats']),
+                'buttonText' => \sprintf('Ajouter %d table%s', $tables['missing'], $tables['missing'] > 1 ? 's' : ''),
+            ];
+        }
 
         return new JsonResponse([
             'lines' => $lines,
@@ -111,6 +122,7 @@ final class EstimateController extends AbstractController
             'excludesDelivery' => $quote['excludesDelivery'] || !$delivery,
             'reasons' => $reasons,
             'ignored' => $ignored,
+            'tables' => $tables,
         ]);
     }
 

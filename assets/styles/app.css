@@ -670,6 +670,29 @@ body.has-open-panel { overflow: hidden; }
     .quote-line__end { flex-direction: column; align-items: flex-end; margin: 0; }
 }
 
+/* Encadré Conditions et pénalités (UX-DR33) : jamais replié ni grisé ; partage et tables suggérées (stories 3.7, 3.8) */
+.conditions-panel { margin-top: var(--space-8); padding: var(--space-6); background: var(--surface); border: 1px solid var(--ink); border-left-width: 4px; }
+.conditions-panel__title { margin: 0 0 var(--space-4); font-size: 22px; }
+.conditions-panel__list { display: grid; gap: var(--space-4); margin: 0; padding: 0; list-style: none; }
+.conditions-panel__list > li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: var(--space-3); }
+.conditions-panel__list .icon { margin-top: 2px; }
+.conditions-panel h3 { margin: 0 0 var(--space-1); font-family: var(--font-body); font-size: 16px; font-weight: 500; }
+.conditions-panel p { margin: 0; }
+.conditions-panel__damage { margin: 0; padding: 0; list-style: none; }
+.quote-share { margin-top: var(--space-6); }
+.quote-share__status { margin: var(--space-2) 0 0; overflow-wrap: anywhere; }
+.quote-share__status:empty { display: none; }
+.quote-share-choice { margin: 0 0 var(--space-6); padding: var(--space-4); border: 1px solid var(--ink); }
+.quote-share-choice p { margin: 0 0 var(--space-3); }
+.quote-share-choice__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.quote-page__share-error { color: var(--error); }
+.quote-tables { margin: 0 0 var(--space-6); }
+.quote-tables p { margin: 0 0 var(--space-3); }
+.quote-tables[hidden], .related[hidden] { display: none; }
+@media (min-width: 768px) {
+    .conditions-panel { padding: var(--space-8); }
+}
+
 /* Packs (story 1.14) : cartes du catalogue, page d'un pack */
 .packs { margin-top: var(--space-12); }
 .pack-card__link { width: 100%; margin-top: var(--space-2); }
@@ -832,12 +855,27 @@ body.has-open-panel { overflow: hidden; }
 .cookie-banner__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3) var(--space-4); }
 .cookie-banner__actions .button-secondary { flex: 1 1 0; }
 .cookie-banner__actions a { display: inline-flex; align-items: center; min-height: var(--target-min); }
-/* Un élément qui reçoit le focus n'est jamais caché sous le bandeau */
-html:has(.cookie-banner:not([hidden])) { scroll-padding-bottom: 200px; }
+/* Un élément qui reçoit le focus n'est jamais caché sous les barres du bas (hauteur mesurée par le contrôleur selection) */
+html { scroll-padding-bottom: var(--bottom-bars-height, 0px); }
 @media (min-width: 768px) {
     .cookie-banner__inner { grid-template-columns: 1fr auto; align-items: center; gap: var(--space-6); }
     .cookie-banner__actions .button-secondary { flex: none; min-width: 140px; }
-    html:has(.cookie-banner:not([hidden])) { scroll-padding-bottom: 120px; }
+}
+
+/* Barre d'estimation (UX-DR31) : aplat ink sous le bandeau cookies ; 2 lignes max sur mobile, 1 ligne dès 1024 px */
+.estimate-bar { background: var(--ink); color: var(--surface); }
+.estimate-bar[hidden], .keyboard-open .estimate-bar { display: none; }
+.estimate-bar__inner { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.estimate-bar__text { margin: 0; min-width: 0; font-size: 14px; line-height: 1.4; }
+.estimate-bar__text > span { display: block; }
+.estimate-bar__total { font-size: 18px; }
+.estimate-bar__total:empty { display: none; }
+.estimate-bar .button-inverse { flex: none; padding: 0 var(--space-3); }
+.estimate-bar .button-inverse:focus-visible { outline-color: var(--surface); }
+@media (min-width: 1024px) {
+    .estimate-bar__text > span { display: inline; }
+    .estimate-bar__total { font-size: 20px; white-space: nowrap; }
+    .estimate-bar__text { display: flex; align-items: baseline; gap: var(--space-6); font-size: 15px; }
 }
 .cookie-settings { margin-top: var(--space-8); }
 .cookie-settings .button-primary { margin-top: var(--space-4); }

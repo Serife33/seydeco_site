@@ -1,0 +1,37 @@
+{# Encadré Conditions et pénalités (story 3.7, UX-DR33) : Mon devis, et étape 4 de Finaliser (story 3.11).
+   Attend `products` : produits de la sélection (casse et perte). Jamais replié ; aucune coordonnée bancaire. #}
+{% set c = quote_conditions() %}
+{% set damage = products|filter(p => p.breakagePrice is not null or p.lossPrice is not null) %}
+<section class="conditions-panel" aria-labelledby="conditions-titre">
+    <h2 class="conditions-panel__title" id="conditions-titre">Avant de réserver</h2>
+    <ul class="conditions-panel__list">
+        {% if c.depositPercent %}
+            <li>{% include 'layout/_icon.html.twig' with {name: 'coin', size: 22} only %}<div><h3>Acompte</h3><p>{{ c.depositPercent }} % du total, versé pour réserver. Il n'est pas remboursable.</p></div></li>
+        {% endif %}
+        <li>{% include 'layout/_icon.html.twig' with {name: 'shield', size: 22} only %}<div><h3>Caution</h3><p>{% if c.deposit %}{{ c.deposit|money(true) }}, par chèque{% else %}Par chèque{% endif %}, avec présentation d'une pièce d'identité.</p></div></li>
+        {% if damage %}
+            <li>{% include 'layout/_icon.html.twig' with {name: 'broken', size: 22} only %}<div><h3>Casse ou perte</h3>
+                <ul class="conditions-panel__damage">
+                    {% for p in damage %}
+                        <li data-damage-product="{{ p.id }}">{{ p.name }} :
+                            {{- p.breakagePrice is not null ? ' casse ' ~ p.breakagePrice|money(true) }}
+                            {{- p.breakagePrice is not null and p.lossPrice is not null ? ',' }}
+                            {{- p.lossPrice is not null ? ' perte ' ~ p.lossPrice|money(true) }}</li>
+                    {% endfor %}
+                </ul>
+            </div></li>
+        {% endif %}
+        {% if c.returnTerms %}
+            <li>{% include 'layout/_icon.html.twig' with {name: 'clock', size: 22} only %}<div><h3>Retour</h3><p>{{ c.returnTerms|nl2br }}</p></div></li>
+        {% endif %}
+        {% if c.pickupTerms %}
+            <li>{% include 'layout/_icon.html.twig' with {name: 'truck', size: 22} only %}<div><h3>Retrait au dépôt</h3><p>{{ c.pickupTerms|nl2br }}</p></div></li>
+        {% endif %}
+        {% if c.fuelTerms %}
+            <li>{% include 'layout/_icon.html.twig' with {name: 'fuel', size: 22} only %}<div><h3>Tarif de livraison</h3><p>{{ c.fuelTerms|nl2br }}</p></div></li>
+        {% endif %}
+        {% if c.paymentMethods %}
+            <li>{% include 'layout/_icon.html.twig' with {name: 'wallet', size: 22} only %}<div><h3>Paiement</h3><p>{{ c.paymentMethods|join(', ') }}. Pas de paiement en ligne.</p></div></li>
+        {% endif %}
+    </ul>
+</section>

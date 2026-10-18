@@ -143,6 +143,34 @@ final class PricingCalculator
         return ['lines' => $out, 'total' => $total, 'deposit' => $deposit, 'balance' => $total - $deposit, 'excludesDelivery' => $excludesDelivery, 'reasons' => $reasons];
     }
 
+    /**
+     * Tables suggérées (story 3.7) : chaises ÷ places de la première table à places de la sélection, arrondi au supérieur.
+     * `missing` = places encore à garnir ÷ places de cette table. Null sans chaise, sans table à places ou si les tables suffisent.
+     *
+     * @param list<array{product: Product, quantity: int}> $lines
+     *
+     * @return array{line: int, seats: int, chairs: int, needed: int, missing: int}|null `line` = position de la table dans `$lines`
+     */
+    public function suggestedTables(array $lines): ?array
+    {
+        $table = null;
+        $covered = 0;
+        foreach ($lines as $index => ['product' => $product, 'quantity' => $quantity]) {
+            $seats = PricingType::Tables === $product->getCategory()?->getPricingType() ? ($product->getSeats() ?? 0) : 0;
+            if ($seats > 0) {
+                $table ??= ['line' => $index, 'seats' => $seats];
+                $covered += $seats * $quantity;
+            }
+        }
+        $chairs = $this->chairCount($lines);
+        if (null === $table || 0 === $chairs || $covered >= $chairs) {
+            return null;
+        }
+        $ceil = fn (int $places) => intdiv($places + $table['seats'] - 1, $table['seats']);
+
+        return $table + ['chairs' => $chairs, 'needed' => $ceil($chairs), 'missing' => $ceil($chairs - $covered)];
+    }
+
     /** Chaises de la demande : quantités des produits de catégorie Chaises (même règle que la remise, story 1.12). */
     private function chairCount(array $lines): int
     {

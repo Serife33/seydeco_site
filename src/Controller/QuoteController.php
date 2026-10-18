@@ -64,6 +64,22 @@ final class QuoteController extends AbstractController
             ];
         }
 
-        return $this->render('quote/_lines.html.twig', ['rows' => $rows]);
+        // Souvent loué avec (story 3.7) : associés des produits proposés, hors produits déjà choisis, 4 au plus
+        $available = array_values(array_unique(array_map(fn (array $row) => $row['productId'], array_filter($rows, fn (array $row) => $row['available']))));
+        $related = [];
+        foreach ($this->products->findPublicRelated($available) as $list) {
+            foreach ($list as $product) {
+                if (!\in_array($product->getId(), $available, true)) {
+                    $related[$product->getId()] = $product;
+                }
+            }
+        }
+
+        return $this->render('quote/_lines.html.twig', [
+            'rows' => $rows,
+            'related' => \array_slice(array_values($related), 0, 4),
+            // Encadré Conditions : casse et perte de chaque produit proposé, une fois
+            'products' => array_map(fn (int $id) => $products[$id], $available),
+        ]);
     }
 }

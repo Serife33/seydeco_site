@@ -6,9 +6,18 @@
 {% block body %}
     <div class="container catalog-page quote-page">
         {% if quoteOnline %}
-            <h1>Mon devis</h1>
+            <h1 tabindex="-1">Mon devis</h1>
             {# Rempli par le contrôleur selection à partir du navigateur ; le HTML servi ne contient aucune sélection #}
             <p class="quote-page__storage-error" data-selection-target="storageError" hidden>Votre navigateur ne peut pas garder votre sélection.</p>
+            {# Lien de partage ouvert (story 3.8) : textes fixes, affichés par le contrôleur selection #}
+            <p class="quote-page__share-error" data-selection-target="shareError" role="status" hidden>Une partie du lien n'a pas pu être lue.</p>
+            <div class="quote-share-choice" data-selection-target="shareChoice" hidden>
+                <p>Ce lien contient une autre sélection. Que faire de la vôtre ?</p>
+                <div class="quote-share-choice__actions">
+                    <button type="button" class="button-primary" data-action="selection#replaceShared">Remplacer ma sélection</button>
+                    <button type="button" class="button-secondary" data-action="selection#addShared">Ajouter à ma sélection</button>
+                </div>
+            </div>
             <turbo-frame id="mon-devis-lignes" target="_top" data-selection-target="lines" data-url="{{ path('quote_lines') }}" aria-busy="true"></turbo-frame>
             <noscript><p>Activez JavaScript pour voir votre sélection, ou <a href="{{ path('catalog_index') }}">parcourez le catalogue</a>.</p></noscript>
         {% else %}
